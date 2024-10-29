@@ -14,12 +14,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "electron": "NODE_ENV=development electron .",
+    "build": "tsc && vite build && electron-builder",
+    "win": "npm run build && electron-builder --windows"
   },
   "dependencies": {
+    "@xyflow/react": "^12.3.2",
+    "antd": "^5.21.6",
     "electron-updater": "^6.1.8"
   },
   "devDependencies": {
@@ -28,8 +32,8 @@
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
-    "electron": "^29.1.1",
-    "electron-builder": "^24.13.3",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.35",
     "postcss-import": "^16.0.1",
     "react": "^18.2.0",
@@ -39,5 +43,85 @@
     "vite": "^5.1.5",
     "vite-plugin-electron": "^0.28.4",
     "vite-plugin-electron-renderer": "^0.14.5"
+  },
+  "build": {
+    "productName": "UBVision",
+    "appId": "com.ubsense.ubvision",
+    "asar": true,
+    "asarUnpack": [
+      "**\\*.{node,dll}",
+      "../node_modules/node-notifier/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://43.138.71.42:7080/build/",
+        "publishAutoUpdate": true
+      }
+    ],
+    "mac": {
+      "icon": "public/app-mac.icns",
+      "target": {
+        "target": "default",
+        "arch": [
+          "x64"
+        ]
+      },
+      "type": "distribution",
+      "hardenedRuntime": true,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "icon": "public/logo.png",
+      "artifactName": "UBVisionSetup-${version}.exe",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "public/app.icns",
+      "target": [
+        "AppImage",
+        "tar.gz",
+        "deb",
+        "snap"
+      ],
+      "artifactName": "${productName}-${os}-${arch}-${version}-setup.${ext}",
+      "maintainer": "ubv",
+      "category": "Development"
+    },
+    "nsis": {
+      "shortcutName": "UBVision",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "directories": {
+      "buildResources": "assets",
+      "output": "release"
+    },
+    "extraResources": [
+      "./public/**"
+    ]
   }
 }
