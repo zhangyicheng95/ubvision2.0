@@ -1,0 +1,60 @@
+.basicLayoutHeader {
+  height: 30px;
+  line-height: 30px;
+  padding: 0 10px;
+  user-select: none;
+
+  :global {
+    .basic-layout-header-btn {
+      font-size: 20px;
+
+      .anticon {
+        font-size: inherit;
+      }
+    }
+
+    .basic-layout-header-title-box {
+      font-size: 16px;
+      font-weight: bolder;
+      margin-right: 8px;
+    }
+
+    .user-info-box {
+      height: 30px;
+      margin-right: 24px;
+      transition: all 1s;
+
+      &-name {
+        margin-left: 8px;
+      }
+
+      .user-info {
+        height: 30px;
+        white-space: nowrap;
+      }
+
+      .user-check {
+        height: 30px;
+      }
+
+      // &:hover {
+      //   .user-info {
+      //     opacity: 0;
+      //   }
+
+      //   .user-check {
+      //     opacity: 1;
+      //     margin-top: -30px;
+      //   }
+      // }
+    }
+
+    .operation-box {
+      gap: 4px;
+
+      .basic-layout-header-btn {
+        font-size: 16px;
+      }
+    }
+  }
+}

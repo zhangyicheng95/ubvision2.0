@@ -18,9 +18,19 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     const [channel, ...omit] = args
     return ipcRenderer.invoke(channel, ...omit)
   },
-
-  // You can expose other APTs you need here.
-  // ...
+  ipcCommTest(listener: any, message: any) {
+    ipcRenderer.send(listener, message);
+  },
+  /**
+    * 添加一次性 listener 函数。 这个 listener 只会在 channel下一次收到消息的时候被调用，之后这个监听器会被移除。
+    * @param channel
+    * @param listener
+    */
+  once(channel: any, listener: any) {
+    ipcRenderer.once(channel, (event, ...args) => {
+      return listener(...args);
+    });
+  },
 })
 
 // --------- Preload scripts loading ---------

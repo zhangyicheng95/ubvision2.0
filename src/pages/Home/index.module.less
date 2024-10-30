@@ -1,0 +1,230 @@
+.homePage {
+  padding: 0 32px;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+
+  :global {
+    .home-body {
+      width: 100%;
+      height: calc(100% - 112px);
+
+      &-top {
+        height: 28px;
+        background-color: rgba(144, 144, 144, .4);
+        font-size: 12px;
+        padding: 2px 4px;
+        margin-bottom: 24px;
+
+        &-icon {
+          height: 20px;
+          width: 20px;
+          margin-right: 8px;
+        }
+
+        &-link {
+          text-decoration: underline;
+          color: rgba(24, 144, 255, 1);
+          cursor: pointer;
+        }
+      }
+
+      &-bottom {
+        height: calc(100% - 36px);
+
+        &-title {
+          text-decoration: underline;
+          margin: 12px 0;
+          font-size: 20px;
+          font-weight: bold;
+        }
+
+        &-icon {
+          font-size: 20px;
+        }
+
+        &-line {
+          height: 100%;
+          width: 4px;
+          background-color: rgba(144, 144, 144, .4);
+          margin: 0 40px;
+        }
+
+        &-left {
+          width: 55%;
+          height: 100%;
+          overflow-y: auto;
+
+          &-operation {
+            padding-left: 8px;
+            gap: 48px;
+            margin-bottom: 24px;
+
+            .ant-upload {
+              color: inherit;
+            }
+
+            &-item {
+              gap: 6px;
+              font-size: 16px;
+              padding: 4px 8px;
+              border-radius: 2px;
+              cursor: pointer;
+            }
+
+            &-item:hover {
+              background-color: #177ddc;
+            }
+          }
+
+          &-list {
+            padding-left: 8px;
+
+            &-item {
+              margin-bottom: 12px;
+              padding: 4px 8px;
+              cursor: pointer;
+              border-radius: 2px;
+
+              &-name {
+                font-size: 16px;
+                font-weight: 500;
+              }
+
+              &-time {
+                opacity: 0.7;
+                font-size: 11px;
+                gap: 4px;
+              }
+            }
+
+            &-item:hover {
+              background-color: rgba(144, 144, 144, .3);
+            }
+          }
+        }
+
+        &-right {
+          width: 45%;
+          height: 100%;
+          overflow-y: auto;
+
+          &-project-list {
+            gap: 24px;
+
+            &-item {
+              align-items: center;
+              justify-content: center;
+              padding: 4px 8px;
+              cursor: pointer;
+              border-radius: 2px;
+              opacity: 0.8;
+
+              img {
+                height: 36px;
+                width: 36px;
+              }
+
+              &-icon {
+                height: 48px;
+                width: 48px;
+                margin-bottom: 8px;
+                background-color: rgba(144, 144, 144, .2);
+                border: 2px solid rgb(181, 181, 181);
+              }
+
+              div {
+                line-height: 1;
+              }
+            }
+
+            &-item:hover {
+              background-color: rgba(144, 144, 144, .3);
+            }
+          }
+
+          &-document-list {
+            gap: 8px;
+
+            &-item {
+              gap: 4px;
+              cursor: pointer;
+              color: rgba(24, 144, 255, 1);
+            }
+
+            &-item:hover {
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+    }
+
+    .monaco-editor-modal {
+      .ant-modal {
+        .ant-modal-content {
+          .ant-modal-body {
+            height: calc(100% - 56px);
+
+            .case-body {
+              height: 100%;
+              width: 100%;
+              overflow-y: auto;
+
+              .case-item-box {
+                width: 300px;
+                padding: 8px;
+                float: left;
+                cursor: pointer;
+
+                &-img {
+                  height: 180px;
+                  width: 100%;
+                  background-color: rgba(144, 144, 144, .3);
+                  margin-bottom: 8px;
+                  position: relative;
+                  overflow: hidden;
+
+                  img {
+                    height: 100%;
+                    width: 100%;
+                    transition: all 1s;
+                  }
+
+                  &-info {
+                    position: absolute;
+                    opacity: 0;
+                    height: 100%;
+                    width: 100%;
+                    background-color: rgba(144, 144, 144, .6);
+                    padding: 24px;
+                  }
+                }
+
+                &-title {
+                  width: 100%;
+                  line-height: 1;
+                  text-align: center;
+                }
+              }
+
+              .case-item-box:hover {
+                background-color: rgba(144, 144, 144, .1);
+
+                .case-item-box-img {
+                  img {
+                    transform: scale(1.1);
+                  }
+                }
+
+                .case-item-box-img-info {
+                  opacity: 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

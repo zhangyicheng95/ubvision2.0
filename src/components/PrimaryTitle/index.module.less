@@ -1,0 +1,27 @@
+.primaryTitle {
+  height: 50px;
+  margin-bottom: 32px;
+  width: 100%;
+
+  :global {
+    .title {
+      font-family: 'PingFangSC-Semibold', 'PingFang SC Semibold', 'PingFang SC', sans-serif;
+      font-weight: 700;
+      font-style: normal;
+      font-size: 31px;
+      color: inherit;
+      flex: 1;
+    }
+
+    .input-box {
+      width: 200px;
+      margin: 0 16px;
+      transition: width 0.3s;
+    }
+
+    .onfocus {
+      width: 250px;
+      transition: width 0.3s;
+    }
+  }
+}

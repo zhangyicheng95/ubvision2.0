@@ -1,0 +1,157 @@
+.basicLayoutSider {
+  width: 68px !important;
+  min-width: 68px !important;
+  max-width: 68px !important;
+  overflow: hidden;
+  background-color: rgb(233, 233, 233);
+
+  @media (prefers-color-scheme: dark) {
+    :global {
+      .ant-layout-sider-children {
+
+        .setting-icon-box {
+          &:hover {
+            background-color: rgb(67, 142, 223);
+          }
+        }
+
+        .ant-menu {
+
+          .ant-menu-item {
+            &:hover {
+              background-color: rgb(67, 142, 223);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global {
+      .ant-layout-sider-children {
+
+        .setting-icon-box {
+          &:hover {
+            background-color: rgb(215, 213, 213);
+          }
+        }
+
+        .ant-menu {
+
+          .ant-menu-item {
+            &:hover {
+              background-color: rgb(215, 213, 213);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  :global {
+    .ant-layout-sider-children {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      // padding-top: 16px;
+
+      .sider-icon {
+        width: 43px;
+        height: 37px;
+      }
+
+      .ant-menu {
+        flex: 1;
+        background: transparent;
+        padding: 0 0 32px;
+        border: 0;
+        color: inherit;
+
+        .ant-menu-item {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 60px;
+          max-height: 60px;
+          width: 60px;
+          padding: 0 !important;
+          border-radius: 4px;
+          margin: 0 4px 4px;
+          color: inherit;
+
+          .ant-menu-title-content {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .anticon {
+              font-size: 30px;
+            }
+          }
+        }
+      }
+
+      .sider-bottom {
+        transform: rotate(270deg);
+        font-style: normal;
+        margin-bottom: 72px;
+        justify-content: center;
+
+        .sider-bottom-title {
+          font-family: 'PingFangSC-Semibold', 'PingFang SC Semibold', 'PingFang SC', sans-serif;
+          font-weight: 700;
+          font-size: 32px;
+          line-height: 27px;
+        }
+
+        .sider-bottom-label {
+          font-family: 'PingFangSC-Regular', 'PingFang SC', sans-serif;
+          font-weight: 400;
+          font-size: 20px;
+          line-height: 20px;
+        }
+      }
+
+      .setting-icon-box {
+        width: 60px;
+        height: 60px;
+        border-radius: 4px;
+        margin: 2px 4px;
+        padding-top: 2px;
+        cursor: pointer;
+        transition: background-color 1s;
+
+        .bottom-setting-icon {
+          font-size: 30px;
+        }
+
+        .circle-box {
+          height: 30px;
+          width: 30px;
+          border: 2px solid rgba(144, 144, 144, .7);
+          border-radius: 50%;
+
+          .bottom-setting-icon {
+            font-size: 22px;
+            margin-top: 3px;
+          }
+        }
+
+
+
+        img {
+          height: 30px;
+          width: 30px;
+        }
+      }
+
+      .menu-selected {
+        border-right: 3px solid #177ddc;
+      }
+    }
+  }
+}

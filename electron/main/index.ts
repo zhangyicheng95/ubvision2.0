@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, nativeTheme } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -39,46 +39,100 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
-let win: BrowserWindow | null = null
-const preload = path.join(__dirname, '../preload/index.mjs')
-const indexHtml = path.join(RENDERER_DIST, 'index.html')
+let win: BrowserWindow | null = null;
+let myWindow: any = null,
+  myChildWindow: any = null;
+let tray = null;
+const preload = path.join(__dirname, '../preload/index.mjs');
+const indexHtml = path.join(RENDERER_DIST, 'index.html');
 
-async function createWindow() {
-  win = new BrowserWindow({
-    title: 'Main window',
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
+// 创建主窗口
+const createWindow = async (arg?: any) => {
+  console.log(`argargargarg: ${arg}`);
+  let res: any = arg || {};
+  let params = '';
+  try {
+    res = JSON.parse(arg);
+    params = Object.entries(res)
+      ?.map?.((item: any) => {
+        return `${item[0]}=${item[1]}`;
+      })
+      .join('&');
+  } catch (err) { }
+  const mainWindow: any = new BrowserWindow({
+    width: !!params ? 1440 : 1280,
+    height: !!params ? 900 : 810,
+    minWidth: !!params ? 1080 : 1280,
+    minHeight: !!params ? 700 : 810,
+    type: `main-${res?.id}`,
+    frame: false, // 隐藏窗口框架
+    skipTaskbar: false, //是否在任务栏中显示窗口
+    kiosk: false,
+    // icon: getAssetPath('icon.png'),
     webPreferences: {
       preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // nodeIntegration: true,
-
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      // contextIsolation: false,
+      webSecurity: false, //网络安全，false允许访问本地文件
+      nodeIntegration: true, // 是否集成Node
     },
   })
 
+  // 最小化窗口
+  ipcMain.handle(`minimize-${mainWindow.id}`, () => {
+    mainWindow.minimize();
+  });
+  // 最大化/还原窗口
+  ipcMain.handle(`maximize-${mainWindow.id}`, () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.restore();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+  // 关闭窗口
+  ipcMain.handle(`close-${mainWindow.id}`, (event: any, arg: any) => {
+    if (arg) {
+      myWindow = null;
+      mainWindow?.close?.();
+      mainWindow?.destroy?.();
+    } else {
+      mainWindow.minimize(); // 隐藏窗口而不是注销应用程序
+    }
+  });
+  // 打开开发者工具
+  ipcMain.handle(`openDevTools-${mainWindow.id}`, (args: any) => {
+    mainWindow.webContents.openDevTools();
+  });
+  // 设置主题色
+  ipcMain.handle(`theme-mode-${mainWindow.id}`, (event: any, arg: any) => {
+    nativeTheme.themeSource = arg;
+    return nativeTheme.shouldUseDarkColors;
+  });
+  // 获取主题色
+  ipcMain.handle(`theme-get-${mainWindow.id}`, (event: any, arg: any) => {
+    return nativeTheme.themeSource;
+  });
+
   if (VITE_DEV_SERVER_URL) { // #298
-    win.loadURL(VITE_DEV_SERVER_URL)
+    mainWindow.loadURL(VITE_DEV_SERVER_URL)
     // Open devTool if the app is not packaged
-    win.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
   } else {
-    win.loadFile(indexHtml)
+    mainWindow.loadFile(indexHtml)
   }
 
   // Test actively push message to the Electron-Renderer
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('main-process-message', new Date().toLocaleString())
   })
 
   // Make all links open with the browser, not with the application
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  mainWindow.webContents.setWindowOpenHandler(({ url }: any) => {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
 
   // Auto update
-  update(win)
+  update(mainWindow)
 }
 
 app.whenReady().then(createWindow)

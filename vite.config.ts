@@ -62,7 +62,7 @@ export default defineConfig(({ command }) => {
         // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
         // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
         renderer: {},
-      }),
+      })
     ],
     server: process.env.VSCODE_DEBUG && (() => {
       const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL)
@@ -72,5 +72,19 @@ export default defineConfig(({ command }) => {
       }
     })(),
     clearScreen: false,
+    css: {
+      preprocessorOptions: {
+        sass: {},
+        less: {
+          javascriptEnabled: true,
+          charset: false,
+        }
+      }
+    },
+    define: {
+      'process.env': {
+        APP_VERSION: pkg.version
+      },
+    }
   }
 })
