@@ -9,6 +9,7 @@ interface Props {
   style?: any;
   onSearch?: any;
   onClick?: any;
+  children?: any;
 }
 
 const PrimaryTitle: React.FC<Props> = (props: any) => {

@@ -132,4 +132,21 @@ export function formatResponse(res: any) {
         }
     }
     return res;
-}
+};
+// 毫秒转为 天时分秒
+export function timeToString(time: number) {
+    const d = parseInt(time / (24 * 60 * 60 * 1000) + '') || 0;
+    const h =
+        parseInt((time - d * 24 * 60 * 60 * 1000) / (60 * 60 * 1000) + '') || 0;
+    const m =
+        parseInt(
+            (time - d * 24 * 60 * 60 * 1000 - h * 60 * 60 * 1000) / (60 * 1000) + ''
+        ) || 0;
+    const s =
+        parseInt(
+            (time - d * 24 * 60 * 60 * 1000 - h * 60 * 60 * 1000 - m * 60 * 1000) /
+            1000 +
+            ''
+        ) || 0;
+    return { d, h, m, s };
+};

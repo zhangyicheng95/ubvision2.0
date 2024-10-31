@@ -1,0 +1,37 @@
+.group-edit-page {
+  height: 100%;
+  width: 100%;
+  padding: 0 24px;
+  font-size: 18px !important;
+  overflow-y: auto;
+
+  :global {
+    .ant-form {
+      font-size: inherit;
+    }
+
+    .group-edit-page-item {
+      margin-bottom: 8px;
+
+      .group-edit-page-title {
+        white-space: nowrap;
+        margin-right: 4px;
+        opacity: .6;
+      }
+
+      .group-edit-page-value {
+        flex: 1;
+      }
+
+      &-selected {
+        .ant-divider {
+          margin: 12px 0;
+        }
+
+        .ant-checkbox-wrapper {
+          margin-bottom: 8px;
+        }
+      }
+    }
+  }
+}

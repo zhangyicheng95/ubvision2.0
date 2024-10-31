@@ -8,10 +8,11 @@
   @media (prefers-color-scheme: dark) {
     :global {
       .ant-layout-sider-children {
+        background-color: rgba(0, 0, 0, 0.85);
 
         .setting-icon-box {
           &:hover {
-            background-color: rgb(67, 142, 223);
+            background-color: #0073ca;
           }
         }
 
@@ -19,9 +20,17 @@
 
           .ant-menu-item {
             &:hover {
-              background-color: rgb(67, 142, 223);
+              background-color: #0073ca;
             }
           }
+
+          .ant-menu-item-selected {
+            background-color: #005597;
+          }
+        }
+
+        .menu-selected-self {
+          background-color: #005597;
         }
       }
     }
@@ -33,7 +42,7 @@
 
         .setting-icon-box {
           &:hover {
-            background-color: rgb(215, 213, 213);
+            background-color: #e6f4ff;
           }
         }
 
@@ -41,7 +50,7 @@
 
           .ant-menu-item {
             &:hover {
-              background-color: rgb(215, 213, 213);
+              background-color: #e6f4ff;
             }
           }
         }
@@ -147,10 +156,6 @@
           height: 30px;
           width: 30px;
         }
-      }
-
-      .menu-selected {
-        border-right: 3px solid #177ddc;
       }
     }
   }

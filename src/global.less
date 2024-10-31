@@ -1,3 +1,11 @@
+.primaryColor {
+    color: #e6f4ff;
+}
+
+.primaryBackgroundColor {
+    background-color: #e6f4ff;
+}
+
 .flex-box {
     display: flex;
     display: -ms-flex;
@@ -60,4 +68,24 @@
     align-items: center;
     justify-content: center;
     -webkit-justify-content: center;
+}
+
+.full-screen-modal {
+    .ant-modal {
+        height: calc(100vh - 48px);
+
+        div:first-child {
+            height: 100%;
+        }
+
+        .ant-modal-content {
+            height: 100%;
+            padding: 24px 16px;
+            overflow-y: auto;
+        }
+    }
+}
+
+.menu-selected-self {
+    background-color: #e6f4ff;
 }

@@ -1,0 +1,46 @@
+.aboutPage {
+  align-items: center;
+  -webkit-align-items: center;
+
+  :global {
+    .top-icon {
+      height: 150px;
+      width: 150px;
+      border-radius: 50%;
+      background-color: #000;
+      overflow: hidden;
+
+      img {
+        height: 80%;
+        width: 80%;
+      }
+    }
+
+    .top-info {
+      text-indent: 2em;
+      margin: 24px 0;
+    }
+
+    .bottom-content {
+      width: 80%;
+
+      .content-item {
+        justify-content: space-between;
+        -webkit-justify-content: space-between;
+        padding: 12px;
+        border-bottom: 1px solid #52688f;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: text;
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global {
+      .top-icon {
+        background-color: rgba(210, 210, 210, .6);
+      }
+    }
+  }
+}

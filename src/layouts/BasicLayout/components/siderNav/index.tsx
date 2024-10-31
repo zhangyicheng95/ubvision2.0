@@ -83,13 +83,13 @@ const SiderNav: React.FC<Props> = (props: any) => {
   const userAuthList = getUserAuthList();
   const userInfo = getUserData();
   const navigate = useNavigate();
-  const { pathname = userAuthList?.includes('project') ? '/project' : '/alert' } = useLocation();
+  const { pathname = userAuthList?.includes('project') ? '/home' : '/alert' } = useLocation();
   const selectedKeys = useMemo(() => {
     return pathname;
   }, [pathname]);
   const sliderList = menuConfig?.map?.(menu => {
     const { name, path, id, icon = '', check } = menu;
-    return !(!check || userAuthList?.includes(id)) ?
+    return (!check || userAuthList?.includes(id)) ?
       {
         key: path,
         label: <Popover placement="right" content={name}>
@@ -117,13 +117,13 @@ const SiderNav: React.FC<Props> = (props: any) => {
       <Tooltip title={process?.env?.APP_VERSION || 'V0.1.0.Alpha'} placement="left">
         <div className="sider-bottom flex-box-column">
           <div className="sider-bottom-title">UBVISION</div>
-          <span className="sider-bottom-label">{process?.env?.APP_VERSION || 'V0.1.0.Alpha'}</span>
+          <span className="sider-bottom-label">V{process?.env?.APP_VERSION || '0.1.0.Alpha'}</span>
         </div>
       </Tooltip>
       <div
-        className={`setting-icon-box flex-box-center ${selectedKeys?.indexOf('/userSetting') > -1 ? 'menu-selected' : ''}`}
+        className={`setting-icon-box flex-box-center ${selectedKeys?.indexOf('/userSetting') > -1 ? 'menu-selected-self' : ''}`}
         onClick={() => {
-          if (userInfo?.userName !== 'sany') {
+          if (!!userInfo?.userName && userInfo?.userName !== 'sany') {
             navigate('/userSetting', { replace: true });
           } else {
             localStorage.removeItem('userInfo');
@@ -136,7 +136,7 @@ const SiderNav: React.FC<Props> = (props: any) => {
         </div>
       </div>
       <div
-        className={`setting-icon-box flex-box-center ${selectedKeys?.indexOf('/setting') > -1 ? 'menu-selected' : ''}`}
+        className={`setting-icon-box flex-box-center ${selectedKeys?.indexOf('/setting') > -1 ? 'menu-selected-self' : ''}`}
         style={{ marginBottom: 12 }}
         onClick={() => {
           navigate('/setting', { replace: true });

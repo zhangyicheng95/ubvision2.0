@@ -198,11 +198,11 @@ const AlertRouter: React.FC<Props> = (props: any) => {
             }
             return (
               <Popover
-                placement="top"
+                placement="bottom"
                 title={'添加监控窗口'}
                 trigger="click"
                 destroyTooltipOnHide={true}
-                arrowPointAtCenter
+                arrow={{ pointAtCenter: true }}
                 open={popoverVisible}
                 content={
                   <Select
@@ -229,7 +229,11 @@ const AlertRouter: React.FC<Props> = (props: any) => {
               >
                 <div
                   className="item-box box-animation add-box"
-                  onClick={() => setPopoverVisible(true)}
+                  onClick={(e) => {
+                    setPopoverVisible(true);
+                    e.preventDefault(); // 阻止默认的关闭行为
+                    e?.stopPropagation();
+                  }}
                 >
                   <div className="item-box-child flex-box-center">
                     <PlusOutlined />
@@ -621,7 +625,7 @@ const AlertItem = (props: any) => {
     >
       <div
         // className={`item-box ${running ? styles.runningBorder : 'box-animation'}`}
-        className={`item-box`}
+        className={`item-box box-animation`}
         onClick={() => {
           return onClick(item);
         }}

@@ -20,12 +20,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #177ddc;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #177ddc;
 }
 
 html,
@@ -53,7 +53,7 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: #177ddc;
 }
 
 button:focus,
@@ -86,7 +86,7 @@ code {
   }
 
   a:hover {
-    color: #747bff;
+    color: #177ddc;
   }
 
   button {
@@ -100,5 +100,57 @@ code {
 
 .ant-layout {
   height: 100%;
+  user-select: none;
+}
+
+.ant-spin-nested-loading {
+  height: 100%;
+  width: 100%;
+
+  .ant-spin-container {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.dropdown-box {
+
+  .ant-dropdown-menu-item,
+  .ant-dropdown-menu-submenu {
+    padding: 6px 16px;
+
+    .ant-dropdown-menu-title-content,
+    .ant-dropdown-menu-submenu-title {
+      display: flex;
+      display: -webkit-flex;
+      align-items: center;
+      -webkit-align-items: center;
+      justify-content: space-between;
+      -webkit-justify-content: space-between;
+      padding: 0;
+
+      .ant-dropdown-menu-submenu-expand-icon {
+        display: none;
+      }
+
+      .contextMenu-icon {
+        font-size: 14px;
+        opacity: .4;
+        font-weight: bold;
+        margin-right: 8px;
+      }
+
+      .contextMenu-text {
+        font-size: 14px;
+        opacity: .6;
+        margin-left: 64px;
+        flex: 1;
+        text-align: right;
+      }
+    }
+  }
+}
+
+.ant-dropdown-menu {
   user-select: none;
 }

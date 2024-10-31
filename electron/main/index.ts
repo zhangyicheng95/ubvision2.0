@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import { update } from './update'
+import modules from '../DB/modules/index';
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -135,7 +136,18 @@ const createWindow = async (arg?: any) => {
   update(mainWindow)
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  // 添加到启动项目
+  // app.setLoginItemSettings({
+  //   openAtLogin: false,
+  // });
+  // if (!ifShellStartUp) {
+  createWindow();
+  modules.init(app);
+  // }
+  // trayFun();
+})
+  .catch(console.log);
 
 app.on('window-all-closed', () => {
   win = null

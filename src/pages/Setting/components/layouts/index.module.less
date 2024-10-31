@@ -1,0 +1,62 @@
+.settingPage {
+  padding: 32px 32px 8px;
+  height: 100%;
+
+  @media (prefers-color-scheme: dark) {
+    :global {
+      .setting-body {
+        .setting-left-tree {
+
+          .tree-item {
+            &:hover {
+              background-color: rgb(67, 142, 223);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global {
+      .setting-body {
+        .setting-left-tree {
+
+          .tree-item {
+            &:hover {
+              background-color: rgb(238, 236, 236);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  :global {
+    .setting-body {
+      height: calc(100% - 114px);
+
+      .setting-left-tree {
+        width: 200px;
+        height: 100%;
+        overflow: auto;
+        padding: 24px 0;
+        border-right: 2px solid #52688F;
+
+        .tree-item {
+          padding: 16px 48px 16px 24px;
+          margin-bottom: 8px;
+          cursor: pointer;
+          transition: background-color .5s;
+        }
+      }
+
+      .setting-content {
+        width: calc(100% - 200px);
+        height: 100%;
+        overflow: auto;
+        padding: 24px 0 0 24px;
+      }
+    }
+  }
+}

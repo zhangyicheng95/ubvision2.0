@@ -1,4 +1,4 @@
-import { fetchGet, fetchPost, fetchPut, fetchDelete } from '@renderer/utils/fetch';
+import { fetchGet, fetchPost, fetchPut, fetchDelete } from '@/utils/fetch';
 
 const V1 = '';
 // 获取本地全部插件列表

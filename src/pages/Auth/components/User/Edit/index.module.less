@@ -1,0 +1,38 @@
+.userEditPage {
+  height: 100%;
+  width: 100%;
+  padding: 0 24px;
+  font-size: 18px;
+  overflow-y: auto;
+
+  :global {
+    .user-edit-page-item {
+      margin-bottom: 8px;
+
+      .user-edit-page-title {
+        white-space: nowrap;
+        margin-right: 4px;
+        opacity: .6;
+      }
+
+      .user-edit-page-value {}
+
+      &-selected {
+        .ant-divider {
+          margin: 12px 0;
+        }
+
+        .ant-checkbox-wrapper {
+          margin-bottom: 8px;
+        }
+      }
+    }
+
+    .ant-form {
+      .ant-form-item-label>label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
+        display: none;
+      }
+
+    }
+  }
+}

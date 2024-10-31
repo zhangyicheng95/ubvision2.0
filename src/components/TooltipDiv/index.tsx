@@ -20,7 +20,7 @@ const TooltipDiv = (props: any) => {
     <div className={`${styles.toolTipDiv} ${className}`} style={({
       ...(onClick ? {
         cursor: 'pointer',
-        color: 'rgba(24, 144, 255, 1)'
+        color: '#e6f4ff'
       } : {}), ...style
     })} {...rest} onClick={onClick}>
       {children}

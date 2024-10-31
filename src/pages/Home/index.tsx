@@ -3,6 +3,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Button,
   message,
   Modal,
   Upload,
@@ -22,12 +23,13 @@ import moment from 'moment';
 import {
   ApartmentOutlined, BugFilled, FieldTimeOutlined, FolderAddOutlined, FolderOpenOutlined, FolderOutlined, LaptopOutlined, PlusOutlined, ProjectOutlined
 } from '@ant-design/icons';
-import { BASE_IP } from '@/services/api';
+
 import TooltipDiv from '@/components/TooltipDiv';
 import icon1 from './机械臂1.png';
 import icon2 from './机械臂2.png';
 import icon3 from './机械臂3.png';
 import icon4 from './机械臂4.png';
+import { dpmDomain } from '@/utils/fetch';
 
 const { confirm } = Modal;
 
@@ -51,7 +53,6 @@ const Home: React.FC<Props> = (props: any) => {
   ]);
 
   useEffect(() => {
-    ipcRenderer.ipcCommTest('get-dirname');
     getDataList().then((res: any) => {
       if (!!res && res.code === 'SUCCESS') {
         setDataList(res.data);
@@ -141,37 +142,37 @@ const Home: React.FC<Props> = (props: any) => {
           <div className="home-body-bottom-left">
             <h1 className='home-body-bottom-title'>快捷操作</h1>
             <div className="flex-box home-body-bottom-left-operation">
-              <div className="flex-box home-body-bottom-left-operation-item" onClick={() => {
-                ipcRenderer?.ipcCommTest(
-                  'alert-open-browser',
-                  JSON.stringify({
-                    type: 'main',
-                    data: { id: 'new' },
-                  })
-                );
-              }}>
-                <FolderAddOutlined className='home-body-bottom-icon' />
-                新建方案
-              </div>
+              <Button
+                type="text"
+                icon={<FolderAddOutlined className='home-body-bottom-icon' />}
+                onClick={() => {
+                  ipcRenderer?.ipcCommTest(
+                    'alert-open-browser',
+                    JSON.stringify({
+                      type: 'main',
+                      data: { id: 'new' },
+                    })
+                  );
+                }}>新建方案</Button>
               <Upload {...uploadProps}>
-                <div className="flex-box home-body-bottom-left-operation-item">
-                  <FolderOpenOutlined className='home-body-bottom-icon' />
-                  打开方案
-                </div>
+                <Button
+                  type="text"
+                  icon={<FolderOpenOutlined className='home-body-bottom-icon' />}
+                >打开方案</Button>
               </Upload>
-              <div className="flex-box home-body-bottom-left-operation-item" onClick={() => {
-                setCaseVisible(true);
-                // getCaseList().then((res: any) => {
+              <Button
+                type="text"
+                icon={<ProjectOutlined className='home-body-bottom-icon' />}
+                onClick={() => {
+                  setCaseVisible(true);
+                   // getCaseList().then((res: any) => {
                 //   if (!!res && res.code === 'SUCCESS') {
                 //     setCaseList(res.data);
                 //   } else {
                 //     message.error(res?.message || '接口异常');
                 //   }
                 // });
-              }}>
-                <ProjectOutlined className='home-body-bottom-icon' />
-                打开案例库
-              </div>
+                }}>打开案例库</Button>
             </div>
             <h1 className='home-body-bottom-title'>最近的方案</h1>
             <div className="home-body-bottom-left-list">
@@ -236,7 +237,7 @@ const Home: React.FC<Props> = (props: any) => {
                         {
                           !!icon ?
                             <img
-                              src={`${BASE_IP}file_browser${icon?.indexOf('/') === 0 ? '' : '/'}${icon}`}
+                              src={`${dpmDomain}file_browser${icon?.indexOf('/') === 0 ? '' : '/'}${icon}`}
                               alt="logo"
                             />
                             :
@@ -265,7 +266,7 @@ const Home: React.FC<Props> = (props: any) => {
             <div className="flex-box-column home-body-bottom-right-document-list">
               {
                 ['快速入门', '通用插件介绍', '了解基础知识', '进阶使用技巧']?.map((item: string, index: number) => {
-                  return <div
+                  return <a
                     className="flex-box home-body-bottom-right-document-list-item"
                     key={`home-body-bottom-right-document-list-item-${index}`}
                     onClick={() => {
@@ -273,7 +274,7 @@ const Home: React.FC<Props> = (props: any) => {
                     }}
                   >
                     {item}
-                  </div>
+                  </a>
                 })
               }
             </div>
@@ -286,7 +287,7 @@ const Home: React.FC<Props> = (props: any) => {
           <Modal
             title={`案例库`}
             width="calc(100vw - 48px)"
-            wrapClassName="monaco-editor-modal"
+            wrapClassName="full-screen-modal case-list-modal"
             centered
             open={caseVisible}
             maskClosable={false}

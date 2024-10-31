@@ -15,10 +15,10 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.withCredentials = false;
 // axios.defaults.crossDomain = true;
 axios.defaults.timeout = 30000;
-export const dpmDomain = localStorage.getItem('ipUrl') || 'localhost:8866';
+export const dpmDomain = `http://${localStorage.getItem('ipUrl') || 'localhost:8866'}`;
 // 实例化axios
 const axiosInstance = axios.create({
-  baseURL: `http://${dpmDomain}`,
+  baseURL: dpmDomain,
 });
 
 // 实例化mock axios

@@ -4,6 +4,34 @@
   height: 100%;
   user-select: none;
 
+  @media (prefers-color-scheme: dark) {
+    :global {
+      .home-body {
+        &-bottom {
+          &-right {
+            &-document-list {
+              &-item {}
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global {
+      .home-body {
+        &-bottom {
+          &-right {
+            &-document-list {
+              &-item {}
+            }
+          }
+        }
+      }
+    }
+  }
+
   :global {
     .home-body {
       width: 100%;
@@ -11,10 +39,11 @@
 
       &-top {
         height: 28px;
-        background-color: rgba(144, 144, 144, .4);
+        background-color: rgba(210, 210, 210, 0.4);
         font-size: 12px;
         padding: 2px 4px;
         margin-bottom: 24px;
+        user-select: text;
 
         &-icon {
           height: 20px;
@@ -24,7 +53,7 @@
 
         &-link {
           text-decoration: underline;
-          color: rgba(24, 144, 255, 1);
+          color: #177ddc;
           cursor: pointer;
         }
       }
@@ -62,18 +91,6 @@
 
             .ant-upload {
               color: inherit;
-            }
-
-            &-item {
-              gap: 6px;
-              font-size: 16px;
-              padding: 4px 8px;
-              border-radius: 2px;
-              cursor: pointer;
-            }
-
-            &-item:hover {
-              background-color: #177ddc;
             }
           }
 
@@ -149,7 +166,6 @@
             &-item {
               gap: 4px;
               cursor: pointer;
-              color: rgba(24, 144, 255, 1);
             }
 
             &-item:hover {
@@ -160,7 +176,7 @@
       }
     }
 
-    .monaco-editor-modal {
+    .case-list-modal {
       .ant-modal {
         .ant-modal-content {
           .ant-modal-body {
@@ -173,6 +189,7 @@
 
               .case-item-box {
                 width: 300px;
+                height: 220px;
                 padding: 8px;
                 float: left;
                 cursor: pointer;
