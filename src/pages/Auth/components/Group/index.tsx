@@ -7,15 +7,14 @@ import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
 import { deleteGroupById, getGroupList } from '@/services/auth';
 import moment from 'moment';
-import { userType } from '@/common/constants/globalConstants';
+import { userType } from '@/pages/Auth';
+
 
 interface Props {
-  stateData: any;
-  dispatch: any;
+ 
 }
 
 const GroupPage: React.FC<Props> = (props: any) => {
-  const { stateData, dispatch } = props;
   const navigate = useNavigate();
   const userAuthList = getUserAuthList();
   const userAuth = getUserAuth();
@@ -80,7 +79,7 @@ const GroupPage: React.FC<Props> = (props: any) => {
             {
               (userAuthList.includes('auth.groups.modify') && (auth !== 'superAdmin' || userAuth == 'superAdmin')) ?
                 <Fragment>
-                  <span className='nameStyle' onClick={() => {
+                  <span className='operation-style' onClick={() => {
                     navigate('modify', {
                       state: record.id
                     });
@@ -109,7 +108,7 @@ const GroupPage: React.FC<Props> = (props: any) => {
                     });
                   }}
                 >
-                  <span className='nameStyle'>删除</span>
+                  <span className='operation-style'>删除</span>
                 </Popconfirm>
                 : null
             }

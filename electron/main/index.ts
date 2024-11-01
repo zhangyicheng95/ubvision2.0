@@ -1,44 +1,127 @@
-import { app, BrowserWindow, shell, ipcMain, nativeTheme } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
+import fs from 'node:fs';
 import { update } from './update'
 import modules from '../DB/modules/index';
+import { exec } from 'child_process';
+import { networkInterfaces } from 'os';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+process.env.APP_ROOT = path.join(__dirname, '../..');
 
-const require = createRequire(import.meta.url)
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-// The built directory structure
-//
-// ├─┬ dist-electron
-// │ ├─┬ main
-// │ │ └── index.js    > Electron-Main
-// │ └─┬ preload
-// │   └── index.mjs   > Preload-Scripts
-// ├─┬ dist
-// │ └── index.html    > Electron-Renderer
-//
-process.env.APP_ROOT = path.join(__dirname, '../..')
-
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-export const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
+export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
+export const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
-  : RENDERER_DIST
+  : RENDERER_DIST;
 
 // Disable GPU Acceleration for Windows 7
-if (os.release().startsWith('6.1')) app.disableHardwareAcceleration()
+if (os.release().startsWith('6.1')) app.disableHardwareAcceleration();
 
 // Set application name for Windows 10+ notifications
-if (process.platform === 'win32') app.setAppUserModelId(app.getName())
+if (process.platform === 'win32') app.setAppUserModelId(app.getName());
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
+};
+/**
+ *  获取硬盘编码
+ **/
+function getDiskSerialNumber() {
+  if (process.platform === 'win32') {
+    // windows
+    return new Promise((resolve, reject) => {
+      exec('wmic diskdrive get serialnumber', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          return reject(error);
+        }
+        const lines = stdout.trim().split('\n');
+        const serialNumbers = lines.slice(1).map((line: string) => line.trim());
+        resolve(serialNumbers);
+      });
+    });
+  } else {
+    // macOS
+    return new Promise((resolve, reject) => {
+      exec('ioreg -rd1 -c AppleAHCIDevice', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          return reject(error);
+        }
+        const regex = /"Serial Number" = "([^"]+)"/g;
+        const serialNumbers = [];
+        let match;
+        while (match = regex.exec(stdout)) {
+          serialNumbers.push(match[1]);
+        }
+        resolve(serialNumbers);
+      });
+    });
+  }
+};
+/**
+ * 获取主板序列号
+ */
+function getMotherboardSerialNumber() {
+  if (process.platform === 'win32') {
+    // windows
+    return new Promise((resolve, reject) => {
+      exec('wmic baseboard get product,serialnumber', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          return reject(error);
+        }
+        const lines = stdout.trim().split('\n');
+        const [_, product, serialNumber] = lines[1].split(/\s{2,}/);
+        resolve({ product, serialNumber });
+      });
+    });
+  } else {
+    // macOS
+    return new Promise((resolve, reject) => {
+      exec('ioreg -rd1 -c IOPlatformExpertDevice', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+          return reject(error);
+        }
+        const serialNumber = stdout.match(/"IOPlatformSerialNumber" = "([^"]+)"/)[1];
+        resolve(serialNumber);
+      });
+    });
+  }
+};
+/**
+ * 获取MAC地址
+ */
+function getMACAddresses() {
+  const nets: any = networkInterfaces();
+  const results = [];
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // Skip over non IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (net.family === 'IPv4' && !net.internal) {
+        results.push(net.mac);
+      }
+    }
+  }
+  return results;
 }
+ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
+  // 同步获取机器ID
+  getDiskSerialNumber().then(serialNumbers => {
+    getMotherboardSerialNumber().then(serialNumber => {
+      const macAddresses = getMACAddresses();
+      event.sender.send('hostname-read-reply', `${serialNumbers}.${serialNumber}.${macAddresses}`);
+    }).catch(error => {
+      console.error(error);
+    });
+  }).catch(error => {
+    console.error(error);
+  });
+
+});
 
 let win: BrowserWindow | null = null;
 let myWindow: any = null,
@@ -135,7 +218,16 @@ const createWindow = async (arg?: any) => {
   // Auto update
   update(mainWindow)
 }
-
+// 崩溃报告
+const homeDir = os.homedir();
+console.log(`homeDirhomeDir: ${homeDir}`);
+const logPath = path.join(homeDir, 'app.log');
+const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+if (app.isPackaged) {
+  console.log = (message) => {
+    logStream.write(`${new Date()} ${message}\n`);
+  };
+}
 app.whenReady().then(() => {
   // 添加到启动项目
   // app.setLoginItemSettings({

@@ -298,7 +298,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
 export default SoftwareRouter;
 
 const SoftwareItem = (props: any) => {
-  const { ipcRenderer }: any = window?.Electron || {};
+  const { ipcRenderer }: any =window || {};
   const {
     item, setDataList, getList, setSoftwareVisible, setSoftwareModifyData,
     setSoftwareType, setSoftwareFile, form,

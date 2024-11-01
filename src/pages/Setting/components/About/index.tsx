@@ -1,27 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Badge, Form, Input, message, Modal } from 'antd';
+import { Badge } from 'antd';
 import icon from '@/layouts/BasicLayout/assets/icon.png';
 import styles from './index.module.less';
 import {
-  getRandomSalt,
-  copyUrlToClipBoard,
-  cryptoDecrypt,
   cryptoEncryption,
-  guid,
   timeToString,
 } from '@/utils/utils';
 import ProjectApi from '@/api/project';
 import * as _ from 'lodash-es';
 
 interface Props {
-  stateData: any;
-  dispatch: any;
+  setEmpowerVisible: any;
 }
 
 const AboutPage: React.FC<Props> = (props: any) => {
   const { setEmpowerVisible } = props;
-  const { ipcRenderer }: any = window?.Electron || {};
-  const [form] = Form.useForm();
+  const { ipcRenderer }: any = window || {};
   const [empowerData, setEmpowerData] = useState<any>({});
 
   useEffect(() => {
@@ -62,10 +56,6 @@ const AboutPage: React.FC<Props> = (props: any) => {
           <div
             onClick={() => {
               setEmpowerVisible(true);
-              const jiami = cryptoEncryption(
-                'HOSTNAME=zhangyiengdeAir.lan&DAY=30&TODAY=1715915771453'
-              );
-              console.log(jiami);
             }}
           >
             更新授权码
@@ -75,12 +65,12 @@ const AboutPage: React.FC<Props> = (props: any) => {
               剩余
               {timeToString(
                 (empowerData?.time || new Date().getTime()) -
-                  new Date().getTime()
+                new Date().getTime()
               )?.d || 0}
               天
               {timeToString(
                 (empowerData?.time || new Date().getTime()) -
-                  new Date().getTime()
+                new Date().getTime()
               )?.h || 0}
               小时
             </span>

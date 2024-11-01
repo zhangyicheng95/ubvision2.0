@@ -6,18 +6,15 @@ import { getUserAuth, getUserAuthList, getUserData, guid } from '@/utils/utils';
 import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
 import { deleteUserById, getUserList } from '@/services/auth';
-import { userType } from '@/common/constants/globalConstants';
-import { filter } from 'jszip';
+import { userType } from '@/pages/Auth';
 
 interface Props {
-  stateData: any;
-  dispatch: any;
+
 }
 
 const antIcon = <LoadingOutlined style={{ fontSize: 36 }} spin />;
 
 const UserPage: React.FC<Props> = (props: any) => {
-  const { stateData, dispatch } = props;
   const navigate = useNavigate();
   const userAuthList = getUserAuthList();
   const userAuth = getUserAuth();
@@ -91,7 +88,7 @@ const UserPage: React.FC<Props> = (props: any) => {
             {
               (userAuthList.includes('auth.users.modify') && (auth !== 'superAdmin' || userAuth == 'superAdmin')) ?
                 <Fragment>
-                  <span className='nameStyle' onClick={() => {
+                  <span className='operation-style' onClick={() => {
                     navigate(pathname?.indexOf('/user') > -1 ? 'modify' : 'user/modify', {
                       state: record.id
                     });
@@ -120,7 +117,7 @@ const UserPage: React.FC<Props> = (props: any) => {
                     });
                   }}
                 >
-                  <span className='nameStyle'>删除</span>
+                  <span className='operation-style'>删除</span>
                 </Popconfirm>
                 : null
             }

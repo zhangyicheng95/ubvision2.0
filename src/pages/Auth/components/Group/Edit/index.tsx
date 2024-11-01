@@ -3,7 +3,6 @@ import { AutoComplete, Button, Checkbox, Divider, Empty, Form, Input, message, P
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './index.module.less';
 import { addGroup, getGroupById, updateGroupById } from '@/services/auth';
-import { userType } from '@/common/constants/globalConstants';
 import { authorIds } from '@/auth/auth';
 import { authorToChinese } from '@/auth/common'
 import { StoreEnum } from '@/pages/Auth/store/typing';
@@ -11,12 +10,11 @@ import { getUserData } from '@/utils/utils';
 import * as _ from 'lodash-es';
 
 interface Props {
-  stateData: any;
   dispatch: any;
 }
 
 const GroupEditPage: React.FC<Props> = (props: any) => {
-  const { stateData, dispatch } = props;
+  const { dispatch } = props;
   const location: any = useLocation();
   const { state } = location;
   const navigate = useNavigate();

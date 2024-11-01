@@ -19,7 +19,7 @@ const AuthRouter = () => {
     } else if (userAuthList.includes('auth.groups')) {
       location.href = location.href?.split('#/')?.[0] + '#/auth/group';
     }
-    
+
     return () => {
       // 销毁组件时，清空数据
       dispatch({
@@ -43,13 +43,20 @@ const AuthRouter = () => {
       getGroupList={getGroupList}
     >
       <Routes>
-        {/* <Route path="/" element={<UserPage stateData={stateData} dispatch={dispatch} />} />
-        <Route path="/user" element={<UserPage stateData={stateData} dispatch={dispatch} />} />
-        <Route path="/user/modify" element={<UserEditPage stateData={stateData} dispatch={dispatch} />} />
-        <Route path="/group" element={<GroupPage stateData={stateData} dispatch={dispatch} />} />
-        <Route path="/group/modify" element={<GroupEditPage stateData={stateData} dispatch={dispatch} />} /> */}
+        <Route path="/" element={<UserPage />} />
+        <Route path="/user" element={<UserPage />} />
+        <Route path="/user/modify" element={<UserEditPage dispatch={dispatch} />} />
+        <Route path="/group" element={<GroupPage />} />
+        <Route path="/group/modify" element={<GroupEditPage dispatch={dispatch} />} />
       </Routes>
     </AuthorLayout>
   );
 };
 export default AuthRouter;
+
+// 用户权限类型
+export const userType: any = {
+  user: '普通用户',
+  admin: '管理员',
+  superAdmin: '超级管理员',
+};

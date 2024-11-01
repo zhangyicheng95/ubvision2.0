@@ -3,18 +3,17 @@ import { Button, Form, Input, message, Select, Spin } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './index.module.less';
 import { addUser, getGroupList, getUserById, updateUserById } from '@/services/auth';
-import { userType } from '@/common/constants/globalConstants';
 import { StoreEnum } from '@/pages/Auth/store/typing';
 import { cryptoEncryption, getUserData } from '@/utils/utils';
 import * as _ from 'lodash';
+import { userType } from '@/pages/Auth';
 
 interface Props {
-  stateData: any;
   dispatch: any;
 }
 
 const UserEditPage: React.FC<Props> = (props: any) => {
-  const { stateData, dispatch } = props;
+  const { dispatch } = props;
   const location: any = useLocation();
   const { state } = location;
   const navigate = useNavigate();
@@ -191,4 +190,3 @@ const UserEditPage: React.FC<Props> = (props: any) => {
 
 
 export default UserEditPage;
-

@@ -1,3 +1,17 @@
+@primaryColor: #177ddc;
+
+@media (prefers-color-scheme: light) {
+    .menu-selected-self {
+        background-color: #e6f4ff;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .menu-selected-self {
+        background-color: @primaryColor;
+    }
+}
+
 .primaryColor {
     color: #e6f4ff;
 }
@@ -86,6 +100,13 @@
     }
 }
 
-.menu-selected-self {
-    background-color: #e6f4ff;
+.operation-style {
+    color: @primaryColor;
+    cursor: pointer;
+}
+
+.operation-line {
+    height: 100%;
+    color: #e9e9e9;
+    margin: 0 5px;
 }

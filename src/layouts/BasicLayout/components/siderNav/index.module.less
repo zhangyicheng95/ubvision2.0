@@ -5,59 +5,6 @@
   overflow: hidden;
   background-color: rgb(233, 233, 233);
 
-  @media (prefers-color-scheme: dark) {
-    :global {
-      .ant-layout-sider-children {
-        background-color: rgba(0, 0, 0, 0.85);
-
-        .setting-icon-box {
-          &:hover {
-            background-color: #0073ca;
-          }
-        }
-
-        .ant-menu {
-
-          .ant-menu-item {
-            &:hover {
-              background-color: #0073ca;
-            }
-          }
-
-          .ant-menu-item-selected {
-            background-color: #005597;
-          }
-        }
-
-        .menu-selected-self {
-          background-color: #005597;
-        }
-      }
-    }
-  }
-
-  @media (prefers-color-scheme: light) {
-    :global {
-      .ant-layout-sider-children {
-
-        .setting-icon-box {
-          &:hover {
-            background-color: #e6f4ff;
-          }
-        }
-
-        .ant-menu {
-
-          .ant-menu-item {
-            &:hover {
-              background-color: #e6f4ff;
-            }
-          }
-        }
-      }
-    }
-  }
-
   :global {
     .ant-layout-sider-children {
       display: flex;
@@ -128,6 +75,7 @@
       .setting-icon-box {
         width: 60px;
         height: 60px;
+        min-height: 60px;
         border-radius: 4px;
         margin: 2px 4px;
         padding-top: 2px;
@@ -149,8 +97,6 @@
             margin-top: 3px;
           }
         }
-
-
 
         img {
           height: 30px;

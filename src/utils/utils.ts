@@ -104,7 +104,17 @@ export function parseParamsToUrl(params: any) {
     }
     return queryParam;
 }
-
+// url的参数转换成对象
+export function GetQueryObj(url: string) {
+    let arr = url?.split('?') || [];
+    let params = (!!arr?.[1] ? arr?.[1] : arr?.[0])?.split('&') || [];
+    let obj: any = {};
+    for (let i = 0; i < params.length; i++) {
+        let param = params[i].split('=');
+        obj[param[0]] = param[1];
+    }
+    return obj;
+}
 // 后端接口返回数据格式化
 export function formatResponse(res: any) {
     if (res.data && _.isObject(res.data)) {

@@ -1,12 +1,11 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
-import { Upload, Button, message, Modal } from 'antd';
-import { CloudDownloadOutlined, PlusOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router';
 import SiderNav from './siderNav';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import styles from './index.module.less';
 import * as _ from 'lodash-es';
-import { addPlugin, deletePlugin } from '@/services/flowPlugin';
 import { getUserAuthList } from '@/utils/utils';
 
 interface Props {
@@ -16,13 +15,10 @@ interface Props {
   getGroupList: any;
   children: any;
 }
-const { confirm } = Modal;
 
 const AuthorLayout: React.FC<Props> = (props: any) => {
-  const { children, stateData, dispatch, getUserList, getGroupList } = props;
-  const { ipcRenderer }: any = window?.Electron || {};
+  const { children, stateData, dispatch } = props;
   const userAuthList = getUserAuthList();
-  const targetPath = JSON.parse(localStorage.getItem('general_setting') || '{}')?.folder_path;
   const navigate = useNavigate();
   const location = useLocation();
   const { pathname = '/auth/user' } = location;
@@ -37,7 +33,7 @@ const AuthorLayout: React.FC<Props> = (props: any) => {
   return (
     <div className={styles.authPage}>
       <PrimaryTitle
-        title={pathname.indexOf('user') > -1 ? '用户管理  Users' : '分组管理  Groups'}
+        title={pathname.indexOf('group') > -1 ? '分组管理  Groups' : '用户管理  Users'}
       // onSearch={['/auth', '/auth/user'].includes(pathname) ? onSearch : null}
       >
         {

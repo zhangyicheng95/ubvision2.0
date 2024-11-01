@@ -25,7 +25,7 @@ export type ThrottleOptions = {
 }
 
 export const createThrottle = (fn: any, wait: number, options: ThrottleOptions, timeout: any) => {
-  const _throttle = function(...args: any) {
+  const _throttle = function (...args: any) {
     const { type, notThrottle, leading } = options;
     notThrottle && isFunction(notThrottle) && notThrottle(...args);
     // @ts-ignore
@@ -73,16 +73,16 @@ export default throttle;
 
 
 type Fn = (...props: any) => any;
-type Fns = {[key:string]: Fn};
+type Fns = { [key: string]: Fn };
 
 export const useThrottleAndMerge = (fn: Fn | Fns, wait: number = 200, options: ThrottleOptions = {}, dep: any[] = []) => {
   const { current } = useRef<any>({ fn, timer: 0 });
-  useEffect(function() {
+  useEffect(function () {
     current.data = [];
     current.timmer = null;
-    current.fn = ()=> {
+    current.fn = () => {
       clearTimeout(current.timmer);
-      current.timmer = setTimeout(()=> {
+      current.timmer = setTimeout(() => {
         if (!current.timer) {
           current.timer = 0;
         }
@@ -93,9 +93,9 @@ export const useThrottleAndMerge = (fn: Fn | Fns, wait: number = 200, options: T
           fn([...current.data]);
         } else {
           for (const cFn in fn) {
-            const currentData = current.data.filter((dataItem: any)=> {
+            const currentData = current.data.filter((dataItem: any) => {
               return dataItem[cFn];
-            })?.map?.((dataItem: any)=> {
+            })?.map?.((dataItem: any) => {
               return dataItem[cFn];
             });
             if (currentData?.length) {
@@ -108,7 +108,7 @@ export const useThrottleAndMerge = (fn: Fn | Fns, wait: number = 200, options: T
     };
   }, []);
 
-  return useCallback(function f(...args) {
+  return useCallback(function f(...args: any) {
     const currentThrottle = createThrottle(current.fn, wait, throttleOptions(Object.assign({
       leading: true,
       type: 2,
@@ -119,7 +119,7 @@ export const useThrottleAndMerge = (fn: Fn | Fns, wait: number = 200, options: T
           options.notThrottle(data);
         }
       },
-      clearTimeout: (now: any)=> {
+      clearTimeout: (now: any) => {
         current.timer = now;
       }
     })), current.timer);
@@ -133,14 +133,14 @@ export const useThrottleAndMerge = (fn: Fn | Fns, wait: number = 200, options: T
  * @param fns
  * @param wait
  */
-export const useThrottleAndMergeFns = (fns: Fns, wait: number = 200)=> {
+export const useThrottleAndMergeFns = (fns: Fns, wait: number = 200) => {
   const onClick = useThrottleAndMerge(fns, wait);
   const [currentFns, setFns] = useState<any>({});
-  useLayoutEffect(()=> {
-    const c:Fns = {};
+  useLayoutEffect(() => {
+    const c: Fns = {};
     for (const fKey in fns) {
-      c[fKey] = (data)=> {
-        onClick({[fKey]: data});
+      c[fKey] = (data) => {
+        onClick({ [fKey]: data });
       }
     }
     setFns(c);

@@ -1,7 +1,8 @@
 import { IpcRequestEnum } from '@/common/ipc/ipc-request-enum';
 import { ChooseFilesResponseBody, ChooseFolderResponseBody, FileFilter } from '@/common/ipc/types';
 import ipcClient from '@/api/ipc/ipc-client';
-const { shell } = window?.Electron || {};
+// @ts-ignore
+const { shell } = window || {};
 
 /**
  * 调用本地文件浏览器，选择一个folder

@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router';
 
 interface Props {
   activeTab: string;
-  stateData: any;
-  dispatch: any;
 }
 
 const SiderNav: React.FC<Props> = (props: any) => {
-  const { activeTab, stateData, dispatch } = props;
+  const { activeTab } = props;
   const navigate = useNavigate();
 
   return (
@@ -16,9 +14,7 @@ const SiderNav: React.FC<Props> = (props: any) => {
       {tabList?.map?.((tab) => {
         return (
           <div
-            className={`tree-item ${
-              activeTab === tab.key ? 'menu-selected-self' : ''
-            }`}
+            className={`tree-item ${activeTab === tab.key ? 'menu-selected-self' : ''}`}
             key={tab.key}
             onClick={() => {
               if (tab.key === 'logout') {
@@ -49,11 +45,7 @@ const tabList = [
     key: 'about',
   },
   // {
-  //   title: '个人中心',
-  //   key: 'user',
+  //   title: '退出登录',
+  //   key: 'logout',
   // },
-  {
-    title: '退出登录',
-    key: 'logout',
-  },
 ];

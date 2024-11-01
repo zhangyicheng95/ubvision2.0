@@ -86,7 +86,10 @@ const CHeader: React.FC = (props: any) => {
   };
   // 关闭窗口
   const close = () => {
-    clearInterval();
+    // @ts-ignore
+    (window?.getAllIntervals?.() || []).forEach((i: number) => {
+      !!i && clearInterval(i);
+    });
     window?.ipcRenderer?.invoke(
       `close-${number}`,
       location.href?.indexOf('#/flow') > -1 ||

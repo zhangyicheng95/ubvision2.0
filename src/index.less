@@ -83,6 +83,22 @@ code {
   :root {
     color: #213547;
     background-color: #ffffff;
+
+    .ant-layout-sider-children {
+      .setting-icon-box {
+        &:hover {
+          background-color: #e6f4ff;
+        }
+      }
+
+      .ant-menu {
+        .ant-menu-item {
+          &:hover {
+            background-color: #e6f4ff;
+          }
+        }
+      }
+    }
   }
 
   a:hover {
@@ -98,8 +114,38 @@ code {
   }
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    .ant-layout-sider-children {
+      background-color: rgba(0, 0, 0, 0.85);
+
+      .setting-icon-box {
+        &:hover {
+          background-color: #0073ca;
+        }
+      }
+
+      .ant-menu {
+        .ant-menu-item {
+          &:hover {
+            background-color: #0073ca;
+          }
+        }
+
+        .ant-menu-item-selected {
+          background-color: #005597;
+        }
+      }
+
+      .menu-selected-self {
+        background-color: #005597;
+      }
+    }
+  }
+}
+
 .ant-layout {
-  height: 100%;
+  height: calc(100% - 31px);
   user-select: none;
 }
 
@@ -153,4 +199,12 @@ code {
 
 .ant-dropdown-menu {
   user-select: none;
+}
+
+.ant-modal {
+  user-select: none;
+}
+
+.ant-input-disabled {
+  background-color: inherit !important;
 }
