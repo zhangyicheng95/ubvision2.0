@@ -15,7 +15,7 @@ const authWrapper = (WrappedComponent: any) => {
       : !!location.href
         ? new URLSearchParams(location.href)
         : {};
-    const number = params.get('number');
+    const number = params.get('number') || 1;
     const theme = localStorage.getItem('theme-mode');
     if (!_.isNull(number)) {
       window?.ipcRenderer?.invoke?.(`theme-mode-${number}`, theme || 'dark');

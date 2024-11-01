@@ -3,6 +3,7 @@ import { Layout, Menu } from 'antd';
 import { useLocation } from 'react-router';
 import SiderNav from '@/layouts/BasicLayout/components/siderNav';
 import CHeader from '@/layouts/BasicLayout/components/header';
+import styles from './index.module.less';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -25,7 +26,7 @@ const BasicLayout = (props: any) => {
   }, [pathname]);
 
   return (
-    <Fragment>
+    <div className={styles.basicLayoutWrapper}>
       <CHeader />
       <Layout>
         {ifShowSiderNav ? <SiderNav /> : null}
@@ -33,7 +34,7 @@ const BasicLayout = (props: any) => {
           <Content className="basic-layout-content">{children}</Content>
         </Layout>
       </Layout>
-    </Fragment>
+    </div>
   );
 };
 

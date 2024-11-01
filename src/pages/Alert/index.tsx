@@ -15,13 +15,11 @@ import {
   AreaChartOutlined,
   InstagramOutlined,
   CopyOutlined,
-  InsertRowAboveOutlined,
-  InsertRowBelowOutlined,
+  BorderTopOutlined,
+  BorderBottomOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import * as _ from 'lodash-es';
-// import { init, reducer, State } from '@/pages/FlowEditor/store';
-// import { StoreEnum } from '@/pages/FlowEditor/store/typing';
 import TooltipDiv from '@/components/TooltipDiv';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import {
@@ -39,7 +37,6 @@ const userAuthList = getUserAuthList();
 interface Props { }
 
 const AlertRouter: React.FC<Props> = (props: any) => {
-  // const [stateData, dispatch] = useReducer(reducer, State, init);
   const timerRef = useRef<any>();
   const [dataList, setDataList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -512,115 +509,103 @@ const AlertItem = (props: any) => {
     const url = `http://${ip}:5001/index.html#/home?ipUrl=${ip}:8866&id=${id}&timestamp=${+new Date()}`;
     copyUrlToClipBoard(url);
   };
+  const settingList: any = [
+    userAuthList.includes('monitor.addDesk') ? {
+      key: `add-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        addToDesk(item);
+      }}>
+        <AppstoreAddOutlined className="contextMenu-icon" />
+        创建桌面快捷方式
+        <span className="contextMenu-text">Add To Desk</span>
+      </div>
+    } : null,
+    userAuthList.includes('monitor.addSelfStart') ? {
+      key: `modify-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        if (ifOnStartUp) {
+          trashStartUp(item);
+        } else {
+          addToStartUp(item);
+        }
+      }}>
+        <PoweroffOutlined className="contextMenu-icon" />
+        {`${ifOnStartUp ? '取消' : '添加'}开机自启动`}
+        <span className="contextMenu-text">Self Starting</span>
+      </div>
+    } : null,
+    userAuthList.includes('monitor.delete') ? {
+      key: `delete-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        onDelete(item);
+      }}>
+        <DeleteOutlined className="contextMenu-icon" />
+        删除
+        <span className="contextMenu-text">Delete</span>
+      </div>
+    } : null,
+    { type: 'divider' },
+    ...userAuthList.includes('monitor.headerOperation') ? [
+      {
+        key: `show-logo-${id}`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          showCCDLogo(item);
+        }}>
+          <AreaChartOutlined className="contextMenu-icon" />
+          {`${contentData?.showLogo ? '隐藏' : '展示'}logo`}
+          <span className="contextMenu-text">CCD Logo</span>
+        </div>
+      },
+      {
+        key: `show-header-${id}`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          showCCDHeader(item);
+        }}>
+          <BorderTopOutlined className="contextMenu-icon" />
+          {`${!!contentData?.showHeader ? '隐藏' : '展示'}头部`}
+          <span className="contextMenu-text">CCD Header</span>
+        </div>
+      },
+      {
+        key: `show-footer-${id}`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          showCCDLogo(item);
+        }}>
+          <BorderBottomOutlined className="contextMenu-icon" />
+          {`${!!contentData?.showFooter ? '隐藏' : '展示'}底部`}
+          <span className="contextMenu-text">CCD Footer</span>
+        </div>
+      },
+      { type: 'divider' }
+    ] : [],
+    userAuthList.includes('monitor.changeLogo') ? {
+      key: `changeLogo-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        allowChangeLogo(item);
+      }}>
+        <InstagramOutlined className="contextMenu-icon" />
+        {`${contentData?.changeLogo ? '禁止' : '允许'}更换logo`}
+        <span className="contextMenu-text">Change Logo</span>
+      </div>
+    } : null,
+    userAuthList.includes('monitor.copyUrl') ? {
+      key: `copyUrl-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        copyUrlLink(item);
+      }}>
+        <CopyOutlined className="contextMenu-icon" />
+        复制访问链接
+        <span className="contextMenu-text">Copy URL</span>
+      </div>
+    } : null,
+  ]?.filter(Boolean);
 
   return (
     <Dropdown
-      // @ts-ignore
-      getPopupContainer={(triggerNode) => {
-        return triggerNode.parentNode || document.body;
+      getPopupContainer={(triggerNode: any) => {
+        return triggerNode?.parentNode || document.body;
       }}
-      overlay={
-        <Menu className="dropdown-box">
-          {userAuthList.includes('monitor.addDesk') ? (
-            <Menu.Item
-              key={`add-${id}`}
-              onClick={() => {
-                addToDesk(item);
-              }}
-            >
-              <AppstoreAddOutlined className="contextMenu-icon" />
-              创建桌面快捷方式
-              <span className="contextMenu-text">Add To Desk</span>
-            </Menu.Item>
-          ) : null}
-          {userAuthList.includes('monitor.addSelfStart') ? (
-            <Menu.Item
-              key={`modify-${id}`}
-              onClick={() => {
-                if (ifOnStartUp) {
-                  trashStartUp(item);
-                } else {
-                  addToStartUp(item);
-                }
-              }}
-            >
-              <PoweroffOutlined className="contextMenu-icon" />
-              {`${ifOnStartUp ? '取消' : '添加'}开机自启动`}
-              <span className="contextMenu-text">Self Starting</span>
-            </Menu.Item>
-          ) : null}
-          {userAuthList.includes('monitor.delete') ? (
-            <Menu.Item
-              key={`delete-${id}`}
-              onClick={() => {
-                onDelete(item);
-              }}
-            >
-              <DeleteOutlined className="contextMenu-icon" />
-              删除
-              <span className="contextMenu-text">Delete</span>
-            </Menu.Item>
-          ) : null}
-          {userAuthList.includes('monitor.headerOperation') ? (
-            <Fragment>
-              <Menu.Item
-                key={`show-logo-${id}`}
-                onClick={() => {
-                  showCCDLogo(item);
-                }}
-              >
-                <AreaChartOutlined className="contextMenu-icon" />
-                {`${contentData?.showLogo ? '隐藏' : '展示'}logo`}
-                <span className="contextMenu-text">CCD Logo</span>
-              </Menu.Item>
-              <Menu.Item
-                key={`show-header-${id}`}
-                onClick={() => {
-                  showCCDHeader(item);
-                }}
-              >
-                <InsertRowAboveOutlined className="contextMenu-icon" />
-                {`${!!contentData?.showHeader ? '隐藏' : '展示'}头部`}
-                <span className="contextMenu-text">CCD Header</span>
-              </Menu.Item>
-              <Menu.Item
-                key={`show-footer-${id}`}
-                onClick={() => {
-                  showCCDFooter(item);
-                }}
-              >
-                <InsertRowBelowOutlined className="contextMenu-icon" />
-                {`${!!contentData?.showFooter ? '隐藏' : '展示'}底部`}
-                <span className="contextMenu-text">CCD Footer</span>
-              </Menu.Item>
-            </Fragment>
-          ) : null}
-          {userAuthList.includes('monitor.changeLogo') ? (
-            <Menu.Item
-              key={`changeLogo-${id}`}
-              onClick={() => {
-                allowChangeLogo(item);
-              }}
-            >
-              <InstagramOutlined className="contextMenu-icon" />
-              {`${contentData?.changeLogo ? '禁止' : '允许'}更换logo`}
-              <span className="contextMenu-text">Change Logo</span>
-            </Menu.Item>
-          ) : null}
-          {userAuthList.includes('monitor.copyUrl') ? (
-            <Menu.Item
-              key={`copyUrl-${id}`}
-              onClick={() => {
-                copyUrlLink(item);
-              }}
-            >
-              <CopyOutlined className="contextMenu-icon" />
-              复制访问链接
-              <span className="contextMenu-text">Copy URL</span>
-            </Menu.Item>
-          ) : null}
-        </Menu>
-      }
+      menu={{ items: settingList }}
       trigger={['contextMenu']}
     >
       <div

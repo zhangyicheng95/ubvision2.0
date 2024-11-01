@@ -298,7 +298,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
 export default SoftwareRouter;
 
 const SoftwareItem = (props: any) => {
-  const { ipcRenderer }: any =window || {};
+  const { ipcRenderer }: any = window || {};
   const {
     item, setDataList, getList, setSoftwareVisible, setSoftwareModifyData,
     setSoftwareType, setSoftwareFile, form,
@@ -339,45 +339,35 @@ const SoftwareItem = (props: any) => {
       return prev;
     });
   };
+  const settingList: any = [
+    userAuthList.includes('software.modify') ? {
+      key: `modify-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        onModify();
+      }}>
+        <FormOutlined className="contextMenu-icon" />
+        编辑
+        <span className="contextMenu-text">Modify</span>
+      </div>
+    } : null,
+    userAuthList.includes('software.delete') ? {
+      key: `delete-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        onDelete();
+      }}>
+        <DeleteOutlined className="contextMenu-icon" />
+        删除
+        <span className="contextMenu-text">Delete</span>
+      </div>
+    } : null
+  ]?.filter(Boolean);
 
   return (
     <Dropdown
-      // @ts-ignore
-      getPopupContainer={(triggerNode) => {
+      getPopupContainer={(triggerNode: any) => {
         return triggerNode.parentNode || document.body;
       }}
-      overlay={
-        <Menu className="dropdown-box">
-          {
-            userAuthList.includes('software.modify') ?
-              <Menu.Item
-                key={`modify-${value}`}
-                onClick={() => {
-                  onModify();
-                }}
-              >
-                <FormOutlined className="contextMenu-icon" />
-                编辑
-                <span className="contextMenu-text">Modify</span>
-              </Menu.Item>
-              : null
-          }
-          {
-            userAuthList.includes('software.delete') ?
-              <Menu.Item
-                key={`delete-${value}`}
-                onClick={() => {
-                  onDelete();
-                }}
-              >
-                <DeleteOutlined className="contextMenu-icon" />
-                删除
-                <span className="contextMenu-text">Delete</span>
-              </Menu.Item>
-              : null
-          }
-        </Menu>
-      }
+      menu={{ items: settingList }}
       trigger={['contextMenu']}
     >
       <div className={`flex-box item-box box-animation`}>

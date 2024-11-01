@@ -121,11 +121,7 @@ const CHeader: React.FC = (props: any) => {
         fullScreen();
       }}>全屏/退出全屏</div>
     },
-    {
-      type: <div onClick={() => {
-        window?.ipcRenderer?.invoke(`openDevTools-${number}`);
-      }}>divider</div>
-    },
+    { type: 'divider' },
     {
       key: 'light',
       label: <div onClick={() => {
@@ -160,29 +156,6 @@ const CHeader: React.FC = (props: any) => {
       </div>
       <div className="flex-box electron-drag"></div>
       <div className="flex-box operation-box">
-        {
-          // location.href?.indexOf('#/flow') > -1 ||
-          //   location.href?.indexOf('#/login') > -1 ? null : (
-          //   <Dropdown overlay={userSettingList} className="user-info-box">
-          //     <div className="user-info-box">
-          //       <div className="flex-box user-info" ref={userInfoRef}>
-          //         <Avatar
-          //           size="small"
-          //           className={'avatar'}
-          //           src={userData?.img}
-          //           alt="avatar"
-          //         />
-          //         <span className="user-info-box-name">
-          //           {userData?.nickName || userData?.userName}
-          //         </span>
-          //       </div>
-          //       {/* <div className="user-check" ref={userCheckRef}>
-          //     切换账号
-          //   </div> */}
-          //     </div>
-          //   </Dropdown>
-          // )
-        }
         <Button
           icon={<MinusOutlined style={{
             color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'

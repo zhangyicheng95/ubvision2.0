@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -122,6 +122,109 @@ ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
   });
 
 });
+// 读取快速启动列表
+ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg: string) => {
+  console.log(`alert-read-startUp: ${arg}`);
+  // 处理传递的参数
+  let res: any = arg;
+  try {
+    res = JSON.parse(arg);
+  } catch (err) { }
+  // 快捷方式放在哪，名称
+  const shortcutPath = path.join(
+    app.getPath('appData'),
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'
+    }`
+  );
+  if (process.platform === 'win32') {
+    const detail = shell.readShortcutLink(shortcutPath);
+    event.sender.send('alert-read-startUp-reply', {
+      success: !!detail?.target || !!detail?.cwd,
+      id: res.id,
+    });
+  }
+});
+// 从快速启动列表删除项目
+ipcMain.on('alert-delete-startUp', async (event: IpcMainEvent, arg: string) => {
+  console.log(`alert-delete-startUp: ${arg}`);
+  // 处理传递的参数
+  let res: any = arg;
+  try {
+    res = JSON.parse(arg);
+  } catch (err) { }
+  // 快捷方式放在哪，名称
+  const shortcutPath = path.join(
+    app.getPath('appData'),
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'
+    }`
+  );
+  if (process.platform === 'win32') {
+    shell.trashItem(shortcutPath);
+    // 创建完成后，返回结果
+    event.sender.send('alert-read-startUp-reply', {
+      success: false,
+      id: res.id,
+    });
+  }
+});
+// 打开第三方软件窗口
+ipcMain.on(`startup-software`, (event: any, arg: any) => {
+  console.log(`startup-software: ${arg}`);
+  // 调用第三方客户端软件，例如记事本
+  shell.openPath(arg).then(response => {
+    if (response) {
+      console.error(`Failed to open ${arg}: ${response}`);
+    } else {
+      console.log(`${arg} opened successfully`);
+    }
+  }).catch(err => {
+    console.error(`catch failed to open ${arg}: ${err}`);
+  });
+});
+// 执行cmd命令
+ipcMain.on(`shell-cmd`, (event: any, arg: any) => {
+  console.log(`shell-cmd: ${JSON.stringify(arg)}`);
+  exec(arg, (error, stdout, stderr) => {
+    if (error) {
+      console.log(`执行命令时出错: ${error}`);
+      return;
+    }
+    console.log(`命令输出: ${stdout}`);
+  });
+});
+// 弹出系统通知
+ipcMain.on(`system-notification`, (event: any, arg: any) => {
+  console.log(`args: ${arg}`);
+  const res = JSON.parse(arg);
+  // 检查是否支持，Notification.isSupported()
+  if (Notification.isSupported()) {
+    console.log(`支持 Notification`);
+    const notification = new Notification({
+      title: res?.title,
+      body: res?.body,
+      silent: true, // 系统默认的通知声音
+    });
+    notification.on('failed', (event, err) => {
+      console.log(`event:${JSON.stringify(event)}\nerr:${err}`);
+    });
+    notification.show();
+  } else {
+    console.log(`不支持 Notification`);
+  }
+});
+// 读取文件内容
+ipcMain.on('read-file-content', (event: any, arg: any) => {
+  console.log(`read-file-content: ${arg}`);
+  const path = JSON.parse(arg);
+  fs.readFile(path, { encoding: 'utf-8' }, (err, res) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log(res);
+      event.sender.send('read-file-content-reply', JSON.stringify(res));
+    }
+  });
+});
 
 let win: BrowserWindow | null = null;
 let myWindow: any = null,
@@ -132,7 +235,6 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html');
 
 // 创建主窗口
 const createWindow = async (arg?: any) => {
-  console.log(`argargargarg: ${arg}`);
   let res: any = arg || {};
   let params = '';
   try {
@@ -159,7 +261,7 @@ const createWindow = async (arg?: any) => {
       nodeIntegration: true, // 是否集成Node
     },
   })
-
+  
   // 最小化窗口
   ipcMain.handle(`minimize-${mainWindow.id}`, () => {
     mainWindow.minimize();
@@ -220,7 +322,6 @@ const createWindow = async (arg?: any) => {
 }
 // 崩溃报告
 const homeDir = os.homedir();
-console.log(`homeDirhomeDir: ${homeDir}`);
 const logPath = path.join(homeDir, 'app.log');
 const logStream = fs.createWriteStream(logPath, { flags: 'a' });
 if (app.isPackaged) {

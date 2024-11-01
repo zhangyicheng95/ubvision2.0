@@ -1,5 +1,5 @@
 .softwarePage {
-  padding: 0 32px;
+  padding: 32px 32px 8px;
   height: 100%;
 
   @media (prefers-color-scheme: dark) {
@@ -162,83 +162,6 @@
 
     }
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  .title-running {
-    background: linear-gradient(to right, #52c41a, #fff, #52c41a);
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  .title-running {
-    background: linear-gradient(to right, #52c41a, #000, #52c41a);
-  }
-}
-
-.title-running {
-  background-size: 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: glowing 5s linear infinite;
-}
-
-@keyframes glowing {
-  0% {
-    background-position: 0%;
-  }
-
-  50% {
-    background-position: 100%;
-  }
-
-  100% {
-    background-position: 0%;
-  }
-}
-
-.running-border {
-  transition: all .3s;
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 3px solid #52c41a;
-    transition: all .5s;
-    border-radius: 10px;
-    animation: clippath 3s infinite linear;
-  }
-
-  &::after {
-    animation: clippath 3s infinite -1.5s linear;
-  }
-
-  @keyframes clippath {
-
-    0%,
-    100% {
-      clip-path: inset(0 0 98% 0);
-    }
-
-    25% {
-      clip-path: inset(0 98% 0 0);
-    }
-
-    50% {
-      clip-path: inset(98% 0 0 0);
-    }
-
-    75% {
-      clip-path: inset(0 0 0 98%);
-    }
-  }
-
 }
 
 :global {

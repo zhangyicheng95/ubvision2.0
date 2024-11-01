@@ -20,6 +20,7 @@ import UserPage from '@/pages/UserInfo';
 import Setting from '@/pages/Setting';
 import SoftwareRouter from './pages/Software';
 import AuthRouter from './pages/Auth';
+import { permissionRule } from './common/globalConstants';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
@@ -30,17 +31,20 @@ const App: React.FC = () => {
   const [empowerVisible, setEmpowerVisible] = useState(false);
 
   useEffect(() => {
-    const getUseTimeFun = () => {
+    const getUseTimeFun = (hostName: string) => {
       ProjectApi.getStorage('softwareUseTime').then((res) => {
         const { num } = res?.data || {};
         const useNum = (num || 0) + 1;
         ProjectApi.getStorage('softwareEmpowerTime').then((empowerRes) => {
           const { time = new Date().getTime() } = empowerRes?.data || {};
           if (
-            !empowerRes?.data ||
-            _.isEmpty(empowerRes?.data) ||
-            useNum > (empowerRes?.data?.num || 0) ||
-            new Date().getTime() >= time
+            permissionRule(
+              {
+                num: empowerRes?.data?.num,
+                time: empowerRes?.data?.time,
+                hostName: empowerRes?.data?.hostName
+              },
+              { useNum, time: res?.data?.time, today: new Date().getTime(), hostName })
           ) {
             setEmpowerVisible(true);
             clearInterval(timeRef.current);
@@ -56,16 +60,16 @@ const App: React.FC = () => {
         });
       });
     };
-    getUseTimeFun();
-    !!timeRef.current && clearInterval(timeRef.current);
-    timeRef.current = setInterval(() => getUseTimeFun(), 60 * 60 * 1000);
     // 获取机器hostname
     ipcRenderer.once('hostname-read-reply', function (res: any) {
       if (res === 'error') {
         message.error('系统信息获取失败');
       } else {
         setHostName(res);
-        form.setFieldsValue({ _HOSTNAME: res });
+        getUseTimeFun(res);
+        !!timeRef.current && clearInterval(timeRef.current);
+        timeRef.current = setInterval(() => getUseTimeFun(res), 60 * 60 * 1000);
+        // form.setFieldsValue({ _HOSTNAME: res });
       }
     });
     ipcRenderer.ipcCommTest('hostname-read');
@@ -114,7 +118,8 @@ const App: React.FC = () => {
         empowerId: value,
         time,
         num: day * 24,
-        today: empowerParam.TODAY,
+        today: Number(empowerParam.TODAY),
+        hostName
       };
       ProjectApi.addStorage('softwareEmpowerTime', params).then(() => {
         ProjectApi.addStorage('softwareUseTime', {
