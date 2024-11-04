@@ -1,35 +1,97 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import './App.css';
-import { Button, ConfigProvider, Form, Input, message, Modal, notification, theme } from 'antd';
+import '@/App.css';
+import { Button, ConfigProvider, Form, Input, message, Modal, notification, Spin, theme } from 'antd';
+import { SunOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 // for date-picker i18n
 import 'dayjs/locale/zh-cn';
 import BasicLayout from '@/layouts/BasicLayout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { HashRouter, Route, Routes } from 'react-router-dom';
-import { copyUrlToClipBoard, cryptoDecrypt, GetQueryObj, getUserAuthList, timeToString } from './utils/utils';
+import { copyUrlToClipBoard, cryptoDecrypt, GetQueryObj, getUserAuthList, timeToString } from '@/utils/utils';
 import * as _ from 'lodash-es';
 import ProjectApi from '@/api/project';
 import authWrapper from '@/components/authWrapper';
 import Login from '@/pages/Login';
 import HomePage from '@/pages/Home';
 import AlertRouter from '@/pages/Alert';
-// import ProjectPage from '@/pages/Project';
+import ProjectPage from '@/pages/Projects';
 // import FlowEditor from '@/pages/FlowEditor';
 import UserPage from '@/pages/UserInfo';
 import Setting from '@/pages/Setting';
-import SoftwareRouter from './pages/Software';
-import AuthRouter from './pages/Auth';
-import { permissionRule } from './common/globalConstants';
+import SoftwareRouter from '@/pages/Software';
+import AuthRouter from '@/pages/Auth';
+import { permissionRule } from '@/common/globalConstants';
+import { getDataList, getListStatusService } from '@/services/flowEditor';
+import { useDispatch, useSelector } from 'react-redux';
+import { getProjectList, IRootActions, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
+  const { loading, projectList } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const timeRef = useRef<any>();
+  const loopTimerRef = useRef<any>();
   const [form] = Form.useForm();
   const userAuthList = getUserAuthList();
-  const [hostName, setHostName] = useState('SE9TVE5BTUU9emhhbmd5aWVuZ2RlQWlyLmxhbiZEQVk9UVNDOTkxVUJWODg5OTkmVE9EQVk9MTcxNTkxNTc3MTQ1Mw');
+  const [hostName, setHostName] = useState('');
   const [empowerVisible, setEmpowerVisible] = useState(false);
 
+  // 轮循查询每个方案启动状态
+  const loopGetStatus = (list: any) => {
+    if (list.length) {
+      !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
+      getListStatusService().then((res: any) => {
+        if (!!res && res.code === 'SUCCESS') {
+          const result = list
+            ?.sort((a: any, b: any) => {
+              return b.updatedAt - a.updatedAt;
+            })
+            ?.map?.((item: any) => {
+              return {
+                ...item,
+                running:
+                  _.isObject(res?.data) && !_.isEmpty(res?.data[item.id]),
+              };
+            });
+          dispatch(setProjectList(result));
+          loopTimerRef.current = setTimeout(() => {
+            loopGetStatus(list);
+          }, 5000);
+        } else {
+          message.error(res?.message || '接口异常');
+          dispatch(setProjectList(list));
+        };
+        dispatch(setLoading(false));
+      });
+    }
+  };
+  // 初始化列表
+  const getList = () => {
+    !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
+    dispatch(setLoading(true));
+    // ProjectApi.list().then((res) => {
+    getDataList().then((res: any) => {
+      if (!!res && res.code === 'SUCCESS') {
+        loopGetStatus(res?.data || []);
+      } else {
+        message.destroy(1);
+        message.error(res?.message || '接口异常');
+        dispatch(setLoading(false));
+      }
+    });
+  };
+  useEffect(() => {
+    getList();
+    dispatch(getProjectList(getList));
+    dispatch(loopProjectStatus(loopGetStatus));
+
+    return () => {
+      !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
+      dispatch(setProjectList([]));
+    };
+  }, []);
+  // 鉴权
   useEffect(() => {
     const getUseTimeFun = (hostName: string) => {
       ProjectApi.getStorage('softwareUseTime').then((res) => {
@@ -75,9 +137,10 @@ const App: React.FC = () => {
     ipcRenderer.ipcCommTest('hostname-read');
 
     return () => {
-
+      !!timeRef.current && clearInterval(timeRef.current);
     };
   }, []);
+  // 授权
   const onEmpower = (value: any) => {
     // HOSTNAME=zhangyiengdeAir.lan&DAY=QSC31UBV880&TODAY=1715915771453   SE9TVE5BTUU9emhhbmd5aWVuZ2RlQWlyLmxhbiZEQVk9cXNjMzF1YnY4ODAmVE9EQVk9MTcxNTkxNTc3MTQ1Mw==
     /**
@@ -158,33 +221,35 @@ const App: React.FC = () => {
           }
         )}
       >
-        <HashRouter>
-          <BasicLayout>
-            {location.href?.indexOf('#/flow') > -1 ? (
-              <Routes>
-                {/* <Route path="/flow" element={<FlowEditor />} /> */}
-              </Routes>
-            ) : (
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/home" element={<HomePage />} />
-                {/* <Route path="/project" element={<ProjectPage />} />
-              <Route path="/flow" element={<FlowEditor />} />
-              <Route path="/resource/*" element={<ResourceRouter />} /> */}
-                <Route path="/alert/*" element={<AlertRouter />} />
-                <Route path="/userSetting" element={<UserPage />} />
-                <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
-                <Route path="/software" element={<SoftwareRouter />} />
-                <Route path="/auth/*" element={<AuthRouter />} />
-                {userAuthList?.includes('projects') ? (
-                  <Route path="*" element={<HomePage />} />
-                ) : (
-                  <Route path="*" element={<AlertRouter />} />
-                )}
-              </Routes>
-            )}
-          </BasicLayout>
-        </HashRouter>
+        <Spin spinning={loading} tip="数据加载中..." percent="auto" indicator={<SunOutlined style={{ fontSize: 40 }} spin />}>
+          <HashRouter>
+            <BasicLayout>
+              {location.href?.indexOf('#/flow') > -1 ? (
+                <Routes>
+                  {/* <Route path="/flow" element={<FlowEditor />} /> */}
+                </Routes>
+              ) : (
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/home" element={<HomePage />} />
+                  <Route path="/project" element={<ProjectPage />} />
+                  {/* <Route path="/flow" element={<FlowEditor />} /> */}
+                  {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
+                  <Route path="/alert/*" element={<AlertRouter />} />
+                  <Route path="/userSetting" element={<UserPage />} />
+                  <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
+                  <Route path="/software" element={<SoftwareRouter />} />
+                  <Route path="/auth/*" element={<AuthRouter />} />
+                  {userAuthList?.includes('projects') ? (
+                    <Route path="*" element={<HomePage />} />
+                  ) : (
+                    <Route path="*" element={<AlertRouter />} />
+                  )}
+                </Routes>
+              )}
+            </BasicLayout>
+          </HashRouter>
+        </Spin>
       </ConfigProvider>
 
       {!!empowerVisible ? (

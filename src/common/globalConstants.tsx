@@ -4,7 +4,8 @@ import * as _ from 'lodash-es';
  * 1.累计运行计数>允许的计数
  * 2.当前时间>授权到期的日期
  * 3.当前时间<授权那一时刻(防止调电脑时间)
- * 4.当前机器编码 ！== 机器编码
+ * 4.当前时间<(授权那一刻+已经累计的计数)
+ * 5.当前机器编码 ！== 机器编码
  * 
  * local：已经授权的信息
  * local.num：授权允许的总计数（计数1就是1个小时）
@@ -30,11 +31,15 @@ interface centerProps {
     hostName: string;
 };
 export const permissionRule = (local: localProps, center: centerProps) => {
+    console.log('已经授权的信息', local);
+    console.log('当前信息', center);
     return center?.useNum > local?.num
         ||
         center.today >= local?.time
         ||
         center.today <= center.time
+        ||
+        center.today <= (center.time + center.useNum * 3600 * 1000)
         ||
         center.hostName !== local.hostName;
 };

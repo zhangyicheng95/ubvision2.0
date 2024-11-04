@@ -26,6 +26,8 @@ import styles from './index.module.less';
 import ProjectApi from '@/api/project';
 import { dpmDomain } from '@/utils/fetch';
 import { getUserAuthList, guid } from '@/utils/utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setLoading } from '@/redux/actions';
 
 const { confirm } = Modal;
 const userAuthList = getUserAuthList();
@@ -33,9 +35,10 @@ const userAuthList = getUserAuthList();
 interface Props { }
 
 const SoftwareRouter: React.FC<Props> = (props: any) => {
+  const { loading } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [dataList, setDataList] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [softwareVisible, setSoftwareVisible] = useState(false);
   const [softwareModifyData, setSoftwareModifyData] = useState<any>({});
   const [softwareType, setSoftwareType] = useState('web');
@@ -46,7 +49,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
 
   // 初始化列表
   const getList = () => {
-    setLoading(true);
+    dispatch(setLoading(true));
     ProjectApi.getStorage('softwareStorage').then((res: any) => {
       if (!!res && res.code === 'SUCCESS' && !_.isEmpty(res.data)) {
         const { list = [] } = res.data;
@@ -57,7 +60,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
           }
         }));
       }
-      setLoading(false);
+      dispatch(setLoading(false));
     });
   };
   // 进入页面默认拉取
@@ -92,205 +95,211 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
 
   return (
     <div className={`${styles.softwarePage}`}>
-      <Spin spinning={loading} tip={"加载中..."}>
-        <PrimaryTitle
-          title="第三方列表  Software"
-        >
-          {
-            userAuthList.includes('software.new') ?
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
-                onClick={() => {
-                  form.resetFields();
-                  form.setFieldsValue({
-                    type: 'web'
-                  });
-                  setSoftwareFile({
-                    icon: '',
-                    value: ''
-                  });
-                  setSoftwareVisible(true);
-                }}
-              >
-                添加软件
-              </Button>
-              : null
-          }
-        </PrimaryTitle>
-        <div className="alert-page-body scrollbar-style">
-          {
-            useMemo(() => {
-              if (!userAuthList.includes('software.list')) {
-                return null;
-              };
-              return (dataList || [])?.map?.((item: any, index: number) => {
-                return (
-                  <SoftwareItem
-                    key={`software-${index}`}
-                    item={item}
-                    setDataList={setDataList}
-                    getList={getList}
-                    setSoftwareModifyData={setSoftwareModifyData}
-                    setSoftwareVisible={setSoftwareVisible}
-                    setSoftwareType={setSoftwareType}
-                    setSoftwareFile={setSoftwareFile}
-                    form={form}
-                  />
-                );
-              });
-            }, [dataList])
-          }
-        </div>
-
+      <PrimaryTitle
+        title="第三方列表  Software"
+      >
         {
-          // 添加第三方软件
-          softwareVisible ?
-            <Modal
-              title="添加第三方软件"
-              wrapClassName={"plugin-manager-modal"}
-              centered
-              open={softwareVisible}
-              maskClosable={false}
-              destroyOnClose
-              onCancel={() => {
+          userAuthList.includes('software.new') ?
+            <Button
+              icon={<PlusOutlined />}
+              type="primary"
+              onClick={() => {
                 form.resetFields();
-                setSoftwareVisible(false);
-                setSoftwareModifyData({});
+                form.setFieldsValue({
+                  type: 'web'
+                });
+                setSoftwareFile({
+                  icon: '',
+                  value: ''
+                });
+                setSoftwareVisible(true);
               }}
-              onOk={() => onAdd()}
             >
-              <div className="plugin-manager-modal-body">
-                <Form form={form} scrollToFirstError>
-                  <Form.Item
-                    name={'type'}
-                    label="软件类型"
-                    rules={[{ required: true, message: '软件类型' }]}
-                  >
-                    <Select
-                      style={{ width: '100%' }}
-                      allowClear
-                      options={[
-                        { label: 'web页面', value: 'web' },
-                        { label: '客户端', value: 'electron' }
-                      ]?.map?.((item: any) => {
-                        const { label, value } = item;
-                        return {
-                          label: label,
-                          value: value,
-                          key: value,
-                        }
-                      })}
-                      placeholder="软件类型"
-                      onChange={(e: any) => setSoftwareType(e)}
-                    />
-                  </Form.Item>
-                  {
-                    softwareType === 'web' ?
-                      <Form.Item
-                        name={'value'}
-                        label="软件链接"
-                        rules={[{ required: false, message: '软件链接' }]}
-                      >
-                        <Input />
-                      </Form.Item>
-                      :
-                      <Form.Item
-                        name={'value'}
-                        label="软件链接"
-                        rules={[{ required: false, message: '软件链接' }]}
-                      >
-                        <div>
-                          <div className="flex-box-justify-between">
-                            <TooltipDiv title={softwareFile?.value}>
-                              {softwareFile?.value}
-                            </TooltipDiv>
-                            <DeleteOutlined
-                              className='upload-delete-icon'
-                              onClick={() => setSoftwareFile((prev: any) => ({
-                                ...prev,
-                                value: '',
-                              }))}
-                            />
-                          </div>
-                          <Button onClick={() => {
-                            chooseFile(
-                              (res: any) => {
-                                const result = (_.isArray(res) && res.length === 1) ? res[0] : res;
-                                setSoftwareFile((prev: any) => ({
-                                  ...prev,
-                                  value: result,
-                                }));
-                                form.setFieldsValue({ value: result });
-                              },
-                              false,
-                              { name: 'File', extensions: [] }
-                            );
-                          }}>
-                            选择软件
-                          </Button>
-                        </div>
-                      </Form.Item>
-                  }
-                  <Form.Item
-                    name={'name'}
-                    label="软件名称"
-                    rules={[{ required: true, message: '软件名称' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name={'alias'}
-                    label="软件别名"
-                    rules={[{ required: false, message: '软件别名' }]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name={'icon'}
-                    label="添加图标"
-                    rules={[{ required: false, message: '图标' }]}
-                  >
-                    <div>
-                      <div className="flex-box-justify-between">
-                        <TooltipDiv title={softwareFile?.icon}>
-                          {softwareFile?.icon}
-                        </TooltipDiv>
-                        <DeleteOutlined
-                          className='upload-delete-icon'
-                          onClick={() => {
-                            setSoftwareFile((prev: any) => ({
-                              ...prev,
-                              icon: '',
-                            }));
-                            form.setFieldsValue({ icon: '' });
-                          }}
-                        />
-                      </div>
-                      <Button onClick={() => {
-                        chooseFile(
-                          (res: any) => {
-                            const result = (_.isArray(res) && res.length === 1) ? res[0] : res;
-                            setSoftwareFile((prev: any) => ({
-                              ...prev,
-                              icon: result,
-                            }));
-                            form.setFieldsValue({ icon: result });
-                          },
-                          false,
-                          { name: 'File', extensions: ['jpg', 'jpeg', 'png', 'svg', 'ico'] }
-                        );
-                      }}>
-                        选择图标
-                      </Button>
-                    </div>
-                  </Form.Item>
-                </Form>
-              </div>
-            </Modal>
+              添加软件
+            </Button>
             : null
         }
-      </Spin>
+      </PrimaryTitle>
+      <div className="alert-page-body scrollbar-style">
+        {
+          useMemo(() => {
+            if (!userAuthList.includes('software.list')) {
+              return null;
+            };
+            return (dataList || [])?.map?.((item: any, index: number) => {
+              return (
+                <SoftwareItem
+                  key={`software-${index}`}
+                  item={item}
+                  setDataList={setDataList}
+                  getList={getList}
+                  setSoftwareModifyData={setSoftwareModifyData}
+                  setSoftwareVisible={setSoftwareVisible}
+                  setSoftwareType={setSoftwareType}
+                  setSoftwareFile={setSoftwareFile}
+                  form={form}
+                />
+              );
+            });
+          }, [dataList])
+        }
+      </div>
+
+      {
+        // 添加第三方软件
+        softwareVisible ?
+          <Modal
+            title="添加第三方软件"
+            wrapClassName={"plugin-manager-modal"}
+            centered
+            open={softwareVisible}
+            maskClosable={false}
+            destroyOnClose
+            onCancel={() => {
+              form.resetFields();
+              setSoftwareVisible(false);
+              setSoftwareModifyData({});
+            }}
+            onOk={() => onAdd()}
+          >
+            <div className="plugin-manager-modal-body">
+              <Form form={form} scrollToFirstError>
+                <Form.Item
+                  name={'type'}
+                  label="软件类型"
+                  rules={[{ required: true, message: '软件类型' }]}
+                >
+                  <Select
+                    style={{ width: '100%' }}
+                    allowClear
+                    options={[
+                      { label: 'web页面', value: 'web' },
+                      { label: '客户端', value: 'electron' }
+                    ]?.map?.((item: any) => {
+                      const { label, value } = item;
+                      return {
+                        label: label,
+                        value: value,
+                        key: value,
+                      }
+                    })}
+                    placeholder="软件类型"
+                    onChange={(e: any) => setSoftwareType(e)}
+                  />
+                </Form.Item>
+                {
+                  softwareType === 'web' ?
+                    <Form.Item
+                      name={'value'}
+                      label="软件链接"
+                      rules={[{ required: false, message: '软件链接' }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    :
+                    <Form.Item
+                      name={'value'}
+                      label="软件链接"
+                      rules={[{ required: false, message: '软件链接' }]}
+                    >
+                      <div>
+                        {
+                          softwareFile?.value ?
+                            <div className="flex-box-justify-between">
+                              <TooltipDiv title={softwareFile?.value}>
+                                {softwareFile?.value}
+                              </TooltipDiv>
+                              <DeleteOutlined
+                                className='upload-delete-icon'
+                                onClick={() => setSoftwareFile((prev: any) => ({
+                                  ...prev,
+                                  value: '',
+                                }))}
+                              />
+                            </div>
+                            : null
+                        }
+                        <Button onClick={() => {
+                          chooseFile(
+                            (res: any) => {
+                              const result = (_.isArray(res) && res.length === 1) ? res[0] : res;
+                              setSoftwareFile((prev: any) => ({
+                                ...prev,
+                                value: result,
+                              }));
+                              form.setFieldsValue({ value: result });
+                            },
+                            false,
+                            { name: 'File', extensions: [] }
+                          );
+                        }}>
+                          选择软件
+                        </Button>
+                      </div>
+                    </Form.Item>
+                }
+                <Form.Item
+                  name={'name'}
+                  label="软件名称"
+                  rules={[{ required: true, message: '软件名称' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  name={'alias'}
+                  label="软件别名"
+                  rules={[{ required: false, message: '软件别名' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  name={'icon'}
+                  label="添加图标"
+                  rules={[{ required: false, message: '图标' }]}
+                >
+                  <div>
+                    {
+                      softwareFile?.icon ?
+                        <div className="flex-box-justify-between">
+                          <TooltipDiv title={softwareFile?.icon}>
+                            {softwareFile?.icon}
+                          </TooltipDiv>
+                          <DeleteOutlined
+                            className='upload-delete-icon'
+                            onClick={() => {
+                              setSoftwareFile((prev: any) => ({
+                                ...prev,
+                                icon: '',
+                              }));
+                              form.setFieldsValue({ icon: '' });
+                            }}
+                          />
+                        </div>
+                        : null
+                    }
+                    <Button onClick={() => {
+                      chooseFile(
+                        (res: any) => {
+                          const result = (_.isArray(res) && res.length === 1) ? res[0] : res;
+                          setSoftwareFile((prev: any) => ({
+                            ...prev,
+                            icon: result,
+                          }));
+                          form.setFieldsValue({ icon: result });
+                        },
+                        false,
+                        { name: 'File', extensions: ['jpg', 'jpeg', 'png', 'svg', 'ico'] }
+                      );
+                    }}>
+                      选择图标
+                    </Button>
+                  </div>
+                </Form.Item>
+              </Form>
+            </div>
+          </Modal>
+          : null
+      }
     </div >
   );
 };
@@ -372,7 +381,11 @@ const SoftwareItem = (props: any) => {
     >
       <div className={`flex-box item-box box-animation`}>
         <div className="flex-box item-box-child">
-          <div className="flex-box item-box-child-left" onClick={() => onClick()}>
+          <div className="flex-box item-box-child-left" onClick={(event) => {
+            onClick();
+            event.preventDefault(); // 阻止默认的关闭行为
+            event?.stopPropagation();
+          }}>
             <div className={`item-icon flex-box-center`}>
               {
                 !!icon ?
@@ -414,7 +427,7 @@ const SoftwareItem = (props: any) => {
           }}>
             {
               !!collected ?
-                <StarFilled style={{ color: 'yellow' }} />
+                <StarFilled style={{ color: '#d4d403' }} />
                 :
                 <StarOutlined />
             }

@@ -1,5 +1,5 @@
-import React, { useEffect, useReducer } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect, useReducer } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import AuthorLayout from '@/pages/Auth/components/layouts';
 import { StoreEnum } from '@/pages/Auth/store/typing';
 import { init, reducer, State } from '@/pages/Auth/store';

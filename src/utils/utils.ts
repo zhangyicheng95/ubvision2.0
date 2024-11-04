@@ -160,3 +160,24 @@ export function timeToString(time: number) {
         ) || 0;
     return { d, h, m, s };
 };
+/**
+ * 公共导出方法，支持ie10
+ * @param data
+ * @param name
+ */
+export function downFileFun(data = '{}', name = '') {
+    const blob = new Blob([data], { type: 'application/x-sql;charset=UTF-8' });
+    // @ts-ignore
+    if (window.navigator && window.navigator?.msSaveOrOpenBlob) {
+        // @ts-ignore
+        window.navigator?.msSaveOrOpenBlob?.(blob, name);
+    } else {
+        const a = document.createElement('a');
+        a.download = name;
+        a.style.display = 'none';
+        a.href = URL.createObjectURL(blob);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+}

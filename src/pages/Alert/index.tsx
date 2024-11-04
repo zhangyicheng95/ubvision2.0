@@ -1,147 +1,49 @@
 import React, {
-  Fragment,
   useEffect,
   useMemo,
-  useReducer,
-  useRef,
   useState,
 } from 'react';
-import { message, Dropdown, Menu, Spin, Popover, Select } from 'antd';
+import { message, Dropdown, Popover, Select, Modal, Form, Switch } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
   AppstoreAddOutlined,
   PoweroffOutlined,
-  AreaChartOutlined,
-  InstagramOutlined,
+  SettingOutlined,
   CopyOutlined,
-  BorderTopOutlined,
-  BorderBottomOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import * as _ from 'lodash-es';
 import TooltipDiv from '@/components/TooltipDiv';
 import PrimaryTitle from '@/components/PrimaryTitle';
-import {
-  getDataList,
-  getListStatusService,
-  getParams,
-  updateParams,
-} from '@/services/flowEditor';
+import { getParams, updateParams } from '@/services/flowEditor';
 import styles from './index.module.less';
 import { dpmDomain } from '@/utils/fetch';
 import { copyUrlToClipBoard, getUserAuthList } from '@/utils/utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions } from '@/redux/actions';
 
 const userAuthList = getUserAuthList();
 
 interface Props { }
 
 const AlertRouter: React.FC<Props> = (props: any) => {
-  const timerRef = useRef<any>();
+  const { projectList, loopProjectStatusFun } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
+  const [form] = Form.useForm();
   const [dataList, setDataList] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [popoverVisible, setPopoverVisible] = useState(false);
-  const [hasInit, setHasInit] = useState(false);
+  const [editVisible, setEditVisible] = useState<any>(null);
 
-  // 初始化列表
-  const getList = () => {
-    setLoading(true);
-    // ProjectApi.list().then((res) => {
-    getDataList().then((res: any) => {
-      if (!!res && res.code === 'SUCCESS') {
-        res.data = res.data
-          ?.map?.((item: any) => {
-            let result = item;
-            if (!_.isBoolean(result.contentData?.showHeader)) {
-              result = {
-                ...result,
-                contentData: {
-                  ...result.contentData,
-                  showHeader: true,
-                },
-              };
-            };
-            if (!_.isBoolean(result.contentData?.showLogo)) {
-              result = {
-                ...result,
-                contentData: {
-                  ...result.contentData,
-                  showLogo: true,
-                },
-              };
-            };
-            if (!_.isBoolean(result.contentData?.showFooter)) {
-              result = {
-                ...result,
-                contentData: {
-                  ...result.contentData,
-                  showFooter: true,
-                },
-              };
-            };
-            return result;
-          })
-          .sort((a: any, b: any) => {
-            return b.updatedAt - a.updatedAt;
-          });
-        setDataList(res.data);
-        const resultStore = res.data?.map?.((i: any) => ({
-          ...i,
-          disabled: !!i?.alertShow,
-        }));
-
-        loopGetStatus(resultStore);
-      } else {
-        message.error(res?.message || '接口异常');
-      }
-      setLoading(false);
-    });
-  };
   // 进入页面默认拉取
   useEffect(() => {
-    setHasInit(true);
-    getList();
+    setDataList(projectList)
+
     return () => {
-      timerRef.current && clearTimeout(timerRef.current);
-      setHasInit(false);
-    };
-  }, []);
-  // 轮循查询每个方案启动状态
-  const loopGetStatus = (list: any) => {
-    if (list.length) {
-      getListStatusService().then((res: any) => {
-        if (!!res && res.code === 'SUCCESS') {
-          const result = (list || [])?.map?.((item: any) => {
-            return {
-              ...item,
-              running: _.isObject(res?.data) && !_.isEmpty(res?.data[item.id]),
-              disabled: !!item.alertShow,
-            };
-          });
-          setDataList((prev: any) => {
-            return prev?.map?.((item: any) => {
-              return {
-                ...item,
-                running:
-                  _.isObject(res?.data) && !_.isEmpty(res?.data[item.id]),
-              };
-            });
-          });
-        } else {
-          message.error(res?.message || '接口异常');
-        }
-        timerRef.current && clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          setHasInit((prev: any) => {
-            if (prev) {
-              loopGetStatus(list);
-            }
-            return prev;
-          });
-        }, 2500);
-      });
+      setDataList([]);
     }
-  };
+  }, [JSON.stringify(projectList)]);
+
   // 模糊查询
   const onSearch = (val: any) => {
     try {
@@ -163,15 +65,12 @@ const AlertRouter: React.FC<Props> = (props: any) => {
           if (!!res && res.code === 'SUCCESS') {
             const result: any = (dataList || [])?.map?.((item: any) => {
               if (item.id === id) {
-                return {
-                  ...res.data,
-                  disabled: !!item.alertShow,
-                };
+                return res.data;
               }
               return item;
             });
             setDataList(result);
-            loopGetStatus(result);
+            loopProjectStatusFun(result);
           } else {
             message.error(res?.message || '接口异常');
           }
@@ -183,81 +82,173 @@ const AlertRouter: React.FC<Props> = (props: any) => {
 
   return (
     <div className={`${styles.alertPage}`}>
-      <Spin spinning={loading} tip={'加载中...'}>
-        <PrimaryTitle
-          title="监控列表  Monitor"
-          onSearch={onSearch}
-        ></PrimaryTitle>
-        <div className="alert-page-body scrollbar-style">
-          {useMemo(() => {
-            if (!userAuthList.includes('monitor.add')) {
-              return null;
-            }
-            return (
-              <Popover
-                placement="bottom"
-                title={'添加监控窗口'}
-                trigger="click"
-                destroyTooltipOnHide={true}
-                arrow={{ pointAtCenter: true }}
-                open={popoverVisible}
-                content={
-                  <Select
-                    style={{ width: 250 }}
-                    onChange={(value) => onAdd(value)}
-                    onBlur={() => setPopoverVisible(false)}
-                  >
-                    {(dataList || [])?.map?.(
-                      (item: any, index: number) => {
-                        const { id, alias, name, disabled } = item;
-                        return (
-                          <Select.Option
-                            disabled={!!disabled}
-                            key={id}
-                            value={id}
-                          >
-                            {alias || name}
-                          </Select.Option>
-                        );
-                      }
-                    )}
-                  </Select>
-                }
-              >
-                <div
-                  className="item-box box-animation add-box"
-                  onClick={(e) => {
-                    setPopoverVisible(true);
-                    e.preventDefault(); // 阻止默认的关闭行为
-                    e?.stopPropagation();
-                  }}
+      <PrimaryTitle
+        title="监控列表  Monitor"
+        onSearch={onSearch}
+      ></PrimaryTitle>
+      <div className="alert-page-body scrollbar-style">
+        {
+          !userAuthList.includes('monitor.add') ? null :
+            <Popover
+              placement="bottom"
+              title={'添加监控窗口'}
+              trigger="click"
+              destroyTooltipOnHide={true}
+              arrow={{ pointAtCenter: true }}
+              open={popoverVisible}
+              content={
+                <Select
+                  style={{ width: 250 }}
+                  onChange={(value) => onAdd(value)}
+                  onBlur={() => setPopoverVisible(false)}
                 >
-                  <div className="item-box-child flex-box-center">
-                    <PlusOutlined />
-                  </div>
+                  {(dataList || [])?.map?.(
+                    (item: any, index: number) => {
+                      const { id, alias, name, alertShow } = item;
+                      return (
+                        <Select.Option
+                          disabled={!!alertShow}
+                          key={id}
+                          value={id}
+                        >
+                          {alias || name}
+                        </Select.Option>
+                      );
+                    }
+                  )}
+                </Select>
+              }
+            >
+              <div
+                className="item-box box-animation add-box"
+                onClick={(e) => {
+                  setPopoverVisible(true);
+                  e.preventDefault(); // 阻止默认的关闭行为
+                  e?.stopPropagation();
+                }}
+              >
+                <div className="item-box-child flex-box-center">
+                  <PlusOutlined />
                 </div>
-              </Popover>
-            );
-          }, [popoverVisible, dataList])}
-          {useMemo(() => {
-            if (!userAuthList.includes('monitor.list')) {
-              return null;
+              </div>
+            </Popover>
+        }
+        {useMemo(() => {
+          if (!userAuthList.includes('monitor.list')) {
+            return null;
+          }
+          return <div>
+            {
+              (dataList || [])?.map?.((item: any, index: number) => {
+                const { id, alertShow } = item;
+                if (!alertShow) return null;
+                return (
+                  <AlertItem
+                    key={id}
+                    item={item}
+                    setDataList={setDataList}
+                    loopGetStatus={loopProjectStatusFun}
+                    setEditVisible={setEditVisible}
+                    form={form}
+                  />
+                );
+              })
             }
-            return (dataList || [])?.map?.((item: any, index: number) => {
-              const { id, alertShow } = item;
-              if (!alertShow) return null;
-              return (
-                <AlertItem
-                  key={id}
-                  item={item}
-                  setDataList={setDataList}
-                  loopGetStatus={loopGetStatus}
-                />
-              );
-            });
-          }, [dataList])}
-        </div>
-      </Spin>
+            {
+              // 添加第三方软件
+              !!editVisible ?
+                <Modal
+                  title={`编辑-${editVisible?.alias || editVisible?.name}`}
+                  wrapClassName={"plugin-manager-modal"}
+                  centered
+                  open={!!editVisible}
+                  maskClosable={false}
+                  onCancel={() => {
+                    form.resetFields();
+                    setEditVisible(null);
+                  }}
+                  onOk={() => {
+                    form.validateFields().then(values => {
+                      getParams(editVisible.id).then((params) => {
+                        if (params && params.code === 'SUCCESS') {
+                          updateParams(editVisible.id, {
+                            ...params.data,
+                            contentData: Object.assign(
+                              params.data?.contentData,
+                              values
+                            ),
+                          }).then((res: any) => {
+                            if (res && res.code === 'SUCCESS') {
+                              setDataList((prev: any) => {
+                                const result = (prev || [])?.map?.((i: any) => {
+                                  if (i.id === res.data.id) {
+                                    return res.data;
+                                  }
+                                  return i;
+                                });
+                                loopProjectStatusFun(result);
+                                return result;
+                              });
+                            } else {
+                              message.error(res?.msg || res?.message || '接口异常');
+                            }
+                          });
+                        } else {
+                          message.error(params?.msg || params?.message || '接口异常');
+                        }
+                      });
+                      form.resetFields();
+                      setEditVisible(null);
+                    });
+                  }}
+                  getContainer={false}
+                >
+                  <div className="plugin-manager-modal-body">
+                    <Form form={form} scrollToFirstError>
+                      <Form.Item
+                        name={'showLogo'}
+                        label="展示logo"
+                        valuePropName="checked"
+                        initialValue={editVisible?.contentData?.showLogo}
+                      >
+                        <Switch />
+                      </Form.Item>
+                      <Form.Item
+                        name={'showHeader'}
+                        label="展示头部"
+                        valuePropName="checked"
+                        initialValue={editVisible?.contentData?.showHeader}
+                      >
+                        <Switch />
+                      </Form.Item>
+                      <Form.Item
+                        name={'showFooter'}
+                        label="展示底部"
+                        valuePropName="checked"
+                        initialValue={editVisible?.contentData?.showFooter}
+                      >
+                        <Switch />
+                      </Form.Item>
+                      {
+                        userAuthList.includes('monitor.changeLogo') ?
+                          <Form.Item
+                            name={'changeLogo'}
+                            label="允许更换logo"
+                            valuePropName="checked"
+                            initialValue={editVisible?.contentData?.changeLogo}
+                          >
+                            <Switch />
+                          </Form.Item>
+                          : null
+                      }
+                    </Form>
+                  </div>
+                </Modal>
+                : null
+            }
+          </div>
+        }, [dataList, JSON.stringify(editVisible?.contentData)])}
+      </div>
     </div>
   );
 };
@@ -266,7 +257,7 @@ export default AlertRouter;
 
 const AlertItem = (props: any) => {
   const { ipcRenderer }: any = window || {};
-  const { item, setDataList, loopGetStatus } = props;
+  const { item, setDataList, loopGetStatus, setEditVisible, form } = props;
   const { name, id, running, ifOnStartUp, contentData, updatedAt } = item;
 
   // 获取是否存在快速启动列表中
@@ -367,141 +358,6 @@ const AlertItem = (props: any) => {
       });
     } catch (e) { }
   };
-  // 显示/隐藏logo
-  const showCCDLogo = (item: any) => {
-    const { id } = item;
-    getParams(id).then((params) => {
-      if (params && params.code === 'SUCCESS') {
-        updateParams(id, {
-          ...params.data,
-          contentData: Object.assign(
-            params.data?.contentData,
-            _.isBoolean(params.data?.contentData.showHeader)
-              ? {}
-              : {
-                showHeader: true,
-              },
-            {
-              showLogo: !params.data?.contentData?.showLogo,
-            }
-          ),
-        }).then((res: any) => {
-          if (res && res.code === 'SUCCESS') {
-            setDataList((prev: any) =>
-              (prev || [])?.map?.((i: any) => {
-                if (i.id === res.data.id) {
-                  return res.data;
-                }
-                return i;
-              })
-            );
-          } else {
-            message.error(res?.msg || res?.message || '接口异常');
-          }
-        });
-      } else {
-        message.error(params?.msg || params?.message || '接口异常');
-      }
-    });
-  };
-  // 显示/隐藏Header
-  const showCCDHeader = (item: any) => {
-    const { id } = item;
-    getParams(id).then((params) => {
-      if (params && params.code === 'SUCCESS') {
-        updateParams(id, {
-          ...params.data,
-          contentData: Object.assign(
-            params.data?.contentData,
-            _.isBoolean(params.data?.contentData.showLogo)
-              ? {}
-              : {
-                showLogo: true,
-              },
-            {
-              showHeader: !params.data?.contentData?.showHeader,
-            }
-          ),
-        }).then((res: any) => {
-          if (res && res.code === 'SUCCESS') {
-            setDataList((prev: any) =>
-              (prev || [])?.map?.((i: any) => {
-                if (i.id === res.data.id) {
-                  return res.data;
-                }
-                return i;
-              })
-            );
-          } else {
-            message.error(res?.msg || res?.message || '接口异常');
-          }
-        });
-      } else {
-        message.error(params?.msg || params?.message || '接口异常');
-      }
-    });
-  };
-  // 显示/隐藏Footer
-  const showCCDFooter = (item: any) => {
-    const { id } = item;
-    getParams(id).then((params) => {
-      if (params && params.code === 'SUCCESS') {
-        updateParams(id, {
-          ...params.data,
-          contentData: Object.assign(
-            params.data?.contentData,
-            {
-              showFooter: !params.data?.contentData?.showFooter,
-            }
-          ),
-        }).then((res: any) => {
-          if (res && res.code === 'SUCCESS') {
-            setDataList((prev: any) =>
-              (prev || [])?.map?.((i: any) => {
-                if (i.id === res.data.id) {
-                  return res.data;
-                }
-                return i;
-              })
-            );
-          } else {
-            message.error(res?.msg || res?.message || '接口异常');
-          }
-        });
-      } else {
-        message.error(params?.msg || params?.message || '接口异常');
-      }
-    });
-  };
-  // 允许/禁止更换logo
-  const allowChangeLogo = (item: any) => {
-    const { id } = item;
-    getParams(id).then((params) => {
-      if (params && params.code === 'SUCCESS') {
-        updateParams(id, {
-          ...params.data,
-          contentData: Object.assign(params.data?.contentData, {
-            changeLogo: !params.data?.contentData?.changeLogo,
-          }),
-        }).then((res: any) => {
-          if (res && res.code === 'SUCCESS') {
-            setDataList((prev: any) =>
-              (prev || [])?.map?.((i: any) => {
-                if (i.id === res.data.id) {
-                  return res.data;
-                }
-                return i;
-              })
-            );
-          } else {
-            message.error(res?.msg || res?.message || '接口异常');
-          }
-        });
-      } else {
-        message.error(params?.msg || params?.message || '接口异常');
-      }
-    });
-  };
   // 复制访问链接
   const copyUrlLink = (item: any) => {
     const { id } = item;
@@ -534,60 +390,6 @@ const AlertItem = (props: any) => {
         <span className="contextMenu-text">Self Starting</span>
       </div>
     } : null,
-    userAuthList.includes('monitor.delete') ? {
-      key: `delete-${id}`,
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        onDelete(item);
-      }}>
-        <DeleteOutlined className="contextMenu-icon" />
-        删除
-        <span className="contextMenu-text">Delete</span>
-      </div>
-    } : null,
-    { type: 'divider' },
-    ...userAuthList.includes('monitor.headerOperation') ? [
-      {
-        key: `show-logo-${id}`,
-        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          showCCDLogo(item);
-        }}>
-          <AreaChartOutlined className="contextMenu-icon" />
-          {`${contentData?.showLogo ? '隐藏' : '展示'}logo`}
-          <span className="contextMenu-text">CCD Logo</span>
-        </div>
-      },
-      {
-        key: `show-header-${id}`,
-        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          showCCDHeader(item);
-        }}>
-          <BorderTopOutlined className="contextMenu-icon" />
-          {`${!!contentData?.showHeader ? '隐藏' : '展示'}头部`}
-          <span className="contextMenu-text">CCD Header</span>
-        </div>
-      },
-      {
-        key: `show-footer-${id}`,
-        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          showCCDLogo(item);
-        }}>
-          <BorderBottomOutlined className="contextMenu-icon" />
-          {`${!!contentData?.showFooter ? '隐藏' : '展示'}底部`}
-          <span className="contextMenu-text">CCD Footer</span>
-        </div>
-      },
-      { type: 'divider' }
-    ] : [],
-    userAuthList.includes('monitor.changeLogo') ? {
-      key: `changeLogo-${id}`,
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        allowChangeLogo(item);
-      }}>
-        <InstagramOutlined className="contextMenu-icon" />
-        {`${contentData?.changeLogo ? '禁止' : '允许'}更换logo`}
-        <span className="contextMenu-text">Change Logo</span>
-      </div>
-    } : null,
     userAuthList.includes('monitor.copyUrl') ? {
       key: `copyUrl-${id}`,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
@@ -598,6 +400,35 @@ const AlertItem = (props: any) => {
         <span className="contextMenu-text">Copy URL</span>
       </div>
     } : null,
+    { type: 'divider' },
+    userAuthList.includes('monitor.delete') ? {
+      key: `delete-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        onDelete(item);
+      }}>
+        <DeleteOutlined className="contextMenu-icon" />
+        删除
+        <span className="contextMenu-text">CCD Delete</span>
+      </div>
+    } : null,
+    userAuthList.includes('monitor.headerOperation') ? {
+      key: `show-logo-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        setEditVisible(item);
+        setTimeout(() => {
+          form.setFieldsValue({
+            showLogo: !!item?.contentData?.showLogo,
+            showHeader: !!item?.contentData?.showHeader,
+            showFooter: !!item?.contentData?.showFooter,
+            changeLogo: !!item?.contentData?.changeLogo
+          });
+        }, 200);
+      }}>
+        <SettingOutlined className="contextMenu-icon" />
+        编辑
+        <span className="contextMenu-text">CCD Edit</span>
+      </div>
+    } : null
   ]?.filter(Boolean);
 
   return (

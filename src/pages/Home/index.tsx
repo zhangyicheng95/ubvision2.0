@@ -16,7 +16,7 @@ import {
 import styles from './index.module.less';
 import ProjectApi from '@/api/project';
 import PrimaryTitle from '@/components/PrimaryTitle';
-import { addParams, getDataList, getCaseList } from '@/services/flowEditor';
+import { addParams, } from '@/services/flowEditor';
 import tipIcon from '@/assets/imgs/tip.svg';
 import postmanIcon from '@/assets/imgs/postman.svg';
 import moment from 'moment';
@@ -30,6 +30,9 @@ import icon2 from './机械臂2.png';
 import icon3 from './机械臂3.png';
 import icon4 from './机械臂4.png';
 import { dpmDomain } from '@/utils/fetch';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions } from '@/redux/actions';
+
 
 const { confirm } = Modal;
 
@@ -39,9 +42,10 @@ const tipList = [
 ]
 
 const Home: React.FC<Props> = (props: any) => {
+  const { projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { ipcRenderer }: any = window || {};
-  const [dataList, setDataList] = useState([]);
   const [softwareList, setSoftwareList] = useState([]);
   const [tipNum, setTipNum] = useState(0);
   const [caseVisible, setCaseVisible] = useState(false);
@@ -53,13 +57,7 @@ const Home: React.FC<Props> = (props: any) => {
   ]);
 
   useEffect(() => {
-    getDataList().then((res: any) => {
-      if (!!res && res.code === 'SUCCESS') {
-        setDataList(res.data);
-      } else {
-        message.error(res?.message || '接口异常');
-      }
-    });
+    getProjectListFun?.();
     ProjectApi.getStorage('softwareStorage').then((res: any) => {
       if (!!res && res.code === 'SUCCESS' && !_.isEmpty(res.data)) {
         const { list = [] } = res.data;
@@ -165,21 +163,19 @@ const Home: React.FC<Props> = (props: any) => {
                 icon={<ProjectOutlined className='home-body-bottom-icon' />}
                 onClick={() => {
                   setCaseVisible(true);
-                   // getCaseList().then((res: any) => {
-                //   if (!!res && res.code === 'SUCCESS') {
-                //     setCaseList(res.data);
-                //   } else {
-                //     message.error(res?.message || '接口异常');
-                //   }
-                // });
+                  // getCaseList().then((res: any) => {
+                  //   if (!!res && res.code === 'SUCCESS') {
+                  //     setCaseList(res.data);
+                  //   } else {
+                  //     message.error(res?.message || '接口异常');
+                  //   }
+                  // });
                 }}>打开案例库</Button>
             </div>
             <h1 className='home-body-bottom-title'>最近的方案</h1>
             <div className="home-body-bottom-left-list">
               {
-                (dataList?.sort((a: any, b: any) => {
-                  return b.updatedAt - a.updatedAt;
-                })?.slice(0, 5) || [])?.map((item: any, index: number) => {
+                (projectList?.slice(0, 5) || [])?.map((item: any, index: number) => {
                   const { name, id, running, plugin_dir, updatedAt } = item;
                   return <div
                     key={`home-body-bottom-left-list-item-${index}`}
