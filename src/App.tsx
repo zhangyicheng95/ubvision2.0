@@ -1,7 +1,6 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import '@/App.css';
-import { Button, ConfigProvider, Form, Input, message, Modal, notification, Spin, theme } from 'antd';
-import { SunOutlined } from '@ant-design/icons';
+import { Button, ConfigProvider, Form, Input, message, Modal, notification, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 // for date-picker i18n
 import 'dayjs/locale/zh-cn';
@@ -23,12 +22,11 @@ import SoftwareRouter from '@/pages/Software';
 import AuthRouter from '@/pages/Auth';
 import { permissionRule } from '@/common/globalConstants';
 import { getDataList, getListStatusService } from '@/services/flowEditor';
-import { useDispatch, useSelector } from 'react-redux';
-import { getProjectList, IRootActions, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
+import { useDispatch } from 'react-redux';
+import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
-  const { loading, projectList } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const timeRef = useRef<any>();
   const loopTimerRef = useRef<any>();
@@ -57,7 +55,7 @@ const App: React.FC = () => {
           dispatch(setProjectList(result));
           loopTimerRef.current = setTimeout(() => {
             loopGetStatus(list);
-          }, 5000);
+          }, 2500);
         } else {
           message.error(res?.message || '接口异常');
           dispatch(setProjectList(list));
@@ -197,9 +195,10 @@ const App: React.FC = () => {
       console.log(err);
     }
   };
+  console.log('app');
 
   return (
-    <ErrorBoundary>
+    <Fragment>
       <ConfigProvider
         locale={zhCN}
         theme={Object.assign(
@@ -221,35 +220,45 @@ const App: React.FC = () => {
           }
         )}
       >
-        <Spin spinning={loading} tip="数据加载中..." percent="auto" indicator={<SunOutlined style={{ fontSize: 40 }} spin />}>
-          <HashRouter>
-            <BasicLayout>
-              {location.href?.indexOf('#/flow') > -1 ? (
-                <Routes>
-                  {/* <Route path="/flow" element={<FlowEditor />} /> */}
-                </Routes>
-              ) : (
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/home" element={<HomePage />} />
-                  <Route path="/project" element={<ProjectPage />} />
-                  {/* <Route path="/flow" element={<FlowEditor />} /> */}
-                  {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
-                  <Route path="/alert/*" element={<AlertRouter />} />
-                  <Route path="/userSetting" element={<UserPage />} />
-                  <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
-                  <Route path="/software" element={<SoftwareRouter />} />
-                  <Route path="/auth/*" element={<AuthRouter />} />
-                  {userAuthList?.includes('projects') ? (
-                    <Route path="*" element={<HomePage />} />
-                  ) : (
-                    <Route path="*" element={<AlertRouter />} />
-                  )}
-                </Routes>
-              )}
-            </BasicLayout>
-          </HashRouter>
-        </Spin>
+        <HashRouter>
+          {
+            useMemo(() => {
+              return <BasicLayout>
+                {
+                  location.href?.indexOf('#/flow') > -1 ? (
+                    <Routes>
+                      <Route path="/flow" element={<UserPage />} />
+                    </Routes>
+                  ) :
+                    location.href?.indexOf('#/ccd') > -1 ? (
+                      <Routes>
+                        <Route path="/ccd" element={<ProjectPage />} />
+                      </Routes>
+                    ) :
+                      (
+                        <Routes>
+                          <Route path="/login" element={<Login />} />
+                          <Route path="/home" element={<HomePage />} />
+                          <Route path="/project" element={<ProjectPage />} />
+                          {/* <Route path="/flow" element={<FlowEditor />} /> */}
+                          {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
+                          <Route path="/alert/*" element={<AlertRouter />} />
+                          <Route path="/userSetting" element={<UserPage />} />
+                          <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
+                          <Route path="/software" element={<SoftwareRouter />} />
+                          <Route path="/auth/*" element={<AuthRouter />} />
+                          {userAuthList?.includes('projects') ? (
+                            <Route path="*" element={<HomePage />} />
+                          ) : (
+                            <Route path="*" element={<AlertRouter />} />
+                          )}
+                        </Routes>
+                      )
+                }
+              </BasicLayout>
+            }, [])
+          }
+        </HashRouter>
       </ConfigProvider>
 
       {!!empowerVisible ? (
@@ -321,7 +330,7 @@ const App: React.FC = () => {
           </Form>
         </Modal>
       ) : null}
-    </ErrorBoundary>
+    </Fragment>
   )
 }
 

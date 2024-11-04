@@ -2,7 +2,6 @@ import React, {
   Fragment,
   useEffect,
   useMemo,
-  useReducer,
   useRef,
   useState,
 } from 'react';
@@ -50,10 +49,8 @@ import {
 import {
   addParams,
   deleteParams,
-  getDataList,
   getFlowStatusService,
   getHistoryList,
-  getListStatusService,
   getParams,
   startFlowService,
   stopFlowService,
@@ -80,6 +77,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<any>([]);
+  const [searchVal, setSearchVal] = useState('');
 
   // 进入页面默认拉取
   useEffect(() => {
@@ -94,11 +92,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
   }, [projectList]);
   // 模糊查询
   const onSearch = (val: any) => {
-    setDataList(() => {
-      return (projectList || []).filter((item: any) => {
-        return item.name.indexOf(val) > -1;
-      });
-    });
+    setSearchVal(val);
   };
   // 导入项目
   const uploadProps = {
@@ -143,156 +137,158 @@ const ProjectPage: React.FC<Props> = (props: any) => {
 
   return (
     <div className={`${styles.projectPage}`}>
-      <Spin spinning={loading} tip={'加载中...'}>
-        <PrimaryTitle title="方案列表  Projects" onSearch={onSearch}>
-          {userAuthList.includes('projects.delete') ||
-            userAuthList.includes('projects.export') ? (
-            <Dropdown
-              getPopupContainer={(triggerNode: any) => {
-                return triggerNode.parentNode || document.body;
-              }}
-              overlay={
-                <Menu>
-                  <Menu.Item key={`all-selecetd`}>
+      <PrimaryTitle title="方案列表  Projects" onSearch={onSearch}>
+        {userAuthList.includes('projects.delete') ||
+          userAuthList.includes('projects.export') ? (
+          <Dropdown
+            getPopupContainer={(triggerNode: any) => {
+              return triggerNode.parentNode || document.body;
+            }}
+            overlay={
+              <Menu>
+                <Menu.Item key={`all-selecetd`}>
+                  <Button
+                    icon={<SelectOutlined />}
+                    type="primary"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      setSelectedRows((prev: any) => {
+                        if (prev?.length === dataList?.length) {
+                          return [];
+                        }
+                        return dataList?.map?.((item: any) => item.id);
+                      });
+                    }}
+                  >
+                    {selectedRows?.length === dataList?.length
+                      ? '取消全选'
+                      : '批量全选'}
+                  </Button>
+                </Menu.Item>
+                {userAuthList.includes('projects.delete') ? (
+                  <Menu.Item key={`delete-selecetd`}>
                     <Button
-                      icon={<SelectOutlined />}
+                      icon={<DeleteOutlined />}
                       type="primary"
-                      style={{ width: '100%' }}
+                      disabled={!selectedRows?.length}
                       onClick={() => {
-                        setSelectedRows((prev: any) => {
-                          if (prev?.length === dataList?.length) {
-                            return [];
-                          }
-                          return dataList?.map?.((item: any) => item.id);
-                        });
-                      }}
-                    >
-                      {selectedRows?.length === dataList?.length
-                        ? '取消全选'
-                        : '批量全选'}
-                    </Button>
-                  </Menu.Item>
-                  {userAuthList.includes('projects.delete') ? (
-                    <Menu.Item key={`delete-selecetd`}>
-                      <Button
-                        icon={<DeleteOutlined />}
-                        type="primary"
-                        disabled={!selectedRows?.length}
-                        onClick={() => {
-                          setLoading(true);
-                          const onDelete = (id: string, index: number) => {
-                            deleteParams(id).then((res) => {
-                              if (!!res && res.code === 'SUCCESS') {
-                                if (!!selectedRows[index + 1]) {
-                                  onDelete(selectedRows[index + 1], index + 1);
-                                } else {
-                                  getProjectListFun?.();
-                                }
+                        setLoading(true);
+                        const onDelete = (id: string, index: number) => {
+                          deleteParams(id).then((res) => {
+                            if (!!res && res.code === 'SUCCESS') {
+                              if (!!selectedRows[index + 1]) {
+                                onDelete(selectedRows[index + 1], index + 1);
                               } else {
                                 getProjectListFun?.();
                               }
-                            });
-                          };
-                          onDelete(selectedRows[0], 0);
-                        }}
-                      >
-                        批量删除
-                      </Button>
-                    </Menu.Item>
-                  ) : null}
-                  {userAuthList.includes('projects.export') ? (
-                    <Menu.Item key={`export-selecetd`}>
-                      <Button
-                        icon={<CloudDownloadOutlined />}
-                        type="primary"
-                        onClick={() => {
-                          var zip = new JSZip();
-                          let list = [];
-                          if (selectedRows?.length) {
-                            list = (selectedRows || [])
-                              ?.map?.((row: string) => {
-                                return dataList?.filter(
-                                  (i: any) => i.id === row
-                                )?.[0];
-                              })
-                              .filter(Boolean);
-                          } else {
-                            list = dataList;
-                          }
-                          list?.forEach((record: any) => {
-                            const {
-                              createdAt,
-                              updatedAt,
-                              id,
-                              project_id,
-                              _id,
-                              running,
-                              alertShow,
-                              ...rest
-                            } = record;
-                            zip.file(
-                              `${record?.name}.json`,
-                              JSON.stringify(rest)
-                            );
+                            } else {
+                              getProjectListFun?.();
+                            }
                           });
-                          zip
-                            .generateAsync({ type: 'blob' })
-                            .then((content: any) => {
-                              downFileFun(content, '方案列表.zip');
-                            });
-                          setSelectedRows([]);
-                        }}
-                      >
-                        批量导出
-                      </Button>
-                    </Menu.Item>
-                  ) : null}
-                </Menu>
-              }
-            >
-              <Button icon={<CloudDownloadOutlined />} type="primary">
-                批量操作
-              </Button>
-            </Dropdown>
-          ) : null}
-          {userAuthList.includes('projects.import') ? (
-            <Upload {...uploadProps}>
-              <Button
-                icon={<UploadOutlined />}
-                type="primary"
-                loading={updateLoading}
-              >
-                导入方案
-              </Button>
-            </Upload>
-          ) : null}
-          {userAuthList.includes('projects.new') ? (
+                        };
+                        onDelete(selectedRows[0], 0);
+                      }}
+                    >
+                      批量删除
+                    </Button>
+                  </Menu.Item>
+                ) : null}
+                {userAuthList.includes('projects.export') ? (
+                  <Menu.Item key={`export-selecetd`}>
+                    <Button
+                      icon={<CloudDownloadOutlined />}
+                      type="primary"
+                      onClick={() => {
+                        var zip = new JSZip();
+                        let list = [];
+                        if (selectedRows?.length) {
+                          list = (selectedRows || [])
+                            ?.map?.((row: string) => {
+                              return dataList?.filter(
+                                (i: any) => i.id === row
+                              )?.[0];
+                            })
+                            .filter(Boolean);
+                        } else {
+                          list = dataList;
+                        }
+                        list?.forEach((record: any) => {
+                          const {
+                            createdAt,
+                            updatedAt,
+                            id,
+                            project_id,
+                            _id,
+                            running,
+                            alertShow,
+                            ...rest
+                          } = record;
+                          zip.file(
+                            `${record?.name}.json`,
+                            JSON.stringify(rest)
+                          );
+                        });
+                        zip
+                          .generateAsync({ type: 'blob' })
+                          .then((content: any) => {
+                            downFileFun(content, '方案列表.zip');
+                          });
+                        setSelectedRows([]);
+                      }}
+                    >
+                      批量导出
+                    </Button>
+                  </Menu.Item>
+                ) : null}
+              </Menu>
+            }
+          >
+            <Button icon={<CloudDownloadOutlined />} type="primary">
+              批量操作
+            </Button>
+          </Dropdown>
+        ) : null}
+        {userAuthList.includes('projects.import') ? (
+          <Upload {...uploadProps}>
             <Button
-              icon={<PlusOutlined />}
+              icon={<UploadOutlined />}
               type="primary"
-              onClick={() => {
-                // navigate('/flow', { replace: true });
-                ipcRenderer?.ipcCommTest(
-                  'alert-open-browser',
-                  JSON.stringify({
-                    type: 'main',
-                    data: { id: 'new' },
-                  })
-                );
-              }}
               loading={updateLoading}
             >
-              新建方案
+              导入方案
             </Button>
-          ) : null}
-        </PrimaryTitle>
-        <div className="home-page-body scrollbar-style">
-          {userAuthList.includes('projects.list')
-            ? (
-              dataList.sort((a: any, b: any) => {
-                return b.updatedAt - a.updatedAt;
-              }) || []
-            )?.map?.((item: any, index: number) => {
+          </Upload>
+        ) : null}
+        {userAuthList.includes('projects.new') ? (
+          <Button
+            icon={<PlusOutlined />}
+            type="primary"
+            onClick={() => {
+              // navigate('/flow', { replace: true });
+              ipcRenderer?.ipcCommTest(
+                'alert-open-browser',
+                JSON.stringify({
+                  type: 'main',
+                  data: { id: 'new' },
+                })
+              );
+            }}
+            loading={updateLoading}
+          >
+            新建方案
+          </Button>
+        ) : null}
+      </PrimaryTitle>
+      <div className="home-page-body scrollbar-style">
+        {userAuthList.includes('projects.list')
+          ? (dataList || [])
+            ?.sort((a: any, b: any) => {
+              return b.updatedAt - a.updatedAt;
+            })
+            .filter((item: any) => {
+              return item.name.indexOf(searchVal) > -1;
+            })
+            ?.map?.((item: any, index: number) => {
               const { id } = item;
               return (
                 <ProjectItem
@@ -307,9 +303,8 @@ const ProjectPage: React.FC<Props> = (props: any) => {
                 />
               );
             })
-            : null}
-        </div>
-      </Spin>
+          : null}
+      </div>
     </div>
   );
 };

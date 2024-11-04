@@ -88,6 +88,7 @@ const Login: React.FC<Props> = (props: any) => {
       });
     // }
   };
+  console.log('login');
 
   return (
     <div className={`${styles.loginPage}  flex-box-column`}>

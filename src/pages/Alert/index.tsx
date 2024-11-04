@@ -155,7 +155,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
               })
             }
             {
-              // 添加第三方软件
+              // 编辑配置
               !!editVisible ?
                 <Modal
                   title={`编辑-${editVisible?.alias || editVisible?.name}`}

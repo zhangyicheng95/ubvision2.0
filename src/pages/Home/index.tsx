@@ -42,8 +42,7 @@ const tipList = [
 ]
 
 const Home: React.FC<Props> = (props: any) => {
-  const { projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
-  const dispatch = useDispatch();
+  const { projectList } = useSelector((state: IRootActions) => state);
   const navigate = useNavigate();
   const { ipcRenderer }: any = window || {};
   const [softwareList, setSoftwareList] = useState([]);
@@ -57,7 +56,6 @@ const Home: React.FC<Props> = (props: any) => {
   ]);
 
   useEffect(() => {
-    getProjectListFun?.();
     ProjectApi.getStorage('softwareStorage').then((res: any) => {
       if (!!res && res.code === 'SUCCESS' && !_.isEmpty(res.data)) {
         const { list = [] } = res.data;

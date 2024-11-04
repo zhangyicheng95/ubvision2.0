@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification, dialog } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -8,6 +8,7 @@ import { update } from './update'
 import modules from '../DB/modules/index';
 import { exec } from 'child_process';
 import { networkInterfaces } from 'os';
+import { resolveHtmlPath } from './util'
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, '../..');
 
@@ -122,6 +123,11 @@ ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
   });
 
 });
+// 打开多窗口
+ipcMain.on('alert-open-browser', async (event: IpcMainEvent, arg: string) => {
+  const { type, data } = JSON.parse(arg);
+  createWindow(JSON.stringify(data));
+});
 // 读取快速启动列表
 ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg: string) => {
   console.log(`alert-read-startUp: ${arg}`);
@@ -232,9 +238,23 @@ let myWindow: any = null,
 let tray = null;
 const preload = path.join(__dirname, '../preload/index.mjs');
 const indexHtml = path.join(RENDERER_DIST, 'index.html');
+// 检测当前点击的窗口，是否已打开
+function toggleAlwaysOnTop(type: string) {
+  const windows = BrowserWindow.getAllWindows();
+  let window: any = null;
+  windows.forEach((item: any) => {
+    item.setAlwaysOnTop(false);
+    if (!!type && type === item.customType) {
+      window = item;
+    }
+  });
+  return window;
+};
 
 // 创建主窗口
 const createWindow = async (arg?: any) => {
+  console.log(`argargarg:${arg}`);
+
   let res: any = arg || {};
   let params = '';
   try {
@@ -245,6 +265,30 @@ const createWindow = async (arg?: any) => {
       })
       .join('&');
   } catch (err) { }
+  const mainsWindow = toggleAlwaysOnTop(`main-${res?.id}`);
+  if (!!mainsWindow) {
+    if (mainsWindow?.isMinimized?.()) {
+      mainsWindow?.restore?.();
+    }
+    mainsWindow?.focus?.();
+    // mainsWindow.setAlwaysOnTop(true);
+    return;
+  }
+  const childWindow = toggleAlwaysOnTop(`child-${res?.id}`);
+  if (!!childWindow) {
+    if (childWindow?.isMinimized?.()) {
+      childWindow?.restore?.();
+    }
+    childWindow?.focus?.();
+    // childWindow.setAlwaysOnTop(true);
+    dialog.showMessageBox(childWindow, {
+      type: 'warning',
+      title: '警告',
+      message: '请先关闭该方案的界面监视器，然后再打开流程编辑器',
+      buttons: ['确定'],
+    });
+    return;
+  }
   const mainWindow: any = new BrowserWindow({
     width: !!params ? 1440 : 1280,
     height: !!params ? 900 : 810,
@@ -261,7 +305,7 @@ const createWindow = async (arg?: any) => {
       nodeIntegration: true, // 是否集成Node
     },
   })
-  
+
   // 最小化窗口
   ipcMain.handle(`minimize-${mainWindow.id}`, () => {
     mainWindow.minimize();
@@ -298,13 +342,21 @@ const createWindow = async (arg?: any) => {
     return nativeTheme.themeSource;
   });
 
-  if (VITE_DEV_SERVER_URL) { // #298
-    mainWindow.loadURL(VITE_DEV_SERVER_URL)
-    // Open devTool if the app is not packaged
-    mainWindow.webContents.openDevTools()
-  } else {
-    mainWindow.loadFile(indexHtml)
-  }
+  // if (VITE_DEV_SERVER_URL) { // #298
+  //   mainWindow.loadURL(VITE_DEV_SERVER_URL)
+  //   // Open devTool if the app is not packaged
+  //   mainWindow.webContents.openDevTools()
+  // } else {
+  mainWindow.loadURL(
+    VITE_DEV_SERVER_URL +
+    (res?.type === 'child'
+      ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
+      : !!params
+        ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
+        : `?number=${mainWindow.id}`)
+  );
+  // mainWindow.loadFile(indexHtml)
+  // }
 
   // Test actively push message to the Electron-Renderer
   mainWindow.webContents.on('did-finish-load', () => {
@@ -316,9 +368,10 @@ const createWindow = async (arg?: any) => {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
-
-  // Auto update
-  update(mainWindow)
+  if (!res) {
+    // Auto update
+    update(mainWindow);
+  }
 }
 // 崩溃报告
 const homeDir = os.homedir();
