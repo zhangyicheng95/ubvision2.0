@@ -15,7 +15,7 @@ import Login from '@/pages/Login';
 import HomePage from '@/pages/Home';
 import AlertRouter from '@/pages/Alert';
 import ProjectPage from '@/pages/Projects';
-// import FlowEditor from '@/pages/FlowEditor';
+import FlowPage from '@/pages/Flow';
 import UserPage from '@/pages/UserInfo';
 import Setting from '@/pages/Setting';
 import SoftwareRouter from '@/pages/Software';
@@ -80,9 +80,13 @@ const App: React.FC = () => {
     });
   };
   useEffect(() => {
-    getList();
-    dispatch(getProjectList(getList));
-    dispatch(loopProjectStatus(loopGetStatus));
+    if (location.href?.indexOf('#/flow') > -1) {
+
+    } else {
+      getList();
+      dispatch(getProjectList(getList));
+      dispatch(loopProjectStatus(loopGetStatus));
+    }
 
     return () => {
       !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
@@ -195,7 +199,6 @@ const App: React.FC = () => {
       console.log(err);
     }
   };
-  console.log('app');
 
   return (
     <Fragment>
@@ -227,7 +230,7 @@ const App: React.FC = () => {
                 {
                   location.href?.indexOf('#/flow') > -1 ? (
                     <Routes>
-                      <Route path="/flow" element={<UserPage />} />
+                      <Route path="/flow" element={<FlowPage />} />
                     </Routes>
                   ) :
                     location.href?.indexOf('#/ccd') > -1 ? (
@@ -240,7 +243,7 @@ const App: React.FC = () => {
                           <Route path="/login" element={<Login />} />
                           <Route path="/home" element={<HomePage />} />
                           <Route path="/project" element={<ProjectPage />} />
-                          {/* <Route path="/flow" element={<FlowEditor />} /> */}
+                          <Route path="/flow" element={<FlowPage />} />
                           {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
                           <Route path="/alert/*" element={<AlertRouter />} />
                           <Route path="/userSetting" element={<UserPage />} />

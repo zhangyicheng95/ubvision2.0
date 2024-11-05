@@ -175,10 +175,27 @@ code {
 
 .ant-modal {
   user-select: none;
+  max-height: calc(100vh - 48px);
 
-  .ant-modal-header {
-    margin-bottom: 24px;
+  .ant-modal-content {
+    height: 100%;
+    max-height: calc(100vh - 48px);
+    padding: 24px;
+
+    .ant-modal-header {
+      height: 24px;
+      margin-bottom: 24px;
+    }
+
+    .ant-modal-body {
+      max-height: calc(100vh - 144px);
+    }
   }
+}
+
+.ant-modal>div:first-child {
+  height: 100%;
+  max-height: calc(100vh - 48px);
 }
 
 .ant-input-disabled {

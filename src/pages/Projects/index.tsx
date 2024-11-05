@@ -1,5 +1,4 @@
 import React, {
-  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -11,10 +10,8 @@ import {
   message,
   Modal,
   Dropdown,
-  Menu,
   Upload,
   Input,
-  Spin,
   Popconfirm,
   Checkbox,
 } from 'antd';
@@ -34,6 +31,7 @@ import {
   BarsOutlined,
   SelectOutlined,
   CloudUploadOutlined,
+  BlockOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import * as _ from 'lodash-es';
@@ -134,6 +132,101 @@ const ProjectPage: React.FC<Props> = (props: any) => {
       return false;
     },
   };
+  const settingList: any = [
+    {
+      key: `all-selecetd`,
+      label: <Button
+        icon={<CopyOutlined />}
+        type="primary"
+        style={{ width: '100%' }}
+        onClick={() => {
+          setSelectedRows((prev: any) => {
+            if (prev?.length === dataList?.length) {
+              return [];
+            }
+            return dataList?.map?.((item: any) => item.id);
+          });
+        }}
+      >
+        {selectedRows?.length === dataList?.length
+          ? '取消全选'
+          : '批量全选'}
+      </Button>
+    },
+    userAuthList.includes('projects.delete') ? {
+      key: `delete-selecetd`,
+      label: <Button
+        icon={<DeleteOutlined />}
+        type="primary"
+        disabled={!selectedRows?.length}
+        onClick={() => {
+          setLoading(true);
+          const onDelete = (id: string, index: number) => {
+            deleteParams(id).then((res) => {
+              if (!!res && res.code === 'SUCCESS') {
+                if (!!selectedRows[index + 1]) {
+                  onDelete(selectedRows[index + 1], index + 1);
+                } else {
+                  getProjectListFun?.();
+                }
+              } else {
+                getProjectListFun?.();
+              }
+            });
+          };
+          onDelete(selectedRows[0], 0);
+        }}
+      >
+        批量删除
+      </Button>
+    } : null,
+    userAuthList.includes('projects.export') ? {
+      key: `export-selecetd`,
+      label: <Button
+        icon={<CloudDownloadOutlined />}
+        type="primary"
+        onClick={() => {
+          var zip = new JSZip();
+          let list = [];
+          if (selectedRows?.length) {
+            list = (selectedRows || [])
+              ?.map?.((row: string) => {
+                return dataList?.filter(
+                  (i: any) => i.id === row
+                )?.[0];
+              })
+              .filter(Boolean);
+          } else {
+            list = dataList;
+          }
+          list?.forEach((record: any) => {
+            const {
+              createdAt,
+              updatedAt,
+              id,
+              project_id,
+              _id,
+              running,
+              alertShow,
+              ...rest
+            } = record;
+            zip.file(
+              `${record?.name}.json`,
+              JSON.stringify(rest)
+            );
+          });
+          zip
+            .generateAsync({ type: 'blob' })
+            .then((content: any) => {
+              downFileFun(content, '方案列表.zip');
+            });
+          setSelectedRows([]);
+        }}
+      >
+        批量导出
+      </Button>
+    } : null,
+  ]?.filter(Boolean);
 
   return (
     <div className={`${styles.projectPage}`}>
@@ -144,106 +237,9 @@ const ProjectPage: React.FC<Props> = (props: any) => {
             getPopupContainer={(triggerNode: any) => {
               return triggerNode.parentNode || document.body;
             }}
-            overlay={
-              <Menu>
-                <Menu.Item key={`all-selecetd`}>
-                  <Button
-                    icon={<SelectOutlined />}
-                    type="primary"
-                    style={{ width: '100%' }}
-                    onClick={() => {
-                      setSelectedRows((prev: any) => {
-                        if (prev?.length === dataList?.length) {
-                          return [];
-                        }
-                        return dataList?.map?.((item: any) => item.id);
-                      });
-                    }}
-                  >
-                    {selectedRows?.length === dataList?.length
-                      ? '取消全选'
-                      : '批量全选'}
-                  </Button>
-                </Menu.Item>
-                {userAuthList.includes('projects.delete') ? (
-                  <Menu.Item key={`delete-selecetd`}>
-                    <Button
-                      icon={<DeleteOutlined />}
-                      type="primary"
-                      disabled={!selectedRows?.length}
-                      onClick={() => {
-                        setLoading(true);
-                        const onDelete = (id: string, index: number) => {
-                          deleteParams(id).then((res) => {
-                            if (!!res && res.code === 'SUCCESS') {
-                              if (!!selectedRows[index + 1]) {
-                                onDelete(selectedRows[index + 1], index + 1);
-                              } else {
-                                getProjectListFun?.();
-                              }
-                            } else {
-                              getProjectListFun?.();
-                            }
-                          });
-                        };
-                        onDelete(selectedRows[0], 0);
-                      }}
-                    >
-                      批量删除
-                    </Button>
-                  </Menu.Item>
-                ) : null}
-                {userAuthList.includes('projects.export') ? (
-                  <Menu.Item key={`export-selecetd`}>
-                    <Button
-                      icon={<CloudDownloadOutlined />}
-                      type="primary"
-                      onClick={() => {
-                        var zip = new JSZip();
-                        let list = [];
-                        if (selectedRows?.length) {
-                          list = (selectedRows || [])
-                            ?.map?.((row: string) => {
-                              return dataList?.filter(
-                                (i: any) => i.id === row
-                              )?.[0];
-                            })
-                            .filter(Boolean);
-                        } else {
-                          list = dataList;
-                        }
-                        list?.forEach((record: any) => {
-                          const {
-                            createdAt,
-                            updatedAt,
-                            id,
-                            project_id,
-                            _id,
-                            running,
-                            alertShow,
-                            ...rest
-                          } = record;
-                          zip.file(
-                            `${record?.name}.json`,
-                            JSON.stringify(rest)
-                          );
-                        });
-                        zip
-                          .generateAsync({ type: 'blob' })
-                          .then((content: any) => {
-                            downFileFun(content, '方案列表.zip');
-                          });
-                        setSelectedRows([]);
-                      }}
-                    >
-                      批量导出
-                    </Button>
-                  </Menu.Item>
-                ) : null}
-              </Menu>
-            }
+            menu={{ items: settingList }}
           >
-            <Button icon={<CloudDownloadOutlined />} type="primary">
+            <Button icon={<BlockOutlined />} type="primary">
               批量操作
             </Button>
           </Dropdown>
@@ -546,13 +542,6 @@ const ProjectItem = (props: any) => {
   // 操作列表
   const operations = useMemo(() => {
     return [
-      // {
-      //   key: 'modify',
-      //   label: '编辑',
-      //   icon: <FormOutlined className="contextMenu-icon" />,
-      //   describtion: 'Modify',
-      //   click: onModify
-      // },
       {
         key: 'copy',
         label: '复制',
@@ -568,13 +557,6 @@ const ProjectItem = (props: any) => {
         click: onDelete,
         disabled: !!running,
       },
-      // {
-      //   key: 'export',
-      //   label: '导出',
-      //   icon: <DownloadOutlined className="contextMenu-icon" />,
-      //   describtion: 'Export',
-      //   click: onExport
-      // },
       {
         key: 'start',
         label: '启动',
@@ -591,14 +573,6 @@ const ProjectItem = (props: any) => {
         click: onEnd,
         disabled: !running,
       },
-      // {
-      //   key: 'restart',
-      //   label: '重启',
-      //   icon: <ReloadOutlined className="contextMenu-icon" />,
-      //   describtion: 'Restart',
-      //   click: onReStart,
-      //   disabled: !running
-      // },
     ];
   }, [running]);
   // 获取历史记录列表
@@ -635,7 +609,7 @@ const ProjectItem = (props: any) => {
       title: '版本时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: '50%',
+      // width: '50%',
       render: (text: any) => {
         return moment(text).format('YYYY-MM-DD HH:mm:ss');
       },
@@ -644,7 +618,7 @@ const ProjectItem = (props: any) => {
       title: '操作',
       dataIndex: 'operation',
       key: 'operation',
-      // width: '150px',
+      width: '70px',
       render: (text: any, record: any) => {
         const { filepath } = record;
         return userAuthList.includes('projects.history.rollBack') ? (
@@ -750,267 +724,185 @@ const ProjectItem = (props: any) => {
       return false;
     },
   };
+  const settingList: any = [
+    userAuthList.includes('projects.modify') ? {
+      key: `rename-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        setRenameVisible(true);
+      }}>
+        <FormOutlined className="contextMenu-icon" />
+        重命名
+        <span className="contextMenu-text">Rename</span>
+      </div>
+    } : null,
+    userAuthList.includes('projects.exportConfig') ? {
+      key: `export-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box'>
+        <CloudDownloadOutlined className="contextMenu-icon" />
+        导出/导入
+        <span className="contextMenu-text">Export/Import</span>
+      </div>,
+      children: [
+        {
+          key: `export-project-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            getParams(id).then((res) => {
+              if (!!res && res.code === 'SUCCESS') {
+                const {
+                  createdAt,
+                  updatedAt,
+                  id,
+                  project_id,
+                  _id,
+                  running,
+                  alertShow,
+                  ...rest
+                } = res.data;
+                downFileFun(JSON.stringify(rest), `${item?.name}.json`);
+              } else {
+                message.error(res?.message || '接口异常');
+              }
+            });
+          }}>
+            <CloudDownloadOutlined className="contextMenu-icon" />
+            导出方案
+            <span className="contextMenu-text">Export Project</span>
+          </div>
+        },
+        {
+          key: `export-config-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            getParams(id).then((res) => {
+              if (!!res && res.code === 'SUCCESS') {
+                const { nodes } = res?.data?.flowData || {};
+                downFileFun(
+                  JSON.stringify(nodes),
+                  `${item?.name}参数配置.json`
+                );
+              } else {
+                message.error(res?.message || '接口异常');
+              }
+            });
+          }}>
+            <CloudDownloadOutlined className="contextMenu-icon" />
+            导出节点配置
+            <span className="contextMenu-text">Export Config</span>
+          </div>
+        },
+        { type: 'divider' },
+        {
+          key: `export-alert-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            downFileFun(
+              JSON.stringify(contentData),
+              `${item?.name}的界面配置.json`
+            );
+          }}>
+            <CloudDownloadOutlined className="contextMenu-icon" />
+            导出界面配置
+            <span className="contextMenu-text">Export Alert</span>
+          </div>
+        },
+        {
+          key: `import-alert-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box'>
+            <Upload {...uploadProps}>
+              <CloudUploadOutlined className="contextMenu-icon" />
+              导入界面配置
+              <span className="contextMenu-text">Import Alert</span>
+            </Upload>
+          </div>
+        },
+      ]
+    } : null,
+    {
+      key: `copyID-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        copyUrlToClipBoard(id);
+      }}>
+        <ReconciliationOutlined className="contextMenu-icon" />
+        复制方案ID
+        <span className="contextMenu-text">Copy ID</span>
+      </div>
+    },
+    { type: 'divider' },
+    {
+      key: `open-dir-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box'>
+        <FolderOpenOutlined className="contextMenu-icon" />
+        打开路径
+        <span className="contextMenu-text">Open Dir</span>
+      </div>,
+      children: [
+        {
+          key: `open-project-dir-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            console.log('要打开的方案路径地址：', plugin_dir);
+            openFolder(`${plugin_dir}\\plugins`);
+          }}>
+            <FolderOpenOutlined className="contextMenu-icon" />
+            打开方案路径
+            <span className="contextMenu-text">Open Project</span>
+          </div>
+        },
+        {
+          key: `open-log-dir-${id}`,
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            console.log('要打开的日志路径地址：', logSavePath);
+            openFolder(`${logSavePath}\\`);
+          }}>
+            <FolderOpenOutlined className="contextMenu-icon" />
+            打开日志路径
+            <span className="contextMenu-text">Open Log</span>
+          </div>
+        },
+      ]
+    },
+    userAuthList.includes('projects.history') ? {
+      key: `reset-history-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        getHistoryListFun();
+      }}>
+        <HistoryOutlined className="contextMenu-icon" />
+        历史记录
+        <span className="contextMenu-text">Reset History</span>
+      </div>
+    } : null,
+    userAuthList.includes('projects.nodeStatus') ? {
+      key: `node-status-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        getStateListFun();
+      }}>
+        <BarsOutlined className="contextMenu-icon" />
+        节点状态
+        <span className="contextMenu-text">Node Status</span>
+      </div>
+    } : null,
+    (userAuthList.includes('projects.delete') || userAuthList.includes('projects.export')) ? {
+      key: `node-select-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        setSelectedRows((prev: any) => {
+          if (prev.includes(id)) {
+            return prev.filter((i: any) => i !== id);
+          } else {
+            return prev.concat(id);
+          }
+        });
+      }}>
+        <SelectOutlined className="contextMenu-icon" />
+        多选
+        <span className="contextMenu-text">Project Select</span>
+      </div>
+    } : null,
+  ]?.filter(Boolean);
 
   return (
     <div>
       <Dropdown
-        // @ts-ignore
-        getPopupContainer={(triggerNode) => {
+        getPopupContainer={(triggerNode: any) => {
           return triggerNode.parentNode || document.body;
         }}
-        overlay={
-          <Menu className="dropdown-box">
-            {userAuthList.includes('projects.modify') ? (
-              <Menu.Item
-                key={`rename-${id}`}
-                onClick={() => {
-                  setRenameVisible(true);
-                }}
-              >
-                <FormOutlined className="contextMenu-icon" />
-                重命名
-                <span className="contextMenu-text">Rename</span>
-              </Menu.Item>
-            ) : null}
-            {(operations || [])?.map?.((opera: any, index: number) => {
-              const { key, label, icon, describtion, click, disabled } = opera;
-              if (!userAuthList.includes(`projects.${key}`)) {
-                return null;
-              }
-              if (['start', 'stop', 'restart', 'export'].includes(key)) {
-                return null;
-              }
-              return (
-                <Fragment key={key}>
-                  {index === 4 ? <Menu.Divider /> : null}
-                  <Menu.Item
-                    key={key}
-                    onClick={() => {
-                      click(item);
-                    }}
-                    disabled={disabled}
-                  >
-                    {icon}
-                    {label}
-                    <span className="contextMenu-text">{describtion}</span>
-                  </Menu.Item>
-                </Fragment>
-              );
-            })}
-            <Menu.Divider />
-            {userAuthList.includes('projects.exportConfig') ? (
-              <Menu.SubMenu
-                key={`export-${id}`}
-                title={
-                  <div
-                    className="flex-box"
-                    style={{ width: '100%', whiteSpace: 'nowrap' }}
-                  >
-                    <CloudDownloadOutlined className="contextMenu-icon" />
-                    导出/导入
-                    <span className="contextMenu-text">Export/Import</span>
-                  </div>
-                }
-              >
-                <Menu.Item
-                  key={`export-project-${id}`}
-                  onClick={() => {
-                    getParams(id).then((res) => {
-                      if (!!res && res.code === 'SUCCESS') {
-                        const {
-                          createdAt,
-                          updatedAt,
-                          id,
-                          project_id,
-                          _id,
-                          running,
-                          alertShow,
-                          ...rest
-                        } = res.data;
-                        downFileFun(JSON.stringify(rest), `${item?.name}.json`);
-                      } else {
-                        message.error(res?.message || '接口异常');
-                      }
-                    });
-                  }}
-                >
-                  <div
-                    className="flex-box"
-                    style={{ width: '100%', whiteSpace: 'nowrap' }}
-                  >
-                    <CloudDownloadOutlined className="contextMenu-icon" />
-                    导出方案
-                    <span className="contextMenu-text">Export Project</span>
-                  </div>
-                </Menu.Item>
-                <Menu.Item
-                  key={`export-config-${id}`}
-                  onClick={() => {
-                    getParams(id).then((res) => {
-                      if (!!res && res.code === 'SUCCESS') {
-                        const { nodes } = res?.data?.flowData || {};
-                        downFileFun(
-                          JSON.stringify(nodes),
-                          `${item?.name}参数配置.json`
-                        );
-                      } else {
-                        message.error(res?.message || '接口异常');
-                      }
-                    });
-                  }}
-                >
-                  <CloudDownloadOutlined className="contextMenu-icon" />
-                  导出节点配置
-                  <span className="contextMenu-text">Export Config</span>
-                </Menu.Item>
-                <Menu.Divider />
-                <Menu.Item
-                  key={`export-alert-${id}`}
-                  onClick={() => {
-                    downFileFun(
-                      JSON.stringify(contentData),
-                      `${item?.name}的界面配置.json`
-                    );
-                  }}
-                >
-                  <CloudDownloadOutlined className="contextMenu-icon" />
-                  导出界面配置
-                  <span className="contextMenu-text">Export Alert</span>
-                </Menu.Item>
-                <Menu.Item key={`import-alert-${id}`}>
-                  <Upload {...uploadProps}>
-                    <CloudUploadOutlined className="contextMenu-icon" />
-                    导入界面配置
-                    <span className="contextMenu-text">Import Alert</span>
-                  </Upload>
-                </Menu.Item>
-              </Menu.SubMenu>
-            ) : null}
-            {process.env.NODE_ENV === 'development' ? (
-              <Menu.Item
-                disabled={!!running}
-                key={`clear-ccd-${id}`}
-                onClick={() => {
-                  const params = {
-                    ...item,
-                    contentData: {},
-                  };
-                  onUpdateProject(params);
-                }}
-              >
-                <DeleteOutlined className="contextMenu-icon" />
-                清空界面配置
-                <span className="contextMenu-text">Clear CCD</span>
-              </Menu.Item>
-            ) : null}
-            <Menu.Item
-              key={`copyID-${id}`}
-              onClick={() => {
-                copyUrlToClipBoard(id);
-              }}
-            >
-              <ReconciliationOutlined className="contextMenu-icon" />
-              复制方案ID
-              <span className="contextMenu-text">Copy ID</span>
-            </Menu.Item>
-            <Menu.SubMenu
-              key={`open-dir-${id}`}
-              disabled={!plugin_dir}
-              title={
-                <div
-                  className="flex-box"
-                  style={{ width: '100%', whiteSpace: 'nowrap' }}
-                >
-                  <FolderOpenOutlined className="contextMenu-icon" />
-                  打开路径
-                  <span className="contextMenu-text">Open Dir</span>
-                </div>
-              }
-            >
-              <Menu.Item
-                key={`open-project-dir-${id}`}
-                disabled={!plugin_dir}
-                onClick={() => {
-                  console.log('要打开的方案路径地址：', plugin_dir);
-                  openFolder(`${plugin_dir}\\plugins`);
-                }}
-              >
-                <div
-                  className="flex-box"
-                  style={{ width: '100%', whiteSpace: 'nowrap' }}
-                >
-                  <FolderOpenOutlined className="contextMenu-icon" />
-                  打开方案路径
-                  <span className="contextMenu-text">Open Project</span>
-                </div>
-              </Menu.Item>
-              <Menu.Item
-                key={`open-log-dir-${id}`}
-                disabled={!logSavePath}
-                onClick={() => {
-                  console.log('要打开的日志路径地址：', logSavePath);
-                  openFolder(`${logSavePath}\\`);
-                }}
-              >
-                <div
-                  className="flex-box"
-                  style={{ width: '100%', whiteSpace: 'nowrap' }}
-                >
-                  <FolderOpenOutlined className="contextMenu-icon" />
-                  打开日志路径
-                  <span className="contextMenu-text">Open Log</span>
-                </div>
-              </Menu.Item>
-            </Menu.SubMenu>
-            {userAuthList.includes('projects.history') ? (
-              <Menu.Item
-                disabled={!!running}
-                key={`reset-history-${id}`}
-                onClick={() => {
-                  getHistoryListFun();
-                }}
-              >
-                <HistoryOutlined className="contextMenu-icon" />
-                历史记录
-                <span className="contextMenu-text">Reset History</span>
-              </Menu.Item>
-            ) : null}
-            {userAuthList.includes('projects.nodeStatus') ? (
-              <Menu.Item
-                disabled={!running}
-                key={`node-status-${id}`}
-                onClick={() => {
-                  getStateListFun();
-                }}
-              >
-                <BarsOutlined className="contextMenu-icon" />
-                节点状态
-                <span className="contextMenu-text">Node Status</span>
-              </Menu.Item>
-            ) : null}
-            {userAuthList.includes('projects.delete') ||
-              userAuthList.includes('projects.export') ? (
-              <Menu.Item
-                disabled={running}
-                key={`node-select-${id}`}
-                onClick={() => {
-                  setSelectedRows((prev: any) => {
-                    if (prev.includes(id)) {
-                      return prev.filter((i: any) => i !== id);
-                    } else {
-                      return prev.concat(id);
-                    }
-                  });
-                }}
-              >
-                <SelectOutlined className="contextMenu-icon" />
-                多选
-                <span className="contextMenu-text">Project Select</span>
-              </Menu.Item>
-            ) : null}
-          </Menu>
-        }
-        onContextMenu={() => setSelectedRows([])}
+        menu={{ items: settingList }}
         trigger={['contextMenu']}
       >
         <div className="item-box flex-box-start">
@@ -1095,12 +987,13 @@ const ProjectItem = (props: any) => {
           <Modal
             title={`历史记录-${historyVisible}`}
             // width="calc(100vw - 48px)"
-            wrapClassName={'plugin-manager-modal'}
+            wrapClassName={'project-history-modal'}
             centered
             open={!!historyVisible}
             maskClosable={false}
             onCancel={() => setHistoryVisible('')}
             footer={null}
+            getContainer={false}
           >
             <div className="plugin-manager-modal-body">
               <BasicTable

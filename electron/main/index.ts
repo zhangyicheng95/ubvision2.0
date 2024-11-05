@@ -292,8 +292,8 @@ const createWindow = async (arg?: any) => {
   const mainWindow: any = new BrowserWindow({
     width: !!params ? 1440 : 1280,
     height: !!params ? 900 : 810,
-    minWidth: !!params ? 1080 : 1280,
-    minHeight: !!params ? 700 : 810,
+    minWidth: !!params ? 1440 : 1280,
+    minHeight: !!params ? 900 : 810,
     type: `main-${res?.id}`,
     frame: false, // 隐藏窗口框架
     skipTaskbar: false, //是否在任务栏中显示窗口
@@ -343,10 +343,9 @@ const createWindow = async (arg?: any) => {
   });
 
   // if (VITE_DEV_SERVER_URL) { // #298
-  //   mainWindow.loadURL(VITE_DEV_SERVER_URL)
   //   // Open devTool if the app is not packaged
   //   mainWindow.webContents.openDevTools()
-  // } else {
+  // }
   mainWindow.loadURL(
     VITE_DEV_SERVER_URL +
     (res?.type === 'child'
@@ -355,8 +354,7 @@ const createWindow = async (arg?: any) => {
         ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
         : `?number=${mainWindow.id}`)
   );
-  // mainWindow.loadFile(indexHtml)
-  // }
+
 
   // Test actively push message to the Electron-Renderer
   mainWindow.webContents.on('did-finish-load', () => {
