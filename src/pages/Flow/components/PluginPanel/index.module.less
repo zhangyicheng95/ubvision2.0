@@ -1,8 +1,109 @@
 .pluginPanel {
   height: 100%;
-  width: 200px;
-  overflow: auto;
+  width: 100%;
   border-right: 1px solid rgba(144, 144, 144, 0.5);
 
-  :global {}
+  :global {
+    .plugin-panel-left {
+      width: 31px;
+      font-size: 16px;
+      height: 100%;
+      border-right: 1px solid rgba(144, 144, 144, 0.5);
+      font-weight: bolder;
+
+      &-item {
+        width: 100%;
+        padding: 8px 0;
+        line-height: 1.1;
+        font-size: 16px;
+        text-align: center;
+
+        &-icon {
+          font-size: 18px;
+          margin-bottom: 8px;
+        }
+      }
+
+      &-item:hover {
+        background-color: rgba(181, 249, 255, 0.5);
+      }
+    }
+
+    .plugin-panel-right {
+      height: 100%;
+      flex: 1;
+      overflow-y: auto;
+
+      &-type {
+        padding: 4px 8px;
+        gap: 16px;
+
+        &-item {
+          cursor: pointer;
+        }
+      }
+
+      &-search {}
+
+      &-body {
+        flex: 1;
+        width: 100%;
+        overflow-y: auto;
+
+        .ant-menu {
+          height: 100%;
+
+          padding: 0;
+
+          .ant-menu-submenu-title {
+            padding: 4px 8px !important;
+
+            .title {
+
+              .title-icon {
+                height: 22px;
+                margin-right: 12px;
+                margin-top: -3px;
+              }
+            }
+          }
+
+          .ant-menu-item {
+            border-bottom: 0;
+            padding: 0 !important;
+
+            .ant-menu-title-content {
+              padding: 0 !important;
+
+              .item {
+                box-sizing: border-box;
+                height: 40px;
+                width: 100%;
+                cursor: move;
+
+                .img-box {
+                  height: 35px;
+                  width: 35px;
+                  min-width: 35px;
+                  background-color: rgba(144, 144, 144, 0.1);
+
+                  .img {
+                    height: 20px;
+                  }
+                }
+
+                .text-content {
+                  padding: 0 16px;
+                }
+              }
+            }
+          }
+
+          .ant-menu-item:nth-child(even) {
+            // background-color: rgba(145, 243, 251, 0.1);
+          }
+        }
+      }
+    }
+  }
 }

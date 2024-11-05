@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { Button, Form, message, Input, AutoComplete } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -22,6 +22,9 @@ import ResizerNode from './components/ResizerNode';
 import CircleNode from './components/CircleNode';
 import TextNode from './components/TextNode';
 import ButtonEdge from './components/ButtonEdge';
+import { getPluginList } from '@/services/flowPlugin';
+import { guid } from '@/utils/utils';
+import { generalConfigList, portTypeObj } from '../../common/constants';
 
 const nodeTypes = {
   annotation: AnnotationNode,
@@ -45,8 +48,6 @@ const CanvasPage: React.FC<Props> = (props: any) => {
   const onConnect = useCallback((params: any) => {
     setEdges((eds) => addEdge(params, eds))
   }, []);
-console.log(edges);
-
 
   return (
     <div className={`flex-box-column ${styles.canvasPage}`}>

@@ -23,7 +23,6 @@ import moment from 'moment';
 import {
   ApartmentOutlined, BugFilled, FieldTimeOutlined, FolderAddOutlined, FolderOpenOutlined, FolderOutlined, LaptopOutlined, PlusOutlined, ProjectOutlined
 } from '@ant-design/icons';
-
 import TooltipDiv from '@/components/TooltipDiv';
 import icon1 from './机械臂1.png';
 import icon2 from './机械臂2.png';

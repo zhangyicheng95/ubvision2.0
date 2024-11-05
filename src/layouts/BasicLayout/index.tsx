@@ -34,7 +34,18 @@ const BasicLayout = (props: any) => {
     <div className={styles.basicLayoutWrapper}>
       <CHeader />
       <ErrorBoundary>
-        <Spin spinning={loading} tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>} percent="auto" indicator={<SunOutlined style={{ fontSize: 40 }} spin />}>
+        <Spin
+          spinning={
+            (window.location.href?.indexOf('#/flow') < 0) &&
+            (window.location.href?.indexOf('#/ccd') < 0) &&
+            loading
+          }
+          tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>}
+          percent="auto"
+          indicator={<SunOutlined style={{ fontSize: 40 }}
+            spin
+          />}
+        >
           <Layout>
             {ifShowSiderNav ? <SiderNav /> : null}
             <Layout className="basic-layout">

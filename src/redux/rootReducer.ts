@@ -7,6 +7,7 @@ const initalState: IRootActions = {
 	loopProjectStatusFun: () => null,
 	projectList: [],
 	selectedRows: [],
+	canvasPlugins: [],
 };
 
 const rootReducer = (state = initalState, actions: IRootActions) => {
@@ -40,6 +41,11 @@ const rootReducer = (state = initalState, actions: IRootActions) => {
 			return {
 				...state,
 				selectedRows: actions.selectedRows,
+			};
+		case rootActionTypes.SET_CANVAS_PLUGINS:
+			return {
+				...state,
+				canvasPlugins: actions.canvasPlugins,
 			};
 		case rootActionTypes.CLEAR_ALL_DATA:
 			return initalState;

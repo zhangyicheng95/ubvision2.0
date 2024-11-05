@@ -4,21 +4,31 @@
     .menu-selected-self {
         background-color: #e6f4ff;
     }
+
+    .primaryColor {
+        color: #e6f4ff;
+    }
+
+    .primaryBackgroundColor {
+        background-color: #e6f4ff;
+    }
 }
 
 @media (prefers-color-scheme: dark) {
     .menu-selected-self {
         background-color: @primaryColor;
     }
+
+    .primaryColor {
+        color: @primaryColor;
+    }
+
+    .primaryBackgroundColor {
+        background-color: @primaryColor;
+    }
 }
 
-.primaryColor {
-    color: #e6f4ff;
-}
 
-.primaryBackgroundColor {
-    background-color: #e6f4ff;
-}
 
 .flex-box {
     display: flex;
@@ -137,4 +147,9 @@
 
 .boxShadow {
     box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.1);
+}
+
+.nameStyle {
+    color: @primaryColor;
+    cursor: pointer;
 }

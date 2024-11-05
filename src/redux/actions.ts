@@ -15,6 +15,7 @@ export enum rootActionTypes {
 	"LOOP_PROJECT_STATUS" = "LOOP_PROJECT_STATUS",
 	"SET_PROJECT_LIST" = "SET_PROJECT_LIST",
 	"SET_SELECTED_ROWS" = "SET_SELECTED_ROWS",
+	"SET_CANVAS_PLUGINS" = "SET_CANVAS_PLUGINS",
 	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
 }
 
@@ -26,6 +27,7 @@ export interface IRootActions {
 	loopProjectStatusFun: (list: []) => null,
 	projectList: [];
 	selectedRows: [];
+	canvasPlugins: [];
 }
 
 // 缓存用户token
@@ -68,6 +70,13 @@ export const setSelectedRows = (selectedRows: []) => {
 	return {
 		type: rootActionTypes.SET_PROJECT_LIST,
 		selectedRows,
+	};
+};
+// 流程图-左侧插件列表
+export const setCanvasPlugins = (canvasPlugins: []) => {
+	return {
+		type: rootActionTypes.SET_CANVAS_PLUGINS,
+		canvasPlugins
 	};
 };
 // 重置所有的init

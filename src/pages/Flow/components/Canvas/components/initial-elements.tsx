@@ -62,6 +62,7 @@ export const nodes = [
   {
     id: '2-1',
     type: 'group',
+    resizable: true,
     position: {
       x: -170,
       y: 250,
