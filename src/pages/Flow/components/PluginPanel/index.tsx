@@ -17,7 +17,11 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   const [pluginType, setPluginType] = useState('plugin');
   const [ifBuildIn, setIfBuildIn] = useState(true);
   const [searchVal, setSearchVal] = useState('');
-
+  // 开始拖拽
+  const onDragStart = (event: any, data: any) => {
+    event.dataTransfer.setData('application/reactflow', JSON.stringify(data));
+    event.dataTransfer.effectAllowed = 'move';
+  };
   // 插件列表
   const items: any = useMemo(() => {
     return (Object.entries(canvasPlugins) || [])
@@ -59,6 +63,8 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                     <div
                       className="item flex-box"
                       style={(index + 1) === showList.length ? { marginBottom: 0 } : {}}
+                      onDragStart={(event) => onDragStart(event, data)}
+                      draggable
                       onMouseDown={(e: any) => {
 
                       }}

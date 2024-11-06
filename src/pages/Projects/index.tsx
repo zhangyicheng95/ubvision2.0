@@ -67,7 +67,7 @@ interface Props { }
 const userAuthList = getUserAuthList();
 
 const ProjectPage: React.FC<Props> = (props: any) => {
-  const { ipcRenderer }: any = window?.Electron || {};
+  const { ipcRenderer }: any = window || {};
   const { projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const timerRef = useRef<any>();
@@ -330,7 +330,7 @@ const ProjectItem = (props: any) => {
     flowData,
     contentData,
   } = item;
-  const { ipcRenderer }: any = window?.Electron || {};
+  const { ipcRenderer }: any = window || {};
   const [logSavePath, setLogSavePath] = useState('');
   const [historyList, setHistoryList] = useState([]);
   const [historyVisible, setHistoryVisible] = useState('');

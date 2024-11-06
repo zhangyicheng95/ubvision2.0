@@ -37,6 +37,7 @@
       &-type {
         padding: 4px 8px;
         gap: 16px;
+        white-space: nowrap;
 
         &-item {
           cursor: pointer;
@@ -51,8 +52,6 @@
         overflow-y: auto;
 
         .ant-menu {
-          height: 100%;
-
           padding: 0;
 
           .ant-menu-submenu-title {
@@ -96,14 +95,10 @@
                 }
 
                 .text-content {
-                  padding: 0 16px;
+                  padding: 0 8px;
                 }
               }
             }
-          }
-
-          .ant-menu-item:nth-child(even) {
-            // background-color: rgba(145, 243, 251, 0.1);
           }
         }
       }

@@ -4,7 +4,7 @@ import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined } from '
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
+import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
 import { startFlowService, stopFlowService } from '@/services/flowEditor';
 import { clearAllInterval } from '@/utils/utils';
 
@@ -28,6 +28,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       dispatch(setLoading(true));
       saveGraph().then((res) => {
         startFlowService({
+          ...canvasData,
           id: canvasData?.id,
           debug: type === 'debugger'
         }).then(
@@ -35,6 +36,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
             dispatch(setLoading(false));
             if (['success', 'SUCCESS'].includes(res?.code)) {
               dispatch(setLoading(false));
+              dispatch(setCanvasStart(true));
             } else {
               message.error(
                 res?.message || res?.msg || '服务启动失败，请检查网络设置'
@@ -71,7 +73,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       stopFlowService(canvasData?.id).then((res) => {
         if (['success', 'SUCCESS'].includes(res?.code)) {
           dispatch(setLoading(false));
-
+          dispatch(setCanvasStart(false));
         } else {
           message.error(res?.message || '停止服务失败，请检查网络设置');
         }

@@ -20,6 +20,6 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 let store = createStore(persistedReducer, composeEnhancers(applyMiddleware(thunk)));
 
 // @ts-ignore
-let persistor = persistStore(store);
+let persistor: any = null; //persistStore(store); // 是否开启持久化存储
 
 export { store, persistor };

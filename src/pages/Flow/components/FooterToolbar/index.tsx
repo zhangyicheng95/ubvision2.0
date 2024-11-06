@@ -6,10 +6,16 @@ import {
 } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setCanvasData } from '@/redux/actions';
+import TooltipDiv from '@/components/TooltipDiv';
+import { chooseFolder, openFolder } from '@/api/native-path';
 
 interface Props { }
 
 const FooterToolbar: React.FC<Props> = (props: any) => {
+  const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const [terminalVisible, setTerminalVisible] = useState('');
 
   return (
@@ -32,7 +38,26 @@ const FooterToolbar: React.FC<Props> = (props: any) => {
         }
       </div>
       <div className="flex-box-justify-end right-project-dir">
-        123123
+        {
+          !!canvasData?.plugin_dir
+            ?
+            <TooltipDiv title="打开插件地址" placement="topRight" onClick={() => openFolder(canvasData?.plugin_dir + '\\plugins')}>
+              {canvasData?.plugin_dir}
+            </TooltipDiv>
+            :
+            <TooltipDiv onClick={() => {
+              chooseFolder((res: any) => {
+                const pluginPath = _.isArray(res) ? res[0] : res;
+                const result = {
+                  ...canvasData,
+                  plugin_dir: pluginPath,
+                };
+                dispatch(setCanvasData(result));
+              });
+            }}>
+              设置方案路径
+            </TooltipDiv>
+        }
       </div>
     </div>
   );

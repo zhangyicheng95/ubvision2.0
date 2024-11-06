@@ -35,11 +35,7 @@ const BasicLayout = (props: any) => {
       <CHeader />
       <ErrorBoundary>
         <Spin
-          spinning={
-            (window.location.href?.indexOf('#/flow') < 0) &&
-            (window.location.href?.indexOf('#/ccd') < 0) &&
-            loading
-          }
+          spinning={loading}
           tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>}
           percent="auto"
           indicator={<SunOutlined style={{ fontSize: 40 }}

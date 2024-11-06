@@ -236,6 +236,80 @@
       .react-flow__minimap .annotation {
         display: none;
       }
+
+      .custom-node {
+        min-width: 140px;
+        min-height: 80px;
+        padding: 0 8px 8px;
+        border: 3px solid #30a2a3;
+        border-radius: 3px;
+        box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.2);
+        font-size: 12px;
+
+        .node-top {
+          width: 100%;
+          justify-content: space-between;
+    
+          .node-top-icon {
+            width: 16px;
+            height: 16px;
+            font-size: 16px;
+            color: #0f0;
+            background: #454648;
+            margin-left: 8px;
+            cursor: pointer;
+          }
+        }
+    
+        .node-content {
+          flex: 1;
+          flex-direction: column;
+          overflow: hidden;
+    
+          .center {
+            width: 100%;
+    
+            .center-icon {
+              font-size: 16px;
+              color: gray;
+            }
+          }
+    
+          .json-content {
+            width: 100%;
+            margin-bottom: 8px;
+            // border: 1px solid rgba(241, 242, 243, 0.5);
+            padding: 4px 8px;
+          }
+    
+          .img-box {
+            flex-wrap: wrap;
+            width: 100%;
+            height: 100%;
+    
+            .ant-image {
+              width: 100%;
+    
+              .view-box {
+                width: 100%;
+                margin-bottom: 8px;
+                background: #2e394d;
+    
+                img {
+                  width: 100%;
+                  cursor: crosshair;
+                }
+              }
+            }
+          }
+        }
+    
+        .node-footer {
+          justify-content: space-between;
+          padding-top: 8px;
+          font-size: 20px;
+        }
+      }
     }
   }
 }

@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import * as _ from 'lodash-es';
 import {
+  getUserAuthList,
   guid,
 } from '@/utils/utils';
 import styles from './index.module.less';
@@ -43,6 +44,7 @@ const tipList = [
 const Home: React.FC<Props> = (props: any) => {
   const { projectList } = useSelector((state: IRootActions) => state);
   const navigate = useNavigate();
+  const userAuthList = getUserAuthList();
   const { ipcRenderer }: any = window || {};
   const [softwareList, setSoftwareList] = useState([]);
   const [tipNum, setTipNum] = useState(0);
@@ -178,13 +180,15 @@ const Home: React.FC<Props> = (props: any) => {
                     key={`home-body-bottom-left-list-item-${index}`}
                     className="home-body-bottom-left-list-item"
                     onClick={() => {
-                      ipcRenderer?.ipcCommTest(
-                        'alert-open-browser',
-                        JSON.stringify({
-                          type: 'main',
-                          data: { id },
-                        })
-                      );
+                      if (userAuthList.includes('projects.modify')) {
+                        ipcRenderer?.ipcCommTest(
+                          'alert-open-browser',
+                          JSON.stringify({
+                            type: 'main',
+                            data: { id },
+                          })
+                        );
+                      }
                     }}
                   >
                     <div className="home-body-bottom-left-list-item-name">{name}</div>

@@ -8,7 +8,16 @@ const initalState: IRootActions = {
 	projectList: [],
 	selectedRows: [],
 	canvasPlugins: [],
-	canvasData: {},
+	canvasData: {
+		id: '',
+		name: '',
+		plugin_dir: '',
+		flowData: {
+			edges: [],
+			nodes: [],
+			groups: []
+		}
+	},
 	canvasStart: false,
 };
 

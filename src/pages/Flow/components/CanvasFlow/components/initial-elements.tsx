@@ -3,6 +3,14 @@ import { MarkerType } from '@xyflow/react';
 
 export const nodes = [
   {
+    id: '0-1',
+    type: 'input',
+    data: {
+      label: '我是测试节点',
+    },
+    position: { x: 0, y: 0 },
+  },
+  {
     id: 'annotation-1',
     type: 'annotation',
     draggable: false,
