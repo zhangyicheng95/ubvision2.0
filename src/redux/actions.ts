@@ -16,6 +16,8 @@ export enum rootActionTypes {
 	"SET_PROJECT_LIST" = "SET_PROJECT_LIST",
 	"SET_SELECTED_ROWS" = "SET_SELECTED_ROWS",
 	"SET_CANVAS_PLUGINS" = "SET_CANVAS_PLUGINS",
+	"SET_CANVAS_DATA" = "SET_CANVAS_DATA",
+	"SET_CANVAS_START" = "SET_CANVAS_START",
 	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
 }
 
@@ -28,6 +30,17 @@ export interface IRootActions {
 	projectList: [];
 	selectedRows: [];
 	canvasPlugins: [];
+	canvasData: {
+		id: '',
+		name: '',
+		plugin_dir: '',
+		flowData: {
+			edges: [],
+			nodes: [],
+			groups: []
+		}
+	};
+	canvasStart: false;
 }
 
 // 缓存用户token
@@ -77,6 +90,20 @@ export const setCanvasPlugins = (canvasPlugins: []) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_PLUGINS,
 		canvasPlugins
+	};
+};
+// 流程图-方案信息
+export const setCanvasData = (canvasData: {}) => {
+	return {
+		type: rootActionTypes.SET_CANVAS_DATA,
+		canvasData
+	};
+};
+// 流程图-启动信息
+export const setCanvasStart = (canvasStart: {}) => {
+	return {
+		type: rootActionTypes.SET_CANVAS_START,
+		canvasStart
 	};
 };
 // 重置所有的init

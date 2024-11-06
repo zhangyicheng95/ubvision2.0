@@ -392,21 +392,13 @@ const ProjectItem = (props: any) => {
   // 编辑
   const onModify = (item: any) => {
     const { id } = item;
-    // if (process.env.NODE_ENV === 'development') {
     ipcRenderer?.ipcCommTest(
       'alert-open-browser',
       JSON.stringify({
         type: 'main',
-        data: {
-          id,
-        },
+        data: { id },
       })
     );
-    // } else {
-    //   navigate('/flow', {
-    //     state: item,
-    //   });
-    // }
   };
   // 复制
   const onCopy = (item: any) => {

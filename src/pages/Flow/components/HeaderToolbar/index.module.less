@@ -1,13 +1,18 @@
 .headerToolbar {
-  height: 50px;
-  min-height: 50px;
+  height: 30px;
+  min-height: 30px;
   width: 100%;
-  line-height: 50px;
-  padding: 0 16px;
+  padding: 0 4px;
   border-bottom: 1px solid rgba(144, 144, 144, 0.5);
-  box-sizing: border-box;
-  justify-content: space-between;
-  position: relative;
+  font-weight: bolder;
 
-  :global {}
+  :global {
+    .header-toolbar-title-box {
+      gap: 4px;
+    }
+
+    .header-toolbar-operation-box {
+      gap: 8px;
+    }
+  }
 }

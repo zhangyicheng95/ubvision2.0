@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import '@/App.css';
 import { Button, ConfigProvider, Form, Input, message, Modal, notification, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
@@ -16,6 +16,7 @@ import HomePage from '@/pages/Home';
 import AlertRouter from '@/pages/Alert';
 import ProjectPage from '@/pages/Projects';
 import FlowPage from '@/pages/Flow';
+import CCDPage from '@/pages/CCD';
 import UserPage from '@/pages/UserInfo';
 import Setting from '@/pages/Setting';
 import SoftwareRouter from '@/pages/Software';
@@ -27,6 +28,14 @@ import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
+  const params: any = !!location.search
+    ? new URLSearchParams(location.search)
+    : !!location.href
+      ? new URLSearchParams(location.href)
+      : {};
+
+  const number = params.get('number') || 1;
+
   const dispatch = useDispatch();
   const timeRef = useRef<any>();
   const loopTimerRef = useRef<any>();
@@ -34,6 +43,7 @@ const App: React.FC = () => {
   const userAuthList = getUserAuthList();
   const [hostName, setHostName] = useState('');
   const [empowerVisible, setEmpowerVisible] = useState(false);
+  const [hasInit, setHasInit] = useState(false);
 
   // 轮循查询每个方案启动状态
   const loopGetStatus = (list: any) => {
@@ -79,7 +89,7 @@ const App: React.FC = () => {
       }
     });
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (location.href?.indexOf('#/flow') > -1) {
 
     } else {
@@ -94,7 +104,7 @@ const App: React.FC = () => {
     };
   }, []);
   // 鉴权
-  useEffect(() => {
+  useLayoutEffect(() => {
     const getUseTimeFun = (hostName: string) => {
       ProjectApi.getStorage('softwareUseTime').then((res) => {
         const { num } = res?.data || {};
@@ -112,15 +122,18 @@ const App: React.FC = () => {
           ) {
             setEmpowerVisible(true);
             clearInterval(timeRef.current);
-          } else if (time - new Date().getTime() < 3 * 24 * 3600 * 1000) {
-            notification.destroy();
-            const { d, h, m, s } = timeToString(time - new Date().getTime());
-            notification.warning({
-              message: '您的授权码即将到期',
-              description: `您的授权仅剩余${d}天${h}小时${m}分钟，请尽快联系管理员续费！`,
-              duration: null,
-            });
-          }
+          } else {
+            if ((time - new Date().getTime()) < 3 * 24 * 3600 * 1000) {
+              notification.destroy();
+              const { d, h, m, s } = timeToString(time - new Date().getTime());
+              notification.warning({
+                message: '您的授权码即将到期',
+                description: `您的授权仅剩余${d}天${h}小时${m}分钟，请尽快联系管理员续费！`,
+                duration: null,
+              });
+            };
+            setHasInit(true);
+          };
         });
       });
     };
@@ -223,10 +236,13 @@ const App: React.FC = () => {
           }
         )}
       >
-        <HashRouter>
-          {
-            useMemo(() => {
-              return <BasicLayout>
+        {
+          useMemo(() => {
+            if (!hasInit) {
+              return null;
+            }
+            return <HashRouter>
+              <BasicLayout>
                 {
                   location.href?.indexOf('#/flow') > -1 ? (
                     <Routes>
@@ -235,7 +251,7 @@ const App: React.FC = () => {
                   ) :
                     location.href?.indexOf('#/ccd') > -1 ? (
                       <Routes>
-                        <Route path="/ccd" element={<ProjectPage />} />
+                        <Route path="/ccd" element={<CCDPage />} />
                       </Routes>
                     ) :
                       (
@@ -243,7 +259,6 @@ const App: React.FC = () => {
                           <Route path="/login" element={<Login />} />
                           <Route path="/home" element={<HomePage />} />
                           <Route path="/project" element={<ProjectPage />} />
-                          <Route path="/flow" element={<FlowPage />} />
                           {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
                           <Route path="/alert/*" element={<AlertRouter />} />
                           <Route path="/userSetting" element={<UserPage />} />
@@ -259,9 +274,9 @@ const App: React.FC = () => {
                       )
                 }
               </BasicLayout>
-            }, [])
-          }
-        </HashRouter>
+            </HashRouter>
+          }, [hasInit])
+        }
       </ConfigProvider>
 
       {!!empowerVisible ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { Button, Form, message, Input, AutoComplete } from 'antd';
 import {
   CodeOutlined, CodeFilled, FileTextOutlined, FileTextFilled,
@@ -38,7 +38,7 @@ const FooterToolbar: React.FC<Props> = (props: any) => {
   );
 };
 
-export default FooterToolbar;
+export default memo(FooterToolbar);
 
 const buttonList = [
   {

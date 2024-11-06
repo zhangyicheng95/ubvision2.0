@@ -182,9 +182,7 @@ const Home: React.FC<Props> = (props: any) => {
                         'alert-open-browser',
                         JSON.stringify({
                           type: 'main',
-                          data: {
-                            id,
-                          },
+                          data: { id },
                         })
                       );
                     }}

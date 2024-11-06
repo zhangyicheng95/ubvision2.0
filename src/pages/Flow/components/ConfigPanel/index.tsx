@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { Button, Form, message, Input, AutoComplete } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -14,4 +14,4 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   );
 };
 
-export default ConfigPanel;
+export default memo(ConfigPanel);

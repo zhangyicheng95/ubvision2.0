@@ -1,23 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button, Form, message, Input, AutoComplete, Splitter } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import HeaderToolbar from './components/HeaderToolbar';
 import PluginPanel from './components/PluginPanel';
 import ConfigPanel from './components/ConfigPanel';
-import CanvasPage from './components/Canvas';
+import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasPlugins } from '@/redux/actions';
+import { IRootActions, setCanvasData, setCanvasPlugins, setCanvasStart } from '@/redux/actions';
 import { generalConfigList, portTypeObj } from './common/constants';
-import { guid } from '@/utils/utils';
+import { GetQueryObj, guid } from '@/utils/utils';
 import { getPluginList } from '@/services/flowPlugin';
+import { getFlowStatusService, getParams } from '@/services/flowEditor';
 
 interface Props { }
 
 const FlowPage: React.FC<Props> = (props: any) => {
   const { loading, projectList } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
+  const params: any = !!location.search
+    ? GetQueryObj(location.search)
+    : !!location.href
+      ? GetQueryObj(location.href)
+      : {};
+  const id = params?.['id'];
+
   // 获取侧边栏配置算子列表
   const getPlugin = () => {
     return new Promise((resolve: any, reject: any) => {
@@ -113,29 +121,67 @@ const FlowPage: React.FC<Props> = (props: any) => {
       });
     });
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     getPlugin();
   }, []);
+  // 拿到数据后，绘制画布节点
+  const initGraph = () => {
+    return new Promise((resolve, reject) => {
+      resolve(true);
+    });
+  };
+  useLayoutEffect(() => {
+    if (id) {
+      // 拉取数据
+      getParams(id).then((res) => {
+        if (!!res && res.code === 'SUCCESS') {
+          dispatch(setCanvasData(res.data));
+          // 初始化节点
+          initGraph().then((res) => {
+            // 获取任务状态
+            getFlowStatusService(id).then((resStatus: any) => {
+              if (!!resStatus && resStatus.code === 'SUCCESS') {
+                dispatch(setCanvasStart(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
+              } else {
+                dispatch(setCanvasStart(false));
+                message.error(
+                  resStatus?.msg || resStatus?.message || '接口异常'
+                );
+              }
+            });
+          });
+        } else {
+          message.error(res?.message || '接口异常');
+        }
+      });
+    }
+  }, [id]);
 
   return (
     <div className={`flex-box-column ${styles.flowPage}`}>
-      <HeaderToolbar />
-      <div className="flex-box flow-page-body">
-        <Splitter>
-          <Splitter.Panel defaultSize="15%" min="10%" max="30%">
-            <PluginPanel />
-          </Splitter.Panel>
-          <Splitter.Panel>
-            <CanvasPage />
-          </Splitter.Panel>
-          <Splitter.Panel defaultSize="30%" min="10%" max="60%">
-            <ConfigPanel />
-          </Splitter.Panel>
-        </Splitter>
-      </div>
-      <FooterToolbar />
+      {
+        useMemo(() => {
+          return <Fragment>
+            <HeaderToolbar />
+            <div className="flex-box flow-page-body">
+              <Splitter>
+                <Splitter.Panel defaultSize="15%" min="5%" max="30%">
+                  <PluginPanel />
+                </Splitter.Panel>
+                <Splitter.Panel>
+                  <CanvasFlow />
+                </Splitter.Panel>
+                <Splitter.Panel defaultSize="30%" min="10%" max="60%">
+                  <ConfigPanel />
+                </Splitter.Panel>
+              </Splitter>
+            </div>
+            <FooterToolbar />
+          </Fragment>
+        }, [])
+      }
     </div>
   );
 };
 
-export default FlowPage;
+export default memo(FlowPage);

@@ -180,4 +180,13 @@ export function downFileFun(data = '{}', name = '') {
         a.click();
         document.body.removeChild(a);
     }
-}
+};
+/**
+ * 清理所有的时间定时器
+ */
+export function clearAllInterval() {
+    const qc: any = setInterval(() => { }, 1) || 100;
+    for (let i = 0; i <= qc; i++) {
+        clearInterval(i);
+    }
+};

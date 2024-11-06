@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import styles from './index.module.less';
 import { useNavigate } from 'react-router-dom';
+import { clearAllInterval } from '@/utils/utils';
 
 const CHeader: React.FC = (props: any) => {
   const params: any = !!location.search
@@ -21,18 +22,17 @@ const CHeader: React.FC = (props: any) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // timerRef.current = setInterval(() => {
-    //   if (userInfoRef.current.style.opacity != 0) {
-    //     userInfoRef.current.style.opacity = 0;
-    //     userCheckRef.current.style.marginTop = '-30px';
-    //   } else if (userInfoRef.current.style.opacity == 0) {
-    //     userInfoRef.current.style.opacity = 1;
-    //     userCheckRef.current.style.marginTop = 0;
-    //   }
-    // }, 3000);
+    const onKeyDown = (e: any) => {
+      if (e.code === "F12") {
+        window?.ipcRenderer?.invoke(`openDevTools-${number}`);
+      } else if (e.code === "F5") {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
 
     return () => {
-      // timerRef.current && clearInterval(timerRef.current);
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, []);
   // 展开/全屏
@@ -86,10 +86,7 @@ const CHeader: React.FC = (props: any) => {
   };
   // 关闭窗口
   const close = () => {
-    // @ts-ignore
-    (window?.getAllIntervals?.() || []).forEach((i: number) => {
-      !!i && clearInterval(i);
-    });
+    clearAllInterval();
     window?.ipcRenderer?.invoke(
       `close-${number}`,
       location.href?.indexOf('#/flow') > -1 ||

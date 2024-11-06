@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useMemo, memo } from 'react';
 import { Button, Form, message, Input, AutoComplete } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -25,6 +25,8 @@ import ButtonEdge from './components/ButtonEdge';
 import { getPluginList } from '@/services/flowPlugin';
 import { guid } from '@/utils/utils';
 import { generalConfigList, portTypeObj } from '../../common/constants';
+import { useSelector } from 'react-redux';
+import { IRootActions } from '@/redux/actions';
 
 const nodeTypes = {
   annotation: AnnotationNode,
@@ -42,12 +44,18 @@ const nodeClassName = (node: any) => node.type;
 
 interface Props { }
 
-const CanvasPage: React.FC<Props> = (props: any) => {
+const CanvasFlow: React.FC<Props> = (props: any) => {
+  const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const [nodes, setNodes, onNodesChange] = useNodesState<any>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const onConnect = useCallback((params: any) => {
     setEdges((eds) => addEdge(params, eds))
   }, []);
+
+  useEffect(() => {
+    console.log(canvasData);
+
+  }, [JSON.stringify(canvasData)]);
 
   return (
     <div className={`flex-box-column ${styles.canvasPage}`}>
@@ -71,4 +79,4 @@ const CanvasPage: React.FC<Props> = (props: any) => {
   );
 };
 
-export default CanvasPage;
+export default memo(CanvasFlow);

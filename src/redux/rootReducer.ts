@@ -8,6 +8,8 @@ const initalState: IRootActions = {
 	projectList: [],
 	selectedRows: [],
 	canvasPlugins: [],
+	canvasData: {},
+	canvasStart: false,
 };
 
 const rootReducer = (state = initalState, actions: IRootActions) => {
@@ -46,6 +48,16 @@ const rootReducer = (state = initalState, actions: IRootActions) => {
 			return {
 				...state,
 				canvasPlugins: actions.canvasPlugins,
+			};
+		case rootActionTypes.SET_CANVAS_DATA:
+			return {
+				...state,
+				canvasData: actions.canvasData,
+			};
+		case rootActionTypes.SET_CANVAS_START:
+			return {
+				...state,
+				canvasStart: actions.canvasStart,
 			};
 		case rootActionTypes.CLEAR_ALL_DATA:
 			return initalState;

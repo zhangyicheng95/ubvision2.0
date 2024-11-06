@@ -126,25 +126,3 @@ window.onmessage = (ev) => {
 }
 
 setTimeout(removeLoading, 4999)
-
-// 用于存储所有活动的interval
-const intervals = new Set();
-
-const originalSetInterval = window.setInterval;
-const originalClearInterval = window.clearInterval;
-//@ts-ignore
-window.setInterval = function (callback: any, delay: any, ...args: any) {
-  const id = originalSetInterval(callback, delay, ...args);
-  intervals.add(id);
-  return id;
-};
-
-window.clearInterval = function (id) {
-  originalClearInterval(id);
-  intervals.delete(id);
-};
-
-// @ts-ignore 获取所有活动的interval 
-window.getAllIntervals = function () {
-  return Array.from(intervals);
-};

@@ -1,4 +1,4 @@
-import React, { Fragment, useMemo, useState } from 'react';
+import React, { Fragment, memo, useMemo, useState } from 'react';
 import { ApartmentOutlined, ApiOutlined, ClusterOutlined, FileZipOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -16,6 +16,8 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   const { canvasPlugins } = useSelector((state: IRootActions) => state);
   const [pluginType, setPluginType] = useState('plugin');
   const [ifBuildIn, setIfBuildIn] = useState(true);
+  const [searchVal, setSearchVal] = useState('');
+
   // 插件列表
   const items: any = useMemo(() => {
     return (Object.entries(canvasPlugins) || [])
@@ -29,54 +31,59 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         return pre.concat({
           key: '' + pre?.length,
           label: title,
-          children: (showList || [])?.map((panel: any) => {
-            const { data = {} } = panel;
-            const {
-              ifShow = false,
-              alias = '',
-              name = '',
-              category = '',
-              description,
-              buildIn
-            } = data;
-            return {
-              key: `${pre?.length}-${name}`,
-              label: <Popover
-                placement='right'
-                content={
-                  <div>
-                    {alias || name}
-                    <br />
-                    {description}
-                  </div>
-                }
-                key={`${category}_${index}`}
-              >
-                <div
-                  className="item flex-box"
-                  style={(index + 1) === showList.length ? { marginBottom: 0 } : {}}
-                  onMouseDown={(e: any) => {
+          children: (showList || [])
+            ?.reduce((pre: any, panel: any) => {
+              const { data = {} } = panel;
+              const {
+                ifShow = false,
+                alias = '',
+                name = '',
+                category = '',
+                description,
+                buildIn
+              } = data;
+              if (alias?.indexOf(searchVal) > -1 || name?.indexOf(searchVal) > -1) {
+                return pre.concat({
+                  key: `${pre?.length}-${name}`,
+                  label: <Popover
+                    placement='right'
+                    content={
+                      <div>
+                        {`${alias}（${name}）`}
+                        <br />
+                        {description}
+                      </div>
+                    }
+                    key={`${category}_${index}`}
+                  >
+                    <div
+                      className="item flex-box"
+                      style={(index + 1) === showList.length ? { marginBottom: 0 } : {}}
+                      onMouseDown={(e: any) => {
 
-                  }}
-                >
-                  <div className="img-box flex-box-center">
-                    <img
-                      src={pluginIcon}
-                      alt="icon"
-                      className="img"
-                    />
-                  </div>
-                  <TooltipDiv className="text-content">
-                    {alias || name}
-                  </TooltipDiv>
-                </div>
-              </Popover>
-            };
-          }),
+                      }}
+                    >
+                      <div className="img-box flex-box-center">
+                        <img
+                          src={pluginIcon}
+                          alt="icon"
+                          className="img"
+                        />
+                      </div>
+                      <TooltipDiv className="text-content">
+                        {alias || name}
+                      </TooltipDiv>
+                    </div>
+                  </Popover>
+                });
+              } else {
+                return pre;
+              }
+            }, []),
         });
       }, [])
       ?.filter(Boolean);
-  }, [canvasPlugins, ifBuildIn]);
+  }, [canvasPlugins, ifBuildIn, searchVal]);
 
   return (
     <div className={`flex-box ${styles.pluginPanel}`}>
@@ -109,7 +116,9 @@ const PluginPanel: React.FC<Props> = (props: any) => {
           <div className={`plugin-panel-right-type-item ${ifBuildIn ? '' : 'nameStyle'}`} onClick={() => { setIfBuildIn(false) }}>自定义</div>
         </div>
         <div className="plugin-panel-right-search">
-          <Input.Search />
+          <Input.Search onSearch={(val) => {
+            setSearchVal(val);
+          }} />
         </div>
         <div className="plugin-panel-right-body">
           {
@@ -120,6 +129,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                 )}
                 mode="inline"
                 items={items}
+                selectable={false}
               />
               :
               pluginType === 'node' ?
@@ -145,4 +155,4 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   );
 };
 
-export default PluginPanel;
+export default memo(PluginPanel);
