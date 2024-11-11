@@ -1,4 +1,4 @@
-import React, { Fragment, memo, useMemo, useState } from 'react';
+import React, { Fragment, memo, useCallback, useMemo, useState } from 'react';
 import { ApartmentOutlined, ApiOutlined, ClusterOutlined, FileZipOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -7,6 +7,7 @@ import { IRootActions } from '@/redux/actions';
 import { Collapse, Input, Menu, Modal, Popover } from 'antd';
 import pluginIcon from '@/assets/imgs/icon-plugin.svg';
 import TooltipDiv from '@/components/TooltipDiv';
+import { useReactFlow } from '@xyflow/react';
 
 interface Props { }
 
@@ -14,9 +15,11 @@ const { confirm } = Modal;
 
 const PluginPanel: React.FC<Props> = (props: any) => {
   const { canvasPlugins } = useSelector((state: IRootActions) => state);
+  const reactFlow = useReactFlow();
   const [pluginType, setPluginType] = useState('plugin');
   const [ifBuildIn, setIfBuildIn] = useState(true);
   const [searchVal, setSearchVal] = useState('');
+  const [nodes, setNodes] = useState<any>([]);
   // 开始拖拽
   const onDragStart = (event: any, data: any) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(data));
@@ -90,6 +93,23 @@ const PluginPanel: React.FC<Props> = (props: any) => {
       }, [])
       ?.filter(Boolean);
   }, [canvasPlugins, ifBuildIn, searchVal]);
+  // 画布中所有的节点
+  const countNodes = useCallback(() => {
+    const result = (reactFlow.getNodes() || [])?.reduce((pre: any, cen: any, index: number) => {
+      if (!cen?.data?.alias && !cen?.data?.name) {
+        return pre;
+      }
+      return pre.concat([
+        {
+          key: '' + index,
+          label: cen?.data?.alias || cen?.data?.name,
+          data: cen,
+        },
+        { type: 'divider' }
+      ])
+    }, []);
+    setNodes(result);
+  }, [reactFlow]);
 
   return (
     <div className={`flex-box ${styles.pluginPanel}`}>
@@ -108,6 +128,10 @@ const PluginPanel: React.FC<Props> = (props: any) => {
               key={`plugin-panel-left-item-${key}`}
               onClick={() => {
                 setPluginType(key);
+                if (key === 'node') {
+                  countNodes();
+                };
+                // reactFlow?.fitView?.({ duration: 500 });
               }}
             >
               {icon}
@@ -140,7 +164,15 @@ const PluginPanel: React.FC<Props> = (props: any) => {
               :
               pluginType === 'node' ?
                 <Fragment>
-
+                  <Menu
+                    mode="inline"
+                    items={nodes}
+                    selectable={false}
+                    onClick={(info: any) => {
+                      const { position, measured } = info?.item?.props?.data || {};
+                      reactFlow?.setCenter?.(position.x + measured.width / 2, position.y + measured.height / 2, { duration: 500, zoom: 2 });
+                    }}
+                  />
                 </Fragment>
                 :
                 pluginType === 'communication' ?

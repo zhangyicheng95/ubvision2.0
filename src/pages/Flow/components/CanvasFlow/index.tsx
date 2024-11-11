@@ -11,6 +11,8 @@ import {
   Background,
   useNodesState,
   useEdgesState,
+  Panel,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -47,75 +49,103 @@ interface Props { }
 
 const CanvasFlow: React.FC<Props> = (props: any) => {
   const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
+  const dom = useRef<any>(null);
+  const reactFlow = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState<any>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  // const [elements, setElements] = useState(initialElements);
 
+  // 连线
   const onConnect = useCallback((params: any) => {
     setEdges((eds) => addEdge(params, eds))
   }, []);
-
-  const onDragOver = (event: any) => {
+  // 左侧拖拽节点进来
+  const onDragOver = useCallback((event: any) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  };
-
-  const onDrop = (event: any) => {
+  }, []);
+  const onDrop = useCallback((event: any) => {
     event.preventDefault();
-    const reactFlowBounds = event.target.getBoundingClientRect();
     const nodeData = event.dataTransfer.getData('application/reactflow');
-    console.log(event);
-
-    console.log(reactFlowBounds);
-
-    const position = {
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
+    const data = JSON.parse(nodeData || "{}");
+    const position = reactFlow?.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+    const group = {
+      id: guid(),
+      type: 'group',
+      resizable: true,
+      position: {
+        x: -170,
+        y: 250,
+      },
+      style: {
+        width: 380,
+        height: 180,
+        backgroundColor: 'rgba(208, 192, 247, 0.2)',
+      },
     };
     const newNode = {
       id: guid(),
       type: 'custom',
       position,
-      data: JSON.parse(nodeData || "{}"),
+      data,
+      extent: 'parent',
     };
+    setNodes((nds) => nds.concat([group, newNode]));
+  }, []);
+  // 节点单击
+  const nodeClick = useCallback((event: any, node: any) => {
+    event.preventDefault(); // 阻止默认的关闭行为
+    event?.stopPropagation();
 
-    setNodes((nds) => nds.concat(newNode));
-  };
+    console.log(event, node);
+  }, []);
+  // 节点双击
+  const nodeDoubleClick = useCallback((event: any, node: any) => {
+    event.preventDefault(); // 阻止默认的关闭行为
+    event?.stopPropagation();
 
+    console.log(event, node);
+  }, []);
+  // 空白处单击
+  const canvasClick = useCallback((event: any) => {
+    event.preventDefault(); // 阻止默认的关闭行为
+    event?.stopPropagation();
+
+    console.log(event);
+  }, []);
   useEffect(() => {
     console.log(canvasData);
 
   }, [JSON.stringify(canvasData)]);
 
   return (
-    <div className={`flex-box-column ${styles.canvasPage}`}>
-      <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onNodeClick={(event: any, node: any) => {
-            console.log(event, node);
-
-          }}
-          onNodeDoubleClick={() => { }}
-          onNodeContextMenu={() => { }}
-          onNodeMouseMove={() => { }}
-          // fitView
-          attributionPosition="top-right"
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          className="overview"
-        >
-          <MiniMap zoomable pannable nodeClassName={nodeClassName} />
-          <Controls />
-          <Background />
-        </ReactFlow>
-      </ReactFlowProvider>
+    <div className={`flex-box-column ${styles.canvasPage}`} ref={dom}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        minZoom={0.1}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onClick={canvasClick}
+        onNodeClick={nodeClick}
+        onNodeDoubleClick={nodeDoubleClick}
+        onNodeContextMenu={(event: any, node: any) => {
+          console.log(event, node);
+        }}
+        fitView
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        className="overview"
+      >
+        <MiniMap zoomable pannable nodeClassName={nodeClassName} />
+        <Controls />
+        <Background />
+      </ReactFlow>
     </div>
   );
 };

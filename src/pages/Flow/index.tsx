@@ -13,6 +13,7 @@ import { generalConfigList, portTypeObj } from './common/constants';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { getPluginList } from '@/services/flowPlugin';
 import { getFlowStatusService, getParams } from '@/services/flowEditor';
+import { ReactFlowProvider } from '@xyflow/react';
 
 interface Props { }
 
@@ -161,7 +162,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
     <div className={`flex-box-column ${styles.flowPage}`}>
       {
         useMemo(() => {
-          return <Fragment>
+          return <ReactFlowProvider>
             <HeaderToolbar />
             <div className="flex-box flow-page-body">
               <Splitter>
@@ -177,7 +178,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
               </Splitter>
             </div>
             <FooterToolbar />
-          </Fragment>
+          </ReactFlowProvider>
         }, [])
       }
     </div>

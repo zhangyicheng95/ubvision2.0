@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
 import { startFlowService, stopFlowService } from '@/services/flowEditor';
 import { clearAllInterval } from '@/utils/utils';
+import { useReactFlow } from '@xyflow/react';
 
 const { confirm } = Modal;
 interface Props {
@@ -15,10 +16,12 @@ interface Props {
 const HeaderToolbar: React.FC<Props> = (props) => {
   const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
+  const reactFlow = useReactFlow();
 
   // 保存业务
   const saveGraph = () => {
     return new Promise((resolve, reject) => {
+      console.log('toObject', reactFlow.toObject());
       resolve(true);
     });
   };
@@ -119,6 +122,9 @@ const HeaderToolbar: React.FC<Props> = (props) => {
     <div className={`flex-box-justify-between ${styles.headerToolbar} boxShadow`}>
       <div className="flex-box header-toolbar-title-box">
         <DatabaseOutlined />{canvasData?.name || '默认方案'}
+      </div>
+      <div className="flex-box">
+
       </div>
       <div className="flex-box header-toolbar-operation-box">
         <Dropdown
