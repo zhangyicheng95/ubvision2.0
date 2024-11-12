@@ -1,8 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { message, Dropdown, Popover, Select, Modal, Form, Switch } from 'antd';
 import {
   PlusOutlined,
@@ -293,11 +289,6 @@ const AlertItem = (props: any) => {
         data: {
           type: 'child',
           ipUrl: dpmDomain,
-          url:
-            process.env.NODE_ENV === 'development'
-              ? 'localhost:8000'
-              : JSON.parse(localStorage.getItem('general_setting') || '{}')
-                ?.alert_url_path || 'localhost:5001/index.html',
           id,
         },
       })

@@ -50,11 +50,6 @@ const GeneralPage: React.FC<Props> = () => {
         Object.assign(
           {},
           result,
-          !result['alert_url_path']
-            ? {
-              alert_url_path: 'localhost:5001/index.html',
-            }
-            : {},
           {
             ipUrl: !!localStorage.getItem('ipUrl')
               ? localStorage.getItem('ipUrl')
@@ -157,13 +152,6 @@ const GeneralPage: React.FC<Props> = () => {
               选择文件夹
             </Button>
           </div>
-        </Form.Item>
-        <Form.Item
-          name="alert_url_path"
-          label="监控窗口地址"
-          rules={[{ required: false, message: '监控窗口地址' }]}
-        >
-          <Input />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit">

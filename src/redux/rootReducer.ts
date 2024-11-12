@@ -21,7 +21,7 @@ const initalState: IRootActions = {
 	canvasStart: false,
 };
 
-const rootReducer = (state = initalState, actions: IRootActions) => {
+const rootReducer = (state = initalState, actions: any) => {
 	switch (actions.type) {
 		case rootActionTypes.SET_TOKEN:
 			return {

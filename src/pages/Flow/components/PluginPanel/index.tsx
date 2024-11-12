@@ -95,7 +95,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   }, [canvasPlugins, ifBuildIn, searchVal]);
   // 画布中所有的节点
   const countNodes = useCallback(() => {
-    const result = (reactFlow.getNodes() || [])?.reduce((pre: any, cen: any, index: number) => {
+    const result = (reactFlow.getNodes() || [])?.filter((i: any) => i?.type === 'custom')?.reduce((pre: any, cen: any, index: number) => {
       if (!cen?.data?.alias && !cen?.data?.name) {
         return pre;
       }

@@ -15,10 +15,6 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import {
-  nodes as initialNodes,
-  edges as initialEdges,
-} from './components/initial-elements';
 import AnnotationNode from './components/AnnotationNode';
 import ToolbarNode from './components/ToolbarNode';
 import ResizerNode from './components/ResizerNode';
@@ -51,12 +47,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dom = useRef<any>(null);
   const reactFlow = useReactFlow();
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
   // 连线
   const onConnect = useCallback((params: any) => {
-    setEdges((eds) => addEdge(params, eds))
+    setEdges((eds: any) => addEdge(params, eds))
   }, []);
   // 左侧拖拽节点进来
   const onDragOver = useCallback((event: any) => {
@@ -71,14 +67,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       x: event.clientX,
       y: event.clientY,
     });
+    const parentID = guid();
     const group = {
-      id: guid(),
+      id: parentID,
       type: 'group',
       resizable: true,
-      position: {
-        x: -170,
-        y: 250,
-      },
+      position,
       style: {
         width: 380,
         height: 180,
@@ -90,6 +84,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       type: 'custom',
       position,
       data,
+      parentId: parentID,
       extent: 'parent',
     };
     setNodes((nds) => nds.concat([group, newNode]));
