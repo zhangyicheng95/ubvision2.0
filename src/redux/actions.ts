@@ -15,9 +15,11 @@ export enum rootActionTypes {
 	"LOOP_PROJECT_STATUS" = "LOOP_PROJECT_STATUS",
 	"SET_PROJECT_LIST" = "SET_PROJECT_LIST",
 	"SET_SELECTED_ROWS" = "SET_SELECTED_ROWS",
+	"SET_GRAPH_DATA" = "SET_GRAPH_DATA",
 	"SET_CANVAS_PLUGINS" = "SET_CANVAS_PLUGINS",
 	"SET_CANVAS_DATA" = "SET_CANVAS_DATA",
 	"SET_CANVAS_START" = "SET_CANVAS_START",
+	"SET_SELECTED_NODE" = "SET_SELECTED_NODE",
 	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
 }
 
@@ -25,10 +27,13 @@ export interface IRootActions {
 	type?: keyof rootActionTypes;
 	token: string;
 	loading: boolean;
+	// 列表相关
 	getProjectListFun: () => null,
 	loopProjectStatusFun: (list: []) => null,
 	projectList: [];
 	selectedRows: [];
+	// 流程图画布相关
+	graphData: any,
 	canvasPlugins: [];
 	canvasData: {
 		id: '',
@@ -41,6 +46,7 @@ export interface IRootActions {
 		}
 	};
 	canvasStart: false;
+	selectedNode: '',
 }
 
 // 缓存用户token
@@ -85,6 +91,13 @@ export const setSelectedRows = (selectedRows: []) => {
 		selectedRows,
 	};
 };
+// 流程图-初始化画布
+export const setGraphData = (graphData: any) => {
+	return {
+		type: rootActionTypes.SET_GRAPH_DATA,
+		graphData
+	};
+};
 // 流程图-左侧插件列表
 export const setCanvasPlugins = (canvasPlugins: []) => {
 	return {
@@ -106,6 +119,13 @@ export const setCanvasStart = (canvasStart: {}) => {
 		canvasStart
 	};
 };
+// 流程图-点击选中节点
+export const setSelectedNode = (selectedNode: '') => {
+	return {
+		type: rootActionTypes.SET_SELECTED_NODE,
+		selectedNode
+	}
+}
 // 重置所有的init
 export const clearAllData = () => {
 	return {

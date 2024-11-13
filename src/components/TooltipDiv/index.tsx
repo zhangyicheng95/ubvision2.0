@@ -1,21 +1,23 @@
 import React, { Fragment, useEffect } from 'react';
-import {
-  Tooltip
-} from 'antd';
-
+import { Popover, Tooltip } from 'antd';
 import styles from './index.module.less';
 
 interface Props {
   title?: any;
+  content?: any;
   style?: any;
   placement?: any;
   onClick?: any;
-  className?: any;
+  className?: string;
+  id?: string;
   children: any;
 }
 
-const TooltipDiv = (props: any) => {
-  const { title = '', style = {}, children = null, placement = 'topLeft', onClick = null, className = '', ...rest } = props;
+const TooltipDiv: React.FC<Props> = (props: any) => {
+  const {
+    title = '', style = {}, children = null, placement = 'topLeft',
+    onClick = null, className = '', ...rest
+  } = props;
   return <Header {...props}>
     <div className={`${styles.toolTipDiv} ${className}`} style={({
       ...(onClick ? {
@@ -29,11 +31,11 @@ const TooltipDiv = (props: any) => {
 };
 
 const Header = (props: any) => {
-  const { children, title = '', placement = 'topLeft' } = props;
+  const { children, title = '', content = '', placement = 'topLeft' } = props;
   if (title) {
-    return <Tooltip title={title} placement={placement}>
+    return <Popover title={title} content={content} placement={placement}>
       {children}
-    </Tooltip>;
+    </Popover>;
   }
   return <>
     {children}

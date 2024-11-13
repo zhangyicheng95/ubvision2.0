@@ -1,5 +1,6 @@
-import React, { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete, Splitter } from 'antd';
+import React, { Fragment, memo, useLayoutEffect } from 'react';
+import { message, Splitter } from 'antd';
+import { Portal } from '@antv/x6-react-shape';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import HeaderToolbar from './components/HeaderToolbar';
@@ -8,17 +9,17 @@ import ConfigPanel from './components/ConfigPanel';
 import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setCanvasPlugins, setCanvasStart } from '@/redux/actions';
+import { IRootActions, setCanvasData, setCanvasPlugins, setCanvasStart, setLoading } from '@/redux/actions';
 import { generalConfigList, portTypeObj } from './common/constants';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { getPluginList } from '@/services/flowPlugin';
 import { getFlowStatusService, getParams } from '@/services/flowEditor';
-import { ReactFlowProvider } from '@xyflow/react';
 
+const X6ReactPortalProvider = Portal.getProvider(); // 注意，一个 graph 只能申明一个 portal provider
 interface Props { }
 
 const FlowPage: React.FC<Props> = (props: any) => {
-  const { loading, projectList } = useSelector((state: IRootActions) => state);
+  const { projectList } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const params: any = !!location.search
     ? GetQueryObj(location.search)
@@ -125,31 +126,24 @@ const FlowPage: React.FC<Props> = (props: any) => {
   useLayoutEffect(() => {
     getPlugin();
   }, []);
-  // 拿到数据后，绘制画布节点
-  const initGraph = () => {
-    return new Promise((resolve, reject) => {
-      resolve(true);
-    });
-  };
   useLayoutEffect(() => {
     if (id) {
+      dispatch(setLoading(true));
       // 拉取数据
       getParams(id).then((res) => {
         if (!!res && res.code === 'SUCCESS') {
-          dispatch(setCanvasData(res.data));
-          // 初始化节点
-          initGraph().then((res) => {
-            // 获取任务状态
-            getFlowStatusService(id).then((resStatus: any) => {
-              if (!!resStatus && resStatus.code === 'SUCCESS') {
-                dispatch(setCanvasStart(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
-              } else {
-                dispatch(setCanvasStart(false));
-                message.error(
-                  resStatus?.msg || resStatus?.message || '接口异常'
-                );
-              }
-            });
+          dispatch(setCanvasData(res.data || {}));
+          // 获取任务状态
+          getFlowStatusService(id).then((resStatus: any) => {
+            if (!!resStatus && resStatus.code === 'SUCCESS') {
+              dispatch(setCanvasStart(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
+            } else {
+              dispatch(setCanvasStart(false));
+              message.error(
+                resStatus?.msg || resStatus?.message || '接口异常'
+              );
+            }
+            dispatch(setLoading(false));
           });
         } else {
           message.error(res?.message || '接口异常');
@@ -160,27 +154,23 @@ const FlowPage: React.FC<Props> = (props: any) => {
 
   return (
     <div className={`flex-box-column ${styles.flowPage}`}>
-      {
-        useMemo(() => {
-          return <ReactFlowProvider>
-            <HeaderToolbar />
-            <div className="flex-box flow-page-body">
-              <Splitter>
-                <Splitter.Panel defaultSize="15%" min="5%" max="30%">
-                  <PluginPanel />
-                </Splitter.Panel>
-                <Splitter.Panel>
-                  <CanvasFlow />
-                </Splitter.Panel>
-                <Splitter.Panel defaultSize="30%" min="10%" max="60%">
-                  <ConfigPanel />
-                </Splitter.Panel>
-              </Splitter>
-            </div>
-            <FooterToolbar />
-          </ReactFlowProvider>
-        }, [])
-      }
+      <Fragment>
+        <HeaderToolbar />
+        <div className="flex-box flow-page-body">
+          <Splitter>
+            <Splitter.Panel defaultSize="15%" min="5%" max="30%">
+              <PluginPanel />
+            </Splitter.Panel>
+            <Splitter.Panel>
+              <CanvasFlow />
+            </Splitter.Panel>
+            <Splitter.Panel defaultSize="30%" min="10%" max="60%">
+              <ConfigPanel />
+            </Splitter.Panel>
+          </Splitter>
+        </div>
+        <FooterToolbar />
+      </Fragment>
     </div>
   );
 };

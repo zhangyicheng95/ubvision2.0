@@ -1,29 +1,167 @@
-import React, { Fragment, memo, useCallback, useMemo, useState } from 'react';
+import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApartmentOutlined, ApiOutlined, ClusterOutlined, FileZipOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
+import * as X6 from '@antv/x6';
+import { Dnd } from '@antv/x6-plugin-dnd';
+import customRegister from '../../config';
 import styles from './index.module.less';
-import { useSelector } from 'react-redux';
-import { IRootActions } from '@/redux/actions';
-import { Collapse, Input, Menu, Modal, Popover } from 'antd';
+import { Input, Menu, Modal, Popover } from 'antd';
 import pluginIcon from '@/assets/imgs/icon-plugin.svg';
 import TooltipDiv from '@/components/TooltipDiv';
-import { useReactFlow } from '@xyflow/react';
+import { getuid, guid } from '@/utils/utils';
+import { archSize } from '../../common/constants';
+import { register } from '@antv/x6-react-shape';
+import AlgoNode from '@/components/AlgoNode';
+import { useSelector } from 'react-redux';
+import { IRootActions } from '@/redux/actions';
 
 interface Props { }
 
 const { confirm } = Modal;
+customRegister(X6);
+const { Graph, Markup, Path, Shape, Cell, NodeView, Vector } = X6;
 
 const PluginPanel: React.FC<Props> = (props: any) => {
-  const { canvasPlugins } = useSelector((state: IRootActions) => state);
-  const reactFlow = useReactFlow();
+  const { graphData, canvasPlugins, canvasStart } = useSelector((state: IRootActions) => state);
+  const dndRef = useRef<any>(null);
   const [pluginType, setPluginType] = useState('plugin');
   const [ifBuildIn, setIfBuildIn] = useState(true);
   const [searchVal, setSearchVal] = useState('');
   const [nodes, setNodes] = useState<any>([]);
+
+  // 初始化侧边栏
+  useEffect(() => {
+    dndRef.current = new Dnd({
+      target: graphData,
+      scaled: false,
+      // 实际添加到画布里的节点样式
+      getDropNode(node: any, options) {
+        const { store = {}, id } = node;
+        const { previous = {} } = store;
+        const { attrs = {} } = previous;
+        const { data = {} } = attrs;
+        const { config = {} } = data?.data || {};
+        const customId = `node_${guid()}`;
+        const realInitParams = {
+          ...config.initParams,
+        };
+        const tagRadioParams = (Object.entries(config?.initParams || {}) || [])
+          ?.map?.((i: any) => {
+            if (i?.[1]?.widget?.type === 'TagRadio') {
+              return i[1];
+            }
+          })
+          .filter(Boolean);
+        if (tagRadioParams?.length) {
+          tagRadioParams.forEach((tag: any) => {
+            const { value, widget = {} } = tag;
+            const { options } = widget;
+            const selectedOptions =
+              (!!value
+                ? options.filter((i: any) => i.name === value)?.[0]?.children
+                : options?.[0]?.children) || [];
+            selectedOptions?.forEach((option: any) => {
+              realInitParams[option?.name] = option;
+            });
+          });
+        }
+        const realData: any = {
+          ...data?.data,
+          config: {
+            ...config,
+            initParams: realInitParams,
+          },
+          customId,
+          id,
+        };
+        const portLength = Math.max(
+          Object.keys(config?.input || {})?.length,
+          Object.keys(config?.output || {})?.length
+        );
+        const nodeWidth =
+          portLength * (archSize.width + 8) > archSize.nodeWidth
+            ? portLength * (archSize.width + 8)
+            : archSize.nodeWidth;
+        const nodeHeight = archSize.nodeHeight;
+
+        register({
+          shape: `dag-node-${customId}`,
+          // @ts-ignore
+          component: <AlgoNode key={id} data={realData} />,
+          ports: {
+            groups: {
+              top: {
+                position: 'top',
+                attrs: {
+                  fo: {
+                    r: 6,
+                    magnet: true,
+                    strokeWidth: 1,
+                    fill: '#fff',
+                  },
+                },
+              },
+              bottom: {
+                position: 'bottom',
+                attrs: {
+                  fo: {
+                    r: 6,
+                    magnet: true,
+                    strokeWidth: 1,
+                    fill: '#fff',
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return graphData?.createNode({
+          shape: `dag-node-${customId}`,
+          id,
+          ports: data.ports,
+          portMarkup: [Markup.getForeignObjectMarkup()],
+          data: { status: 'STOPPED' },
+          config: realData,
+          customId,
+          size: {
+            width: nodeWidth,
+            height: nodeHeight,
+          },
+        });
+      },
+      // 拖拽结束时，验证节点是否可以放置到目标画布中。
+      validateNode(droppingNode, options) {
+        return true;
+      },
+    });
+  }, [graphData]);
+  // 是否启动
+  const ifStartFlow = useMemo(() => {
+    return !!canvasStart;
+  }, [canvasStart]);
   // 开始拖拽
-  const onDragStart = (event: any, data: any) => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify(data));
-    event.dataTransfer.effectAllowed = 'move';
+  const onDragStart = (e: any, item: any) => {
+    if (!e) {
+      return;
+    }
+    const node = graphData.createNode({
+      width: 100,
+      height: 40,
+      label: item,
+      attrs: {
+        data: item,
+        label: {
+          text: 'Rect',
+          fill: '#6a6c8a',
+        },
+        body: {
+          stroke: '#31d0c6',
+          strokeWidth: 2,
+        },
+      },
+    });
+    dndRef.current.start(node, e.nativeEvent);
   };
   // 插件列表
   const items: any = useMemo(() => {
@@ -53,14 +191,9 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                 return pre.concat({
                   key: `${pre?.length}-${name}`,
                   label: <Popover
-                    placement='right'
-                    content={
-                      <div>
-                        {`${alias}（${name}）`}
-                        <br />
-                        {description}
-                      </div>
-                    }
+                    placement={description?.length > 50 ? 'bottomLeft' : 'right'}
+                    title={`${alias}（${name}）`}
+                    content={description || '-'}
                     key={`${category}_${index}`}
                   >
                     <div
@@ -69,7 +202,16 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                       onDragStart={(event) => onDragStart(event, data)}
                       draggable
                       onMouseDown={(e: any) => {
-
+                        !ifStartFlow &&
+                          onDragStart(
+                            e,
+                            Object.assign({}, panel, {
+                              data: {
+                                ...data,
+                                id: getuid(),
+                              }
+                            })
+                          )
                       }}
                     >
                       <div className="img-box flex-box-center">
@@ -95,21 +237,29 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   }, [canvasPlugins, ifBuildIn, searchVal]);
   // 画布中所有的节点
   const countNodes = useCallback(() => {
-    const result = (reactFlow.getNodes() || [])?.filter((i: any) => i?.type === 'custom')?.reduce((pre: any, cen: any, index: number) => {
-      if (!cen?.data?.alias && !cen?.data?.name) {
-        return pre;
-      }
-      return pre.concat([
-        {
-          key: '' + index,
-          label: cen?.data?.alias || cen?.data?.name,
-          data: cen,
-        },
-        { type: 'divider' }
-      ])
-    }, []);
+    const result = (graphData.getNodes() || [])
+      ?.reduce((pre: any, cen: any, index: number) => {
+        const item = cen?.store?.data || {};
+        if (!item?.config?.alias && !item?.config?.name) {
+          return pre;
+        }
+        return pre.concat([
+          {
+            key: '' + index,
+            label: `${item?.config?.alias} (${item?.config?.name})`,
+            onClick: () => {
+              graphData.centerPoint(
+                item?.position.x + item?.size?.width / 2,
+                item?.position.y + item?.size?.height / 2
+              );
+              graphData.zoomTo(1);
+            }
+          },
+          { type: 'divider' }
+        ])
+      }, []);
     setNodes(result);
-  }, [reactFlow]);
+  }, [graphData, searchVal]);
 
   return (
     <div className={`flex-box ${styles.pluginPanel}`}>
@@ -166,12 +316,8 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                 <Fragment>
                   <Menu
                     mode="inline"
-                    items={nodes}
+                    items={nodes?.filter((i: any) => _.toUpper(i?.label).indexOf(_.toUpper(searchVal)) > -1)}
                     selectable={false}
-                    onClick={(info: any) => {
-                      const { position, measured } = info?.item?.props?.data || {};
-                      reactFlow?.setCenter?.(position.x + measured.width / 2, position.y + measured.height / 2, { duration: 500, zoom: 2 });
-                    }}
                   />
                 </Fragment>
                 :

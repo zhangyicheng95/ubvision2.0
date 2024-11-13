@@ -150,6 +150,24 @@
     box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.1);
 }
 
+.only-show-one-line {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.only-show-two-line {
+    word-break: break-all;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: normal;
+    display: -webkit-box;
+    display: -moz-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    /*控制文字行数*/
+}
+
 .nameStyle {
     color: @primaryColor;
     cursor: pointer;

@@ -175,7 +175,31 @@ export const archSize = {
     width: 140,
     height: 40,
     nodeWidth: 300,
-    nodeHeight: 110,
+    nodeHeight: 116,
+};
+/**
+ # STARTING：节点正在启动中
+ # FATAL：进程无法成功启动
+ # RUNNING：节点正常运行中
+ # ERROR: 节点运行出现异常
+ # STOPPING：进程正在处理用户的停止请求
+ # STOPPED：节点已经被用户主动停止，或从未启动过
+ # UNKNOWN：未知状态
+ # WAITING RESTART: 等待节点自动重启
+ * */
+export const nodeStatusColor: any = {
+    STARTING: '#52c41a',
+    RUNNING: '#52c41a', // 'rgba(24, 144, 255, 1)',
+    STOPPING: '#52c41a',
+    STOPPED: '#30a2a3',
+    UNKNOWN: '#ffba00',
+    CREATED: '#ff4d4f',
+    EXITED: '#ff4d4f',
+    FATAL: '#ff4d4f',
+    ERROR: '#ff4d4f',
+    ERRORED: '#ff4d4f',
+    SEARCH: '#52c41a',
+    default: '',
 };
 // 节点通用配置
 export const generalConfigList = {

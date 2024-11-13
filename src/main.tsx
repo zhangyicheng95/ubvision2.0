@@ -1,6 +1,7 @@
 import React from 'react';
+import { App, Button, Modal } from 'antd';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App1 from './App';
 import './index.less';
 import './demos/ipc';
 import './global.less';
@@ -12,16 +13,18 @@ import { persistor, store } from "./redux";
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   // <React.StrictMode>
-  <Provider store={store}>
-    {
-      !!persistor ?
-        <PersistGate loading={null} persistor={persistor}>
-          <App />
-        </PersistGate>
-        :
-        <App />
-    }
-  </Provider>
+  <App>
+    <Provider store={store}>
+      {
+        !!persistor ?
+          <PersistGate loading={null} persistor={persistor}>
+            <App1 />
+          </PersistGate>
+          :
+          <App1 />
+      }
+    </Provider>
+  </App>
   // </React.StrictMode>,
 )
 

@@ -1,27 +1,24 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete, Modal, Dropdown } from 'antd';
+import React, { memo } from 'react';
+import { Button, message, Modal, Dropdown } from 'antd';
 import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
 import { startFlowService, stopFlowService } from '@/services/flowEditor';
-import { clearAllInterval } from '@/utils/utils';
-import { useReactFlow } from '@xyflow/react';
 
 const { confirm } = Modal;
 interface Props {
 }
 
 const HeaderToolbar: React.FC<Props> = (props) => {
-  const { canvasData, canvasStart } = useSelector((state: IRootActions) => state);
+  const { graphData, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
-  const reactFlow = useReactFlow();
 
   // 保存业务
   const saveGraph = () => {
     return new Promise((resolve, reject) => {
-      console.log('toObject', reactFlow.toObject());
+      console.log('toObject', graphData?.toJSON());
       resolve(true);
     });
   };
@@ -34,20 +31,16 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           ...canvasData,
           id: canvasData?.id,
           debug: type === 'debugger'
-        }).then(
-          (res) => {
-            dispatch(setLoading(false));
-            if (['success', 'SUCCESS'].includes(res?.code)) {
-              dispatch(setLoading(false));
-              dispatch(setCanvasStart(true));
-            } else {
-              message.error(
-                res?.message || res?.msg || '服务启动失败，请检查网络设置'
-              );
-              dispatch(setLoading(false));
-            }
-          }
-        );
+        }).then((res) => {
+          if (['success', 'SUCCESS'].includes(res?.code)) {
+            dispatch(setCanvasStart(true));
+          } else {
+            message.error(
+              res?.message || res?.msg || '服务启动失败，请检查网络设置'
+            );
+          };
+          dispatch(setLoading(false));
+        });
       });
     } else {
       confirm({
@@ -75,11 +68,11 @@ const HeaderToolbar: React.FC<Props> = (props) => {
     setTimeout(() => {
       stopFlowService(canvasData?.id).then((res) => {
         if (['success', 'SUCCESS'].includes(res?.code)) {
-          dispatch(setLoading(false));
           dispatch(setCanvasStart(false));
         } else {
           message.error(res?.message || '停止服务失败，请检查网络设置');
-        }
+        };
+        dispatch(setLoading(false));
       });
     }, 1000);
   };
@@ -121,7 +114,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   return (
     <div className={`flex-box-justify-between ${styles.headerToolbar} boxShadow`}>
       <div className="flex-box header-toolbar-title-box">
-        <DatabaseOutlined />{canvasData?.name || '默认方案'}
+        <DatabaseOutlined style={{ fontSize: 22 }} />{canvasData?.name || '默认方案'}
       </div>
       <div className="flex-box">
 

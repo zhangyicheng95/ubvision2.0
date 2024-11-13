@@ -1,15 +1,14 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete } from 'antd';
+import React, { memo, useState } from 'react';
 import {
   CodeOutlined, CodeFilled, FileTextOutlined, FileTextFilled,
   HighlightOutlined, HighlightFilled, CloseCircleOutlined, CloseCircleFilled
 } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
-import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData } from '@/redux/actions';
 import TooltipDiv from '@/components/TooltipDiv';
 import { chooseFolder, openFolder } from '@/api/native-path';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setCanvasData } from '@/redux/actions';
 
 interface Props { }
 
