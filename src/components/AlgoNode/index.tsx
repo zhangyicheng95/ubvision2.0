@@ -1,4 +1,4 @@
-import React, { Fragment, memo, useMemo, useState } from 'react';
+import React, { Fragment, memo, useMemo, useRef, useState } from 'react';
 import { Dropdown, Modal } from 'antd';
 import {
   AlignLeftOutlined, CloudDownloadOutlined, CloudSyncOutlined,
@@ -46,14 +46,25 @@ const AlgoNode: React.FC<Props> = (props) => {
     noBtn = false,
   } = props;
   const { alias, name, id, customId } = data;
-  const nodeData = node?.getData?.();
+  const timer = useRef<any>(null);
   const [currentNode, setCurrentNode] = useState({
+    alias: '',
     status: 'STOPPED',
     input_check: true, // false未开启输入校验-蓝色
     initParams_check: true, // false有必填项没填-红色
+    canvasStart: false, // 方案启动
   });
   const [borderColor, setBorderColor] = useState(nodeStatusColor.STOPPED);
 
+  // 监听节点信息变化
+  node?.on?.('change:data', (args: any) => {
+    const { current } = args;
+    const { customId, running, graphLock, alias, ...rest } = current;
+    timer.current && clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setCurrentNode(current);
+    }, 200);
+  });
   // 右键下拉菜单
   const settingList: any = [
     {
@@ -174,7 +185,7 @@ const AlgoNode: React.FC<Props> = (props) => {
   return (
     <Fragment>
       <Dropdown
-        trigger={!noBtn ? ['contextMenu'] : []}
+        trigger={(!noBtn && !currentNode?.canvasStart) ? ['contextMenu'] : []}
         disabled={
           !['STOPPED', 'UNKNOWN'].includes(currentNode?.status)
         }
@@ -193,14 +204,14 @@ const AlgoNode: React.FC<Props> = (props) => {
           <div className="flex-box node-top">
             <TooltipDiv
               id={`algoNode_${id}_name`}
-              title={nodeData?.alias || alias || name}
+              title={currentNode?.alias || alias || name}
               content={name}
               style={{
                 fontSize: 40,
                 fontWeight: 800
               }}
             >
-              {nodeData?.alias || alias || name}
+              {currentNode?.alias || alias || name}
             </TooltipDiv>
           </div>
           <div className="node-content flex-box">

@@ -1,0 +1,65 @@
+.inputGroup {
+  border: 1px solid rgba(144, 144, 144, 0.4);
+  border-radius: 2px;
+  transition: all 0.3s;
+  text-align: center;
+
+  &:hover {
+    border-color: #45bbff;
+    border-right-width: 1px !important;
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(29, 165, 255, 0.2);
+  }
+
+  :global {
+    @media (prefers-color-scheme: light) {
+      .dot {
+        background-color: rgba(0, 0, 0, 0.85);
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .dot {
+        background-color: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    .dot {
+      width: 3px;
+      height: 3px;
+      min-width: 3px;
+      min-height: 3px;
+      // border: 1px solid #000;
+      border-radius: 50%;
+      opacity: 0.5;
+      z-index: 9;
+      position: relative;
+      top: 8px;
+    }
+
+    .self_input {
+      width: 24%;
+      height: 100%;
+      border: 0;
+      background: none;
+      outline: 0;
+
+      .ant-input-number-handler-wrap {
+        display: none;
+      }
+
+      &:hover {
+        box-shadow: none;
+      }
+
+      &::selection {
+        box-shadow: none;
+      }
+
+      &:focus {
+        box-shadow: none;
+        border: 0 !important;
+      }
+    }
+  }
+}

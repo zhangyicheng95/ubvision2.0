@@ -20,7 +20,7 @@ class SimpleNodeView extends NodeView {
       body: {
         refWidth: '100%',
         refHeight: '100%',
-        fill: '#31353a',
+        fill: '#aaa',
         label: {
           text: 'rect',
           fill: '#333',

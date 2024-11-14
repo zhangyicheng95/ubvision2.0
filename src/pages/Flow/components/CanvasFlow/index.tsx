@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import SimpleNodeView from '../../config/miniMapNodeView';
 import MiniMapPanel from '../MinimapPanel';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setGraphData, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasData, setGraphData, setLoading, setSelectedNode } from '@/redux/actions';
 import { Transform } from '@antv/x6-plugin-transform';
 import { archSize, generalConfigList, portTypeObj } from '../../common/constants';
 import { Group } from '../../config/shape';
@@ -104,10 +104,11 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     if (!!container && !graphRef.current) {
       graphRef.current = new Graph({
         container,
+        async: true, // 是否是异步渲染的画布。异步渲染不会阻塞 UI，对需要添加大量节点和边时的性能提升非常明显。但需要注意的是，一些同步操作可能会出现意外结果，比如获取某个节点的视图、获取节点/边的包围盒等，因为这些同步操作触发时异步渲染可能并没有完成。
         autoResize: true,
         grid: {
           visible: true,
-          type: 'mesh',
+          type: 'dot',
           args: {
             color: 'rgba(144,144,144,.5)', // 主网格线颜色
             thickness: 1, // 主网格线宽度
@@ -117,7 +118,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         mousewheel: {
           enabled: true,
           modifiers: ['ctrl', 'meta'],
-          minScale: 0.1,
+          minScale: 0.2,
           maxScale: 2,
         },
         // 画布是否可拖动
@@ -347,33 +348,21 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       // 小地图
       graphRef.current.use(
         new MiniMap({
-          enabled: true,
-          scalable: true,
-          // @ts-ignore
-          container: document.getElementById('mini-map'),
+          scalable: true, // 是否可缩放
+          container: document.getElementById('mini-map') || undefined, // 挂载小地图的容器
           graphOptions: {
-            async: true,
-            // @ts-ignore
-            getCellView(cell) {
+            createCellView(cell: any) {
               // 可以返回三种类型数据
               // 1. null: 不渲染
               // 2. undefined: 使用 X6 默认渲染方式
               // 3. CellView: 自定义渲染
-              console.log(cell.isNode());
-
               if (cell.isEdge()) {
                 return null
-              }
+              };
               if (cell.isNode()) {
                 return SimpleNodeView;
-              }
-            },
-            // @ts-ignore
-            createCellView(cell: any) {
-              // 在小地图中不渲染边
-              if (cell.isEdge()) {
-                return null;
-              }
+              };
+              return null;
             },
           },
         })
@@ -415,319 +404,346 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, []);
   // 绑定事件
   useEffect(() => {
-    bindEvent();
+    if (canvasData?.id) {
+      bindEvent();
+    }
 
     return () => {
-      unbindEvent();
+      if (canvasData?.id) {
+        unbindEvent();
+      }
     }
-  }, [canvasData, canvasStart]);
+  }, [graphRef.current, canvasData]);
   // 绑定事件
-  const bindEvent = () => {
+  const bindEvent = useCallback(() => {
     if (graphRef.current) {
-      graphRef?.current?.on('node:mouseenter', nodeMoveIn);
-      graphRef?.current?.on('node:mouseleave', nodeMoveOut);
       graphRef?.current?.on('edge:mouseenter', edgeMoveIn);
       graphRef?.current?.on('edge:mouseleave', edgeMoveOut);
       graphRef?.current?.on('edge:contextmenu', edgeRightClick);
+      graphRef?.current?.on('node:added', nodeAdd);
       graphRef?.current?.on('node:click', nodeClick);
       graphRef?.current?.on('node:dblclick', nodeDoubleClick);
       graphRef?.current?.on('node:contextmenu', nodeRightClick);
-      // graphRef?.current?.on('edge:click', edgeClick);
-      graphRef?.current?.on('node:added', nodeAdd);
+      graphRef?.current?.on('node:mouseenter', nodeMoveIn);
+      graphRef?.current?.on('node:mouseleave', nodeMoveOut);
+
       // graphRef?.current?.on('edge:added', edgeAdd);
       // graphRef?.current?.on('cell:added', cellAdd);
       // graphRef?.current?.on('cell:removed', cellRemove);
-      // graphRef?.current?.on('node:change:data', (cell: any) => {
-      //   return nodeChange(cell, graph);
-      // });
-      graphRef?.current?.on('blank:click', reset);
-      // graphRef?.current?.on('blank:dblclick', resetDoubleClick);
+      // graphRef?.current?.on('node:change:data', nodeChange);
+      // graphRef?.current?.on('blank:click', reset);
+      graphRef?.current?.on('blank:dblclick', reset);
     }
-  };
+  }, [graphRef.current, canvasData]);
   const unbindEvent = useCallback(() => {
     if (graphRef.current) {
-      graphRef?.current?.off('node:mouseenter');
-      graphRef?.current?.off('node:mouseleave');
-      graphRef?.current?.off('edge:mouseenter');
-      graphRef?.current?.off('edge:mouseleave');
-      graphRef?.current?.on('edge:contextmenu');
+      // 删除所有事件监听
+      graphRef?.current?.off('edge:mouseenter', edgeMoveIn);
+      graphRef?.current?.off('edge:mouseleave', edgeMoveOut);
+      graphRef?.current?.off('edge:contextmenu', edgeRightClick);
+      graphRef?.current?.off('node:added', nodeAdd);
       graphRef?.current?.off('node:click', nodeClick);
-      graphRef?.current?.off('node:dblclick');
-      graphRef?.current?.off('node:contextmenu');
-      graphRef?.current?.off('edge:click');
-      graphRef?.current?.off('node:added');
-      graphRef?.current?.off('edge:added');
-      graphRef?.current?.off('cell:added');
-      graphRef?.current?.off('cell:removed');
-      graphRef?.current?.off('node:change:data');
-      graphRef?.current?.off('node:embedding');
-      graphRef?.current?.off('node:embedded');
-      graphRef?.current?.off('node:collapse');
-      graphRef?.current?.off('node:change:size');
-      graphRef?.current?.off('node:change:position');
-      graphRef?.current?.off('blank:click');
-      graphRef?.current?.off('blank:dblclick');
+      graphRef?.current?.off('node:dblclick', nodeDoubleClick);
+      graphRef?.current?.off('node:contextmenu', nodeRightClick);
+      graphRef?.current?.off('node:mouseenter', nodeMoveIn);
+      graphRef?.current?.off('node:mouseleave', nodeMoveOut);
     }
-  }, [graphRef.current]);
+  }, [graphRef.current, canvasData]);
   // 初始化渲染节点
   const initGraph = useCallback(() => {
-    console.log('画布数据', canvasData);
-    const { groups, nodes, edges } = canvasData?.flowData || {};
-    const formatPorts = (list: any) => {
-      const prePorts = [].concat(list || []);
-      const topPorts = (prePorts || [])?.filter((i: any) => i.group === 'top')?.map?.((item: any, index: number) => {
-        const color =
-          portTypeObj[item?.label?.type]?.color || portTypeObj.default;
-        return Object.assign(
-          {},
-          item,
-          !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
-          {
-            type: item?.label?.type,
-            color,
-          }
-        );
-      })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
-      const bottomPorts = (prePorts || [])?.filter((i: any) => i.group === 'bottom')?.map?.((item: any, index: number) => {
-        const color =
-          portTypeObj[item?.label?.type]?.color || portTypeObj.default;
-        return Object.assign(
-          {},
-          item,
-          !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
-          {
-            type: item?.label?.type,
-            color,
-          }
-        );
-      })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
-      return { topPorts, bottomPorts };
-    };
-    let portTypeList: any = {};
-    const groupList = (groups || []).reduce((prev: any, cent: any) => {
-      return { ...prev, [cent.customId]: cent };
-    }, {});
-    const nodeList = (nodes || []).reduce((prev: any, cent: any) => {
-      if (!cent) {
-        return prev;
-      }
-      const { topPorts, bottomPorts } = formatPorts(cent?.ports?.items || []);
-      return {
-        ...prev,
-        [cent?.customId]: {
-          ...cent,
-          config: {
-            ...cent.config,
-            generalConfig: {
-              ...(!!cent.config?.generalConfig
-                ? Object.entries(generalConfigList)?.reduce(
-                  (pre: any, cen: any) => {
-                    return Object.assign({}, pre, {
-                      [cen[0]]: {
-                        ...cen[1],
-                        ...(!!cent.config?.generalConfig[cen[0]]
-                          ? {
-                            value:
-                              cent.config?.generalConfig[cen[0]]?.value,
-                          }
-                          : {}),
-                      },
-                    });
-                  },
-                  {}
-                )
-                : generalConfigList),
-            },
-          },
-          ports: {
-            ...cent?.ports,
-            items: topPorts.concat(bottomPorts)
-          }
-        },
-      };
-    }, {});
-    const edgeList = (edges || []).reduce((prev: any, cent: any) => {
-      return { ...prev, [cent.id]: cent };
-    }, {});
-    const createGroup = (
-      id: string,
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      attrs: { label: any },
-      childrenList: [],
-      label: any
-    ) => {
-      const group: any = new Group({
-        id,
-        x,
-        y,
-        width,
-        height,
-        shape: 'dag-group',
-        customId: id,
-        attrs: Object.assign({}, attrs, {
-          body: {
-            fill:
-              localStorage.getItem('theme-mode') === 'dark'
-                ? '#2E394D'
-                : '#f3f4f5',
-          },
-          label: {
-            ...attrs.label,
-            fill:
-              localStorage.getItem('theme-mode') === 'dark'
-                ? '#fff'
-                : '#2E394D',
-          },
-          labelSec: {
-            text: label,
-            fill:
-              localStorage.getItem('theme-mode') === 'dark'
-                ? '#fff'
-                : '#2E394D',
-          },
-        }),
-        childrenList,
-        zIndex: 0,
-      });
-      graphRef.current.addNode(group);
-      return group;
-    };
-    setTimeout(() => {
-      Object.entries(nodeList || {}).forEach((node: any) => {
-        const { width = 0, height = 0 } = node[1]?.size || {};
-        register({
-          shape: `dag-node-${node[1].id}`,
-          // @ts-ignore
-          component: (
-            <AlgoNode
-              data={node[1]}
-            />
-          ),
-        });
-        const { topPorts, bottomPorts } = formatPorts(node[1]?.ports?.items || []);
-        const nodeCanvas = graphRef?.current.addNode({
-          shape: `dag-node-${node[1].id}`,
-          id: node[1].id,
-          portMarkup: [Markup.getForeignObjectMarkup()],
-          ports: Object.assign({}, node[1]?.ports, {
-            items: topPorts.concat(bottomPorts)
-          }),
-          data: { status: 'STOPPED', graphLock: false },
-          position: node[1].position,
-          size: {
-            width: width < archSize.nodeWidth ? archSize.nodeWidth : width,
-            height:
-              height < archSize.nodeHeight ? archSize.nodeHeight : height,
-          },
-          config: node[1],
-          customId: node[1].customId,
-        });
-        const data = nodeCanvas?.getData() || {};
-        nodeCanvas.setData({ ...data });
-      });
-      Object.entries(groupList || {}).forEach((group: any) => {
-        const {
-          id,
-          position: { x, y },
-          size,
-          attrs,
-          children = [],
-          childrenList = [],
-          collapsed = false,
-        } = group[1];
-        let { width, height } = size;
-        const childs = childrenList?.length ? childrenList : children;
-        let label = '';
-        childs.forEach((child: any, index: number) => {
-          const node = graphRef?.current.getCellById(child);
-          if (!!node) {
-            const { store = {} } = node;
-            const { data = {} } = store;
-            const { config = {} } = data;
-            const { alias, name } = config;
-            const text = getActualWidthOfChars(alias || name);
-            if (childs?.length <= 3) {
-              label += `${text} 
-          
-`;
-            } else {
-              if (index < 2) {
-                label += `${text}
-          
-`;
-              }
-              if (index === 2) {
-                label += `${getActualWidthOfChars(alias || name, {
-                  boxSize: 130,
-                })} 
-              
-等${childs?.length}个节点`;
-              }
+    return new Promise((resolve: any, reject: any) => {
+      console.log('画布数据', canvasData);
+      const { groups, nodes, edges } = canvasData?.flowData || {};
+      const formatPorts = (list: any) => {
+        const prePorts = [].concat(list || []);
+        const topPorts = (prePorts || [])?.filter((i: any) => i.group === 'top')?.map?.((item: any, index: number) => {
+          const color =
+            portTypeObj[item?.label?.type]?.color || portTypeObj.default;
+          return Object.assign(
+            {},
+            item,
+            !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
+            {
+              type: item?.label?.type,
+              color,
             }
-          }
-        });
-
-        const parent = createGroup(
+          );
+        })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
+        const bottomPorts = (prePorts || [])?.filter((i: any) => i.group === 'bottom')?.map?.((item: any, index: number) => {
+          const color =
+            portTypeObj[item?.label?.type]?.color || portTypeObj.default;
+          return Object.assign(
+            {},
+            item,
+            !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
+            {
+              type: item?.label?.type,
+              color,
+            }
+          );
+        })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
+        return { topPorts, bottomPorts };
+      };
+      let portTypeList: any = {};
+      const groupList = (groups || []).reduce((prev: any, cent: any) => {
+        return { ...prev, [cent.customId]: cent };
+      }, {});
+      const nodeList = (nodes || []).reduce((prev: any, cent: any) => {
+        if (!cent) {
+          return prev;
+        }
+        const { topPorts, bottomPorts } = formatPorts(cent?.ports?.items || []);
+        return {
+          ...prev,
+          [cent?.customId]: {
+            ...cent,
+            config: {
+              ...cent.config,
+              generalConfig: {
+                ...(!!cent.config?.generalConfig
+                  ? Object.entries(generalConfigList)?.reduce(
+                    (pre: any, cen: any) => {
+                      return Object.assign({}, pre, {
+                        [cen[0]]: {
+                          ...cen[1],
+                          ...(!!cent.config?.generalConfig[cen[0]]
+                            ? {
+                              value:
+                                cent.config?.generalConfig[cen[0]]?.value,
+                            }
+                            : {}),
+                        },
+                      });
+                    },
+                    {}
+                  )
+                  : generalConfigList),
+              },
+            },
+            ports: {
+              ...cent?.ports,
+              items: topPorts.concat(bottomPorts)
+            }
+          },
+        };
+      }, {});
+      const edgeList = (edges || []).reduce((prev: any, cent: any) => {
+        return { ...prev, [cent.id]: cent };
+      }, {});
+      const createGroup = (
+        id: string,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        attrs: { label: any },
+        childrenList: [],
+        label: any
+      ) => {
+        const group: any = new Group({
           id,
           x,
           y,
           width,
           height,
-          attrs,
-          childs,
-          label
-        );
-        childs.forEach((child: any) => {
-          const node = graphRef?.current.getCellById(child);
-          if (collapsed) {
-            node?.hide?.();
-          }
-          parent.addChild(node);
-        });
-        if (collapsed) {
-          parent.toggleCollapse();
-        }
-        if (!!parent?.store?.data?.attrs?.labelSec?.fill) {
-          if (collapsed) {
-            parent.store.data.attrs.labelSec.fill =
-              localStorage.getItem('theme-mode') === 'dark'
-                ? '#f3f4f5'
-                : '#2E394D';
-          } else {
-            parent.store.data.attrs.labelSec.fill = 'transparent';
-          }
-        }
-      });
-      Object.entries(edgeList || {}).forEach((edge: any) => {
-        const { attrs, source } = edge[1];
-        const stroke = portTypeList[source?.port];
-        graphRef?.current.addEdge(
-          Object.assign({}, _.omit(edge[1], 'connector'), {
-            attrs: {
-              line: Object.assign(
-                {},
-                attrs?.line,
-                { strokeWidth: 6, strokeDasharray: '' },
-                stroke ? { stroke } : {}
-              ),
+          shape: 'dag-group',
+          customId: id,
+          attrs: Object.assign({}, attrs, {
+            body: {
+              fill:
+                localStorage.getItem('theme-mode') === 'dark'
+                  ? '#2E394D'
+                  : '#fefefe',
             },
-          })
-        );
-      });
+            label: {
+              ...attrs.label,
+              fill:
+                localStorage.getItem('theme-mode') === 'dark'
+                  ? '#fefefe'
+                  : '#2E394D',
+            },
+            labelSec: {
+              text: label,
+              fill:
+                localStorage.getItem('theme-mode') === 'dark'
+                  ? '#fefefe'
+                  : '#2E394D',
+            },
+          }),
+          childrenList,
+          zIndex: 0,
+        });
+        graphRef.current.addNode(group);
+        return group;
+      };
+      setTimeout(() => {
+        Object.entries(nodeList || {}).forEach((node: any) => {
+          const { width = 0, height = 0 } = node[1]?.size || {};
+          register({
+            shape: `dag-node-${node[1].id}`,
+            // @ts-ignore
+            component: (
+              <AlgoNode
+                data={node[1]}
+              />
+            ),
+          });
+          const { topPorts, bottomPorts } = formatPorts(node[1]?.ports?.items || []);
+          const nodeCanvas = graphRef?.current.addNode({
+            shape: `dag-node-${node[1].id}`,
+            id: node[1].id,
+            portMarkup: [Markup.getForeignObjectMarkup()],
+            ports: Object.assign({}, node[1]?.ports, {
+              items: topPorts.concat(bottomPorts)
+            }),
+            data: { status: 'STOPPED', graphLock: false },
+            position: node[1].position,
+            size: {
+              width: width < archSize.nodeWidth ? archSize.nodeWidth : width,
+              height:
+                height < archSize.nodeHeight ? archSize.nodeHeight : height,
+            },
+            config: node[1],
+            customId: node[1].customId,
+          });
+          const data = nodeCanvas?.getData() || {};
+          nodeCanvas.setData({ ...data });
+        });
+        Object.entries(groupList || {}).forEach((group: any) => {
+          const {
+            id,
+            position: { x, y },
+            size,
+            attrs,
+            children = [],
+            childrenList = [],
+            collapsed = false,
+          } = group[1];
+          let { width, height } = size;
+          const childs = childrenList?.length ? childrenList : children;
+          let label = '';
+          childs.forEach((child: any, index: number) => {
+            const node = graphRef?.current.getCellById(child);
+            if (!!node) {
+              const { store = {} } = node;
+              const { data = {} } = store;
+              const { config = {} } = data;
+              const { alias, name } = config;
+              const text = getActualWidthOfChars(alias || name);
+              if (childs?.length <= 3) {
+                label += `${text} 
+          
+`;
+              } else {
+                if (index < 2) {
+                  label += `${text}
+          
+`;
+                }
+                if (index === 2) {
+                  label += `${getActualWidthOfChars(alias || name, {
+                    boxSize: 130,
+                  })} 
+              
+等${childs?.length}个节点`;
+                }
+              }
+            }
+          });
 
-      graphRef?.current.zoomToFit({ absolute: true, maxScale: 1 });
-      const zoom = graphRef?.current.zoom();
-    }, 500);
-    // graphRef.current?.fromJSON?.();
-  }, [graphRef.current, canvasData]);
+          const parent = createGroup(
+            id,
+            x,
+            y,
+            width,
+            height,
+            attrs,
+            childs,
+            label
+          );
+          childs.forEach((child: any) => {
+            const node = graphRef?.current.getCellById(child);
+            if (collapsed) {
+              node?.hide?.();
+            }
+            parent.addChild(node);
+          });
+          if (collapsed) {
+            parent.toggleCollapse();
+          }
+          if (!!parent?.store?.data?.attrs?.labelSec?.fill) {
+            if (collapsed) {
+              parent.store.data.attrs.labelSec.fill =
+                localStorage.getItem('theme-mode') === 'dark'
+                  ? '#f3f4f5'
+                  : '#2E394D';
+            } else {
+              parent.store.data.attrs.labelSec.fill = 'transparent';
+            }
+          }
+        });
+        Object.entries(edgeList || {}).forEach((edge: any) => {
+          const { attrs, source } = edge[1];
+          const stroke = portTypeList[source?.port];
+          graphRef?.current.addEdge(
+            Object.assign({}, _.omit(edge[1], 'connector'), {
+              attrs: {
+                line: Object.assign(
+                  {},
+                  attrs?.line,
+                  { strokeWidth: 6, strokeDasharray: '' },
+                  stroke ? { stroke } : {}
+                ),
+              },
+            })
+          );
+        });
+        graphRef?.current.zoomToFit({ absolute: true, maxScale: 1 });
+        dispatch(setCanvasData({
+          ...canvasData,
+          zoom: graphRef?.current?.zoom(),
+        }));
+        setTimeout(() => {
+          resolve(true);
+        }, 3000);
+      }, 500);
+    });
+  }, [graphRef.current, canvasData?.id]);
+  const syncNodeStatus = useCallback(() => {
+    (canvasData?.flowData?.nodes || [])?.forEach((item: any) => {
+      const { config } = item;
+      const { generalConfig, initParams } = config || {};
+      let ifHasRequireNotWrite = false;
+      const node = graphRef.current?.getCellById(item.id);
+      try {
+        Object.entries(initParams || {})?.forEach((item: any) => {
+          if (item?.[1]?.require && (_.isUndefined(item[1]?.value) || _.isNull(item[1]?.value))) {
+            ifHasRequireNotWrite = true;
+            throw new Error();
+          }
+        })
+      } catch (err) {
+
+      }
+      node.setData({
+        ...node?.getData() || {},
+        input_check: !!generalConfig?.input_check?.value,
+        initParams_check: !ifHasRequireNotWrite,
+        canvasStart,
+      })
+    })
+  }, [canvasData?.flowData?.nodes, canvasStart]);
   useEffect(() => {
-    if (!!graphRef.current && !!canvasData?.id) {
-      initGraph();
-    };
-  }, [graphRef.current, JSON.stringify(canvasData)]);
+    if (!!graphRef.current) {
+      if (!!canvasData?.id) {
+        dispatch(setLoading(true));
+        initGraph().then(() => {
+          dispatch(setLoading(false));
+          syncNodeStatus();
+        });
+      }
+    }
+  }, [graphRef.current, canvasData?.id]);
   // 节点添加
   const nodeAdd = useCallback((flow: any) => {
     const { node } = flow;
@@ -751,16 +767,15 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   // 节点双击
   const nodeDoubleClick = useCallback((flow: any) => {
     const { e, view, node } = flow;
-    const { config, customId } = node?.store?.data;
+    const { config, customId, id } = node?.store?.data;
     if (selectedNode === customId) return;
-    console.log(selectedNode, customId);
     reset(e);
     setTimeout(() => {
       // 组点击，可进行"解散组"操作
       if (node?.id?.indexOf('group_') > -1) {
 
       } else if (node?.store?.data?.customId?.indexOf('node_') > -1) {
-        dispatch(setSelectedNode(customId));
+        dispatch(setSelectedNode(`${customId}$%$${id}`));
       } else {
 
       }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InputNumber } from 'antd';
 import {
   EyeInvisibleOutlined,
@@ -20,19 +20,18 @@ const MiniMapPanel: React.FC<Props> = (props) => {
   const [inputToMiniMapZoom, setInputToMiniMapZoom] = useState(false);
   const [miniMapZoom, setMiniMapZoom] = useState(1);
 
+  useEffect(() => {
+    setMiniMapZoom(Number(canvasData.zoom));
+  }, [canvasData?.zoom]);
+
   return (
     <div className={`${styles.minimapPanel} flex-box-column`}>
-      <div
-        className="map-toolbar flex-box"
-      // style={
-      //   showMiniMap ? { width: 332 } : { width: 228, transition: 'width .5s' }
-      // }
-      >
+      <div className="map-toolbar flex-box">
         <ZoomOutOutlined
           className="toolbar-btn"
           onClick={() => {
             const zoomCur = graphData.zoom();
-            const zoomto = Number((zoomCur - 0.1).toFixed(1));
+            const zoomto = Number((zoomCur - 0.1).toFixed(2));
             if (zoomto >= 0.1) {
               graphData.zoomTo(zoomto);
               setMiniMapZoom(zoomto);

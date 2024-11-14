@@ -11,8 +11,26 @@ const initalState: IRootActions = {
 	canvasPlugins: [],
 	canvasData: {
 		id: '',
+		alias: '',
 		name: '',
+		description: '',
 		plugin_dir: '',
+		pushData: false,
+		zoom: 1,
+		flowData: {
+			edges: [],
+			nodes: [],
+			groups: []
+		}
+	},
+	canvasDataBase: {
+		id: '',
+		alias: '',
+		name: '',
+		description: '',
+		plugin_dir: '',
+		pushData: false,
+		zoom: 1,
 		flowData: {
 			edges: [],
 			nodes: [],
@@ -78,6 +96,12 @@ const rootReducer = (state = initalState, actions: any) => {
 			return {
 				...state,
 				canvasData: actions.canvasData,
+			};
+		// 设置方案数据-备份
+		case rootActionTypes.SET_CANVAS_DATA_BASE:
+			return {
+				...state,
+				canvasDataBase: actions.canvasDataBase,
 			};
 		// 方案启动
 		case rootActionTypes.SET_CANVAS_START:

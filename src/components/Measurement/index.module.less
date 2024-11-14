@@ -1,0 +1,76 @@
+.roiMark {
+  gap: 4px;
+  flex: 1;
+  flex-wrap: wrap;
+
+  &:hover {
+    border: none;
+    outline: 0;
+  }
+
+  :global {
+    .item-input-box {
+      position: relative;
+      flex: 1;
+      min-width: calc(25% - 8px);
+
+      .self_input {
+        border-radius: 4px;
+
+        .ant-input-number-handler-wrap {
+          display: none;
+        }
+      }
+
+      .ant-switch,
+      .ant-input,
+      .ant-input-number-input {
+        height: 32px;
+        width: 100%;
+
+        .ant-switch-handle {
+          top: 7px;
+        }
+      }
+
+      .input-name {
+        position: absolute;
+        font-size: 12px;
+        cursor: text;
+        z-index: 1;
+      }
+
+      .focus {
+        top: -6px;
+        height: 14px;
+        line-height: 1;
+        padding: 0 2px;
+        z-index: 1;
+      }
+
+      @media (prefers-color-scheme: light) {
+        .input-name {
+          color: inherit;
+        }
+
+        .focus {
+          background-color: #fff;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .input-name {
+          color: rgba(144, 144, 144, .85);
+        }
+
+        .focus {
+          background-color: #202735;
+        }
+
+        .bgColor {
+          background-color: #273142;
+        }
+      }
+    }
+  }
+}

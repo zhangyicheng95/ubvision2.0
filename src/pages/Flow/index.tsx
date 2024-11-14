@@ -9,7 +9,7 @@ import ConfigPanel from './components/ConfigPanel';
 import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setCanvasPlugins, setCanvasStart, setLoading } from '@/redux/actions';
+import { IRootActions, setCanvasData, setCanvasDataBase, setCanvasPlugins, setCanvasStart, setLoading } from '@/redux/actions';
 import { generalConfigList, portTypeObj } from './common/constants';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { getPluginList } from '@/services/flowPlugin';
@@ -132,18 +132,18 @@ const FlowPage: React.FC<Props> = (props: any) => {
       // 拉取数据
       getParams(id).then((res) => {
         if (!!res && res.code === 'SUCCESS') {
-          dispatch(setCanvasData(res.data || {}));
           // 获取任务状态
           getFlowStatusService(id).then((resStatus: any) => {
             if (!!resStatus && resStatus.code === 'SUCCESS') {
+              dispatch(setCanvasData(res?.data || {}));
+              dispatch(setCanvasDataBase(res?.data || {}));
               dispatch(setCanvasStart(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
             } else {
               dispatch(setCanvasStart(false));
               message.error(
                 resStatus?.msg || resStatus?.message || '接口异常'
               );
-            }
-            dispatch(setLoading(false));
+            };
           });
         } else {
           message.error(res?.message || '接口异常');
@@ -164,7 +164,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
             <Splitter.Panel>
               <CanvasFlow />
             </Splitter.Panel>
-            <Splitter.Panel defaultSize="30%" min="10%" max="60%">
+            <Splitter.Panel defaultSize="40%" min="10%" max="60%">
               <ConfigPanel />
             </Splitter.Panel>
           </Splitter>

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Button, message, Modal, Dropdown } from 'antd';
 import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
@@ -23,7 +23,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
     });
   };
   // 启动业务
-  const startFlow = (type?: string) => {
+  const startFlow = useCallback((type?: string) => {
     if (canvasData?.id) {
       dispatch(setLoading(true));
       saveGraph().then((res) => {
@@ -34,6 +34,14 @@ const HeaderToolbar: React.FC<Props> = (props) => {
         }).then((res) => {
           if (['success', 'SUCCESS'].includes(res?.code)) {
             dispatch(setCanvasStart(true));
+            (graphData?.getNodes?.() || [])?.forEach((node: any) => {
+              console.log(node?.getData?.());
+              
+              node.setData?.({
+                ...node?.getData?.() || {},
+                canvasStart: true
+              });
+            });
           } else {
             message.error(
               res?.message || res?.msg || '服务启动失败，请检查网络设置'
@@ -57,9 +65,9 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       });
     }
     return false;
-  };
+  }, [graphData, canvasData]);
   // 停止业务
-  const stopFlow = (ifGoBack?: Boolean, ifRestart?: Boolean) => {
+  const stopFlow = useCallback((ifGoBack?: Boolean, ifRestart?: Boolean) => {
     dispatch(setLoading(true));
     // socketDataRef.current && socketDataRef.current?.close();
     // socketStateRef.current && socketStateRef.current?.close();
@@ -69,13 +77,19 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       stopFlowService(canvasData?.id).then((res) => {
         if (['success', 'SUCCESS'].includes(res?.code)) {
           dispatch(setCanvasStart(false));
+          (graphData?.getNodes?.() || [])?.forEach((node: any) => {
+            node.setData?.({
+              ...node?.getData?.() || {},
+              canvasStart: false
+            });
+          });
         } else {
           message.error(res?.message || '停止服务失败，请检查网络设置');
         };
         dispatch(setLoading(false));
       });
     }, 1000);
-  };
+  }, [graphData, canvasData]);
   const startList: any = [
     {
       key: `start-normal`,
