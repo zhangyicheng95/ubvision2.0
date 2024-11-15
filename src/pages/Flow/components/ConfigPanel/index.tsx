@@ -2,10 +2,11 @@ import React, { Fragment, memo, useCallback, useEffect, useMemo, useState } from
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData } from '@/redux/actions';
+import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
 import { Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select, Splitter, Switch, Tabs, TabsProps, Upload } from 'antd';
 import {
   CaretDownOutlined, CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, ExclamationCircleOutlined,
+  MinusSquareOutlined, ArrowUpOutlined, MinusOutlined,
 
 } from '@ant-design/icons';
 import TooltipDiv from '@/components/TooltipDiv';
@@ -13,8 +14,9 @@ import { chooseFile, chooseFolder, openFolder } from '@/api/native-path';
 import moment from 'moment';
 import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
-import { formatJson, guid } from '@/utils/utils';
+import { formatJson, getuid, guid } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
+import { portTypeObj } from '../../common/constants';
 
 const { confirm } = Modal;
 interface Props { }
@@ -24,117 +26,265 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const { validateFields, getFieldsValue, setFieldsValue } = form;
-  const [selectedTab, setSelectedTab] = useState('1');
+  const [selectedTab, setSelectedTab] = useState('params');
+  const [dataViewType, setDataViewType] = useState('output');
+  const [portList, setPortList] = useState<any>([]);
 
   useEffect(() => {
     form?.resetFields?.();
     if (selectedNode?.indexOf('node_') > -1) {
+      setPortList((node?.getPorts() || [])?.map((item: any, index: number) => ({
+        ...item,
+        sort: index,
+        label: {
+          ...item.label,
+          sort: index
+        }
+      })));
       form.setFieldsValue({
         alias: nodeConfig?.alias,
         description: nodeConfig?.description
       });
     } else {
       form.setFieldsValue({ ...canvasData });
+      setSelectedTab('params');
     }
   }, [canvasData.id, selectedNode]);
   // 选中的节点
+  const node = useMemo(() => {
+    if (!graphData) return null;
+    const nodeId = selectedNode?.split('$%$')?.[1];
+    return graphData.getCellById(nodeId)
+  }, [graphData, selectedNode]);
   const nodeConfig = useMemo<any>(() => {
-    const { nodes } = canvasData?.flowData || {};
-    const selected = nodes?.filter((i: any) => selectedNode?.indexOf(i?.customId) > -1);
+    const { groups, nodes } = canvasData?.flowData || {};
+    const selected = selectedNode?.indexOf('node_') > -1 ?
+      nodes?.filter((i: any) => selectedNode?.indexOf(i?.customId) > -1)
+      :
+      selectedNode?.indexOf('group_') > -1 ?
+        groups?.filter((i: any) => selectedNode?.indexOf(i?.customId) > -1)
+        : null
+      ;
     return selected?.[0] || null;
-  }, [JSON.stringify(canvasData?.flowData?.nodes), selectedNode])
+  }, [selectedNode, canvasData])
   // 节点不同的配置信息
   const items: TabsProps['items'] = [
     {
-      key: '1',
+      key: 'params',
       label: '参数',
     },
     {
-      key: '2',
+      key: 'input',
       label: '输入',
     },
     {
-      key: '3',
+      key: 'output',
       label: '输出',
     },
     {
-      key: '4',
+      key: 'info',
       label: '基本信息'
     },
   ];
   // 节点保存
   const onSave = useCallback(() => {
-    validateFields()
-      .then((values) => {
-        console.log(values);
-        if (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) {
-          // 节点
-          const {
-            alias, description,
-            // 高级设置相关
-            start_delay_time, input_check, output_check, cost_record, show_update_time,
-          } = values;
-          const nodeId = selectedNode?.split('$%$')?.[1];
-          const node = graphData.getCellById(nodeId);
-          node.setData({ ...node?.getData?.(), alias, description, input_check, initParams_check: true });
-          const result = {
-            ...nodeConfig,
-            alias, description,
-            config: {
-              ...nodeConfig?.config || {},
-              generalConfig: Object.entries(nodeConfig?.config?.generalConfig || {})?.reduce((pre: any, cen: any) => {
-                return {
-                  ...pre,
-                  [cen[0]]: {
-                    ...cen[1],
-                    value: values[cen[0]]
-                  }
+    return new Promise((resolve, reject) => {
+      validateFields()
+        .then((values) => {
+          console.log(values);
+          try {
+            if (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) {
+              // 节点编辑-保存
+              (Object.keys(values) || []).forEach((key: string) => {
+                if (key?.indexOf('port$%$') > -1 && key?.indexOf('$%$newname$%$') > -1) {
+                  message.destroy();
+                  message.error('新增的连接桩，请在name输入框回车确认');
+                  throw new Error();
                 }
-              }, {}),
-              initParams: Object.entries(nodeConfig?.config?.initParams || {})?.reduce((pre: any, cen: any) => {
-                return {
-                  ...pre,
-                  [cen[0]]: {
-                    ...cen[1],
-                    value: values[cen[0]]
-                  }
-                }
-              }, {}),
-            }
-          };
-          const params = {
-            ...canvasData || {},
-            flowData: {
-              ...canvasData?.flowData || {},
-              nodes: (canvasData?.flowData?.nodes || [])
-                ?.map((item: any) => {
-                  if (selectedNode?.indexOf(item.customId) > -1) {
-                    return {
-                      ...result
+              });
+              let ports: any = {};
+              Object.entries(values)?.forEach((res: any) => {
+                if (res[0]?.indexOf('port$%$') > -1) {
+                  const item = res[0]?.split('$%$');
+                  // 代表是编辑连接桩
+                  const id = item?.[1];
+                  const name = item?.[2];
+                  const direction = item?.[3];
+                  if (!!ports[id]) {
+                    ports[id] = {
+                      ...ports[id],
+                      [name]: res[1],
                     };
                   } else {
-                    return item;
-                  }
-                })
-            }
-          };
-          console.log(params);
-          dispatch(setCanvasData(params));
-        } else {
-          // 方案
-          const result = {
-            ...canvasData,
-            ...values
-          };
-          dispatch(setCanvasData(result));
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        const { errorFields } = err;
-        errorFields?.length && message.error(`${errorFields[0]?.errors[0]} 是必填项`);
-      });
-  }, [graphData, canvasData, selectedNode]);
+                    ports[id] = {
+                      [name]: res[1],
+                      direction
+                    };
+                  };
+                }
+              });
+              // 连接桩
+              const inputPort = (portList || [])
+                ?.filter((i: any) => i.direction === 'input')
+                ?.map((item: any) => {
+                  const result = {
+                    ...item,
+                    ...ports[item.id],
+                    label: {
+                      ...item?.label || {},
+                      ...ports[item.id],
+                    }
+                  };
+                  node.setPortProp(item.id, result);
+                  return result;
+                });
+              const outputPort = (portList || [])
+                ?.filter((i: any) => i.direction === 'output')
+                ?.map((item: any) => {
+                  const result = {
+                    ...item,
+                    ...ports[item.id],
+                    label: {
+                      ...item?.label || {},
+                      ...ports[item.id],
+                    }
+                  };
+                  node.setPortProp(item.id, result);
+                  return result;
+                });
+              // 把别名和描述传给node
+              node.setData({
+                ...node?.getData?.(),
+                alias: values['info$%$alias'],
+                description: values['info$%$description'],
+                input_check: values['params$%$input_check'],
+                initParams_check: true
+              });
+              const result = {
+                ...nodeConfig,
+                alias: values['info$%$alias'],
+                description: values['info$%$description'],
+                config: {
+                  ...nodeConfig?.config || {},
+                  generalConfig: Object.entries(nodeConfig?.config?.generalConfig || {})?.reduce((pre: any, cen: any) => {
+                    return {
+                      ...pre,
+                      [cen[0]]: {
+                        ...cen[1],
+                        value: values[`params$%$${cen[0]}`]
+                      }
+                    }
+                  }, {}),
+                  initParams: Object.entries(nodeConfig?.config?.initParams || {})?.reduce((pre: any, cen: any) => {
+                    return {
+                      ...pre,
+                      [cen[0]]: {
+                        ...cen[1],
+                        value: values[`params$%$${cen[0]}`]
+                      }
+                    }
+                  }, {}),
+                  input: inputPort?.reduce((pre: any, cen: any) => {
+                    return {
+                      ...pre,
+                      [cen.name]: cen.label
+                    }
+                  }, {}),
+                  output: outputPort?.reduce((pre: any, cen: any) => {
+                    return {
+                      ...pre,
+                      [cen.name]: cen.label
+                    }
+                  }, {}),
+                },
+                ports: {
+                  ...nodeConfig?.ports || {},
+                  items: inputPort.concat(outputPort)
+                }
+              };
+              const params = {
+                ...canvasData || {},
+                flowData: {
+                  ...canvasData?.flowData || {},
+                  nodes: (canvasData?.flowData?.nodes || [])
+                    ?.map((item: any) => {
+                      if (selectedNode?.indexOf(item.customId) > -1) {
+                        return {
+                          ...result
+                        };
+                      } else {
+                        return item;
+                      }
+                    })
+                }
+              };
+              console.log(params);
+              dispatch(setCanvasData(params));
+              setPortList(inputPort.concat(outputPort));
+              resolve(true);
+              return;
+            } if (selectedNode?.indexOf('group_') > -1 && !!nodeConfig) {
+              // 组编辑-保存
+              const result = {
+                ...nodeConfig,
+                config: {
+                  ...nodeConfig?.config || {},
+                  initParams: {
+                    interpreter: {
+                      name: 'interpreter',
+                      alias: '解释器',
+                      require: true,
+                      description: '',
+                      type: 'File',
+                      widget: {
+                        type: 'File',
+                        suffix: ['exe'],
+                      },
+                      value: values.interpreter,
+                    },
+                  },
+                }
+              };
+              const params = {
+                ...canvasData || {},
+                flowData: {
+                  ...canvasData?.flowData || {},
+                  groups: (canvasData?.flowData?.groups || [])
+                    ?.map((item: any) => {
+                      if (selectedNode?.indexOf(item.customId) > -1) {
+                        return {
+                          ...result
+                        };
+                      } else {
+                        return item;
+                      }
+                    })
+                }
+              };
+              dispatch(setCanvasData(params));
+              resolve(true);
+              return;
+            } else {
+              // 方案编辑-保存
+              const result = {
+                ...canvasData,
+                ...values
+              };
+              dispatch(setCanvasData(result));
+              resolve(true);
+              return;
+            };
+          } catch (err) {
+            console.log(err);
+          }
+        })
+        .catch((err) => {
+          const { errorFields } = err;
+          errorFields?.length && message.error(`${errorFields[0]?.errors[0]} 是必填项`);
+          reject()
+        });
+    });
+  }, [graphData, canvasData, selectedNode, portList]);
 
   return (
     <div className={`flex-box-column ${styles.configPanel}`}>
@@ -143,7 +293,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
-                console.log('config', nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}
@@ -153,45 +302,211 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                       (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) ?
                         // 选中节点
                         <Form form={form} layout="vertical" scrollToFirstError>
-                          <Tabs items={items} onChange={(e) => { setSelectedTab(e) }} />
+                          <Tabs className='boxShadow' items={items} activeKey={selectedTab} onChange={(e) => {
+                            onSave().then((res) => {
+                              setSelectedTab(e);
+                            })
+                          }} />
                           <div className="config-panel-left-body-panel">
-                            <div style={selectedTab === '1' ? {} : { display: 'none' }}>
+                            <div style={selectedTab === 'params' ? {} : { display: 'none' }}>
                               {
-                                Object.entries(nodeConfig?.config?.initParams || {})?.map((res: any, index: number) => {
-                                  return <FormatWidgetToDom
-                                    key={res[0]}
-                                    config={res}
-                                    form={form}
-                                    disabled={canvasStart || res[1]?.disabled}
-                                  />
-                                })
+                                Object.entries(nodeConfig?.config?.initParams || {})
+                                  ?.map((res: any, index: number) => {
+                                    return <FormatWidgetToDom
+                                      key={res[0]}
+                                      config={[`params$%$${res[0]}`, res[1]]}
+                                      form={form}
+                                      disabled={canvasStart || res[1]?.disabled}
+                                    />
+                                  })
                               }
                               <Divider>高级设置</Divider>
                               {
                                 Object.entries(nodeConfig?.config?.generalConfig || {})?.map((res: any, index: number) => {
                                   return <FormatWidgetToDom
                                     key={res[0]}
-                                    config={res}
+                                    config={[`params$%$${res[0]}`, res[1]]}
                                     form={form}
                                     disabled={canvasStart || res[1]?.disabled}
                                   />
                                 })
                               }
                             </div>
-                            <div style={selectedTab === '2' ? {} : { display: 'none' }}>
-                              Content of Tab Pane 2
+                            <div style={['input', , 'output'].includes(selectedTab) ? {} : { display: 'none' }}>
+                              {(portList || [])
+                                ?.sort((a: any, b: any) => a.sort - b.sort)
+                                ?.filter((i: any) => i.direction === selectedTab)
+                                ?.map((port: any, index: number) => {
+                                  const { id, label, direction, sort } = port;
+                                  const { alias, name, type, description, pushData, require } = label;
+                                  return <div className="port-item" key={`port-item-${id}`}>
+                                    <div className="flex-box-justify-between port-item-title">
+                                      {
+                                        !!name ?
+                                          <Form.Item
+                                            name={`port$%$${id}$%$name$%$${direction}`}
+                                            initialValue={name}
+                                            rules={[{ required: true, message: `${alias}` }]}
+                                          >
+                                            <TooltipDiv>{name}</TooltipDiv>
+                                          </Form.Item>
+                                          :
+                                          <Form.Item
+                                            name={`port$%$${id}$%$newname$%$${direction}`}
+                                            rules={[{ required: true, message: `${alias}` }]}
+                                          >
+                                            <Input
+                                              placeholder="name，输入后回车确认"
+                                              onPressEnter={(e: any) => {
+                                                const { value } = e?.target;
+                                                const center = {
+                                                  ...port,
+                                                  name: value,
+                                                  label: {
+                                                    ...port?.label || {},
+                                                    name: value
+                                                  }
+                                                };
+                                                node.setPortProp(id, center);
+                                                setPortList((pre: any) => (pre || [])?.map((item: any) => {
+                                                  if (item.id === id) {
+                                                    return center;
+                                                  }
+                                                  return item;
+                                                }));
+                                              }} />
+                                          </Form.Item>
+                                      }
+                                      <Button
+                                        icon={<TooltipDiv content={"删除"} placement="right"><MinusOutlined /> </TooltipDiv>}
+                                        style={{ width: 24, minWidth: 24 }}
+                                        onClick={() => {
+                                          node.removePort(id);
+                                          setPortList((pre: any) => pre?.filter((i: any) => i.id !== id));
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="port-item-body">
+                                      <div className="flex-box">
+                                        <Form.Item
+                                          name={`port$%$${id}$%$alias$%$${direction}`}
+                                          initialValue={alias}
+                                          rules={[{ required: false, message: `${alias}` }]}
+                                        >
+                                          <Input placeholder="别名" />
+                                        </Form.Item>
+                                        <Form.Item
+                                          name={`port$%$${id}$%$type$%$${direction}`}
+                                          initialValue={type}
+                                          style={{ width: 'calc(50% - 12px)', minWidth: 'calc(50% - 12px)' }}
+                                          rules={[{ required: false, message: `${alias}` }]}
+                                        >
+                                          <Select
+                                            placeholder="链接桩类型"
+                                            options={Object.keys(portTypeObj)?.map?.((type) => ({ key: type, label: type, value: type }))}
+                                          />
+                                        </Form.Item>
+                                        <Button
+                                          icon={<TooltipDiv content={`排序向上: ${sort}`} placement="right"><ArrowUpOutlined /></TooltipDiv>}
+                                          disabled={index === 0}
+                                          style={{ width: 24, minWidth: 24 }}
+                                          onClick={() => {
+                                            const target = {
+                                              ...portList[index] || {},
+                                              label: {
+                                                ...portList[index]?.label,
+                                                sort: portList[index - 1]?.sort,
+                                              },
+                                              sort: portList[index - 1]?.sort
+                                            };
+                                            const center = {
+                                              ...portList[index - 1] || {},
+                                              label: {
+                                                ...portList[index - 1]?.label,
+                                                sort: portList[index]?.sort,
+                                              },
+                                              sort: portList[index]?.sort,
+                                            };
+                                            node.setPortProp(center.id, center);
+                                            node.setPortProp(target.id, target);
+                                            setPortList((pre: any) => (pre || [])?.map((cen: any, cIndex: number) => {
+                                              if (cIndex === index - 1) {
+                                                return {
+                                                  ...cen,
+                                                  label: {
+                                                    ...cen?.label,
+                                                    sort: index,
+                                                  },
+                                                  sort: index,
+                                                };
+                                              } else if (cIndex === index) {
+                                                return {
+                                                  ...cen,
+                                                  label: {
+                                                    ...cen?.label,
+                                                    sort: index - 1,
+                                                  },
+                                                  sort: index - 1,
+                                                };
+                                              }
+                                              return cen;
+                                            }))
+                                          }}
+                                        />
+                                      </div>
+                                      <Form.Item
+                                        name={`port$%$${id}$%$description$%$${direction}`}
+                                        initialValue={description}
+                                        rules={[{ required: false, message: `${alias}` }]}
+                                      >
+                                        <Input.TextArea
+                                          autoSize={{ minRows: 1, maxRows: 3 }}
+                                          placeholder="描述"
+                                          className="scrollbar-style"
+                                        />
+                                      </Form.Item>
+                                      {
+                                        selectedTab === 'output'
+                                          ?
+                                          <TooltipDiv content={"数据推送"} placement="right">
+                                            <Form.Item
+                                              name={`port$%$${id}$%$pushData$%$${direction}`}
+                                              initialValue={pushData}
+                                              valuePropName="checked"
+                                              rules={[{ required: false, message: `${alias}` }]}
+                                            >
+                                              <Switch
+                                                className='port-item-body-switch'
+                                              />
+                                            </Form.Item>
+                                          </TooltipDiv>
+                                          :
+                                          <TooltipDiv content={"是否必要"} placement="right">
+                                            <Form.Item
+                                              name={`port$%$${id}$%$require$%$${direction}`}
+                                              initialValue={require}
+                                              valuePropName="checked"
+                                              rules={[{ required: false, message: `${alias}` }]}
+                                            >
+                                              <Switch
+                                                className='port-item-body-switch'
+                                                defaultChecked={require}
+                                              />
+                                            </Form.Item>
+                                          </TooltipDiv>
+                                      }
+                                    </div>
+                                  </div>
+                                })}
                             </div>
-                            <div style={selectedTab === '3' ? {} : { display: 'none' }}>
-                              Content of Tab Pane 3
-                            </div>
-                            <div style={selectedTab === '4' ? {} : { display: 'none' }}>
+                            <div style={selectedTab === 'info' ? {} : { display: 'none' }}>
                               <div className='config-panel-left-body-info-box'>
                                 <p><span>节点ID:</span> {nodeConfig?.customId}</p>
                                 <p><span>版本号:</span> {nodeConfig?.version}</p>
                                 <p><span>模块:</span> {nodeConfig?.config?.module}</p>
                               </div>
                               <Form.Item
-                                name={`alias`}
+                                name={`info$%$alias`}
                                 label="节点别名:"
                                 initialValue={nodeConfig?.alias}
                                 rules={[{ required: false, message: '节点别名' }]}
@@ -199,7 +514,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                 <Input disabled={canvasStart} />
                               </Form.Item>
                               <Form.Item
-                                name={`description`}
+                                name={`info$%$description`}
                                 label="描述:"
                                 initialValue={nodeConfig?.description}
                                 rules={[{ required: false, message: '插件描述' }]}
@@ -215,107 +530,210 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                           </div>
                         </Form>
                         :
-                        // 通用设置
-                        <Form form={form} layout="vertical" scrollToFirstError>
-                          <div className="config-panel-left-body-panel">
-                            <Form.Item
-                              name={`name`}
-                              label="方案名称:"
-                              initialValue={canvasData?.name}
-                              rules={[{ required: true, message: 'name' }]}
-                            >
-                              <Input
-                                placeholder="请输入方案名称"
-                                disabled={canvasStart}
-                              />
-                            </Form.Item>
-                            <Form.Item
-                              name={`description`}
-                              label="方案描述:"
-                              initialValue={canvasData?.description}
-                              rules={[{ required: false, message: '方案描述' }]}
-                            >
-                              <Input.TextArea
-                                autoSize={{ minRows: 1, maxRows: 6 }}
-                                maxLength={200}
-                                placeholder="请输入方案描述"
-                                disabled={canvasStart}
-                              />
-                            </Form.Item>
-                            <Form.Item
-                              name={`plugin_dir`}
-                              label="方案路径:"
-                              tooltip="插件本地路径，不填无法获取插件"
-                              initialValue={canvasData?.plugin_dir}
-                              rules={[{ required: false, message: '方案路径' }]}
-                            >
-                              <code className="flex-box-justify-between">
-                                {
-                                  !!canvasData?.plugin_dir ?
-                                    <Fragment>
-                                      <TooltipDiv title={canvasData?.plugin_dir} onClick={() =>
-                                        openFolder(`${canvasData?.plugin_dir}\\plugins`)
-                                      }>
-                                        {canvasData?.plugin_dir}
-                                      </TooltipDiv>
-                                      <a
-                                        style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
-                                        onClick={() => {
-                                          if (canvasStart) return;
-                                          form.setFieldsValue({ plugin_dir: '' })
-                                          dispatch(setCanvasData({
-                                            ...canvasData,
-                                            plugin_dir: ''
-                                          }));
-                                        }}
-                                      >
-                                        移除
-                                      </a>
-                                    </Fragment>
-                                    : null
-                                }
-                                <Button
-                                  icon={<CloudUploadOutlined />}
+                        (selectedNode?.indexOf('group_') > -1 && nodeConfig) ?
+                          // 选中分组
+                          <Form form={form} layout="vertical" scrollToFirstError>
+                            <div className="config-panel-left-body-panel">
+                              {
+                                Object.entries(nodeConfig?.config?.initParams || {
+                                  interpreter: {
+                                    name: 'interpreter',
+                                    alias: '解释器',
+                                    require: true,
+                                    description: '',
+                                    type: 'File',
+                                    widget: {
+                                      type: 'File',
+                                      suffix: ['exe'],
+                                    },
+                                    value: undefined,
+                                  }
+                                })?.map((res: any) => {
+                                  return <FormatWidgetToDom
+                                    key={res[0]}
+                                    config={res}
+                                    form={form}
+                                    disabled={canvasStart || res[1]?.disabled}
+                                  />
+                                })
+                              }
+                            </div>
+                          </Form>
+                          :
+                          // 通用设置
+                          <Form form={form} layout="vertical" scrollToFirstError>
+                            <div className="config-panel-left-body-panel">
+                              <Form.Item
+                                name={`name`}
+                                label="方案名称:"
+                                initialValue={canvasData?.name}
+                                rules={[{ required: true, message: 'name' }]}
+                              >
+                                <Input
+                                  placeholder="请输入方案名称"
                                   disabled={canvasStart}
-                                  onClick={() => {
-                                    chooseFolder((res: any) => {
-                                      const path = _.isArray(res) ? res[0] : res;
-                                      form.setFieldsValue({ plugin_dir: path })
-                                      dispatch(setCanvasData({
-                                        ...canvasData,
-                                        plugin_dir: path
-                                      }));
-                                    });
-                                  }}
-                                >
-                                  选择文件
-                                </Button>
-                              </code>
-                            </Form.Item>
-                            <Form.Item
-                              name={`pushData`}
-                              label="数据推送:"
-                              tooltip="节点数据推送的总开关"
-                              initialValue={canvasData?.pushData}
-                              valuePropName="checked"
-                              rules={[{ required: false, message: '数据推送' }]}
-                            >
-                              <Switch />
-                            </Form.Item>
-                          </div>
-                        </Form>
+                                />
+                              </Form.Item>
+                              <Form.Item
+                                name={`description`}
+                                label="方案描述:"
+                                initialValue={canvasData?.description}
+                                rules={[{ required: false, message: '方案描述' }]}
+                              >
+                                <Input.TextArea
+                                  autoSize={{ minRows: 1, maxRows: 6 }}
+                                  maxLength={200}
+                                  placeholder="请输入方案描述"
+                                  disabled={canvasStart}
+                                />
+                              </Form.Item>
+                              <Form.Item
+                                name={`plugin_dir`}
+                                label="方案路径:"
+                                tooltip="插件本地路径，不填无法获取插件"
+                                initialValue={canvasData?.plugin_dir}
+                                rules={[{ required: false, message: '方案路径' }]}
+                              >
+                                <code className="flex-box-justify-between">
+                                  {
+                                    !!canvasData?.plugin_dir ?
+                                      <Fragment>
+                                        <TooltipDiv title={canvasData?.plugin_dir} onClick={() =>
+                                          openFolder(`${canvasData?.plugin_dir}\\plugins`)
+                                        }>
+                                          {canvasData?.plugin_dir}
+                                        </TooltipDiv>
+                                        <a
+                                          style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
+                                          onClick={() => {
+                                            if (canvasStart) return;
+                                            form.setFieldsValue({ plugin_dir: '' })
+                                            dispatch(setCanvasData({
+                                              ...canvasData,
+                                              plugin_dir: ''
+                                            }));
+                                          }}
+                                        >
+                                          移除
+                                        </a>
+                                      </Fragment>
+                                      : null
+                                  }
+                                  <Button
+                                    icon={<CloudUploadOutlined />}
+                                    disabled={canvasStart}
+                                    onClick={() => {
+                                      chooseFolder((res: any) => {
+                                        const path = _.isArray(res) ? res[0] : res;
+                                        form.setFieldsValue({ plugin_dir: path })
+                                        dispatch(setCanvasData({
+                                          ...canvasData,
+                                          plugin_dir: path
+                                        }));
+                                      });
+                                    }}
+                                  >
+                                    选择文件
+                                  </Button>
+                                </code>
+                              </Form.Item>
+                              <Form.Item
+                                name={`pushData`}
+                                label="数据推送:"
+                                tooltip="节点数据推送的总开关"
+                                initialValue={canvasData?.pushData}
+                                valuePropName="checked"
+                                rules={[{ required: false, message: '数据推送' }]}
+                              >
+                                <Switch disabled={canvasStart} />
+                              </Form.Item>
+                            </div>
+                          </Form>
                     }
                   </div>
                   <div className="flex-box-center config-panel-left-footer">
-                    <Button type="primary" disabled={canvasStart} onClick={onSave}>保存</Button>
+                    {
+                      ['input', 'output']?.includes(selectedTab) ?
+                        <Button
+                          onClick={() => {
+                            let port = {
+                              "alias": "",
+                              "customId": `port_${guid()}`,
+                              "description": "",
+                              "direction": selectedTab,
+                              "group": selectedTab === "input" ? "top" : "bottom",
+                              "id": getuid(),
+                              "label": {
+                                "alias": "",
+                                "description": "",
+                                "direction": selectedTab,
+                                "name": "",
+                                "require": true,
+                                "sort": portList?.length,
+                                "type": "numpy.ndarray",
+                              },
+                              "name": "",
+                              "require": true,
+                              "sort": portList?.length,
+                              "type": "numpy.ndarray",
+                            };
+                            node.addPort(port);
+                            setPortList((pre: any) => pre.concat(port));
+                          }}
+                          block
+                          icon={<PlusOutlined />}
+                        >
+                          添加连接桩
+                        </Button>
+                        : null
+                    }
+                    <Button type="primary" block disabled={canvasStart} onClick={() => {
+                      onSave().then(() => {
+                        dispatch(setSelectedNode(''));
+                        message.success('保存成功');
+                      })
+                    }}>保存</Button>
                   </div>
                 </Fragment>
-              }, [graphData, canvasData, nodeConfig, selectedNode, canvasStart, selectedTab])
+              }, [canvasData, nodeConfig, canvasStart, selectedTab, portList])
             }
           </div>
         </Splitter.Panel>
         <Splitter.Panel>
+          <div className="config-panel-right">
+            <Splitter layout="vertical">
+              <Splitter.Panel>
+                <div className="config-panel-right-title boxShadow">
+                  {`数据查看器`}
+                </div>
+                <div className="config-panel-right-body">
 
+                </div>
+              </Splitter.Panel>
+              <Splitter.Panel defaultSize="20%" min="5%" max="50%">
+                <div className="flex-box config-panel-right-footer-toolbar">
+                  {
+                    buttonList?.map((item: any) => {
+                      const { key, title, icon, hover } = item;
+                      return <div
+                        className={`flex-box config-panel-right-footer-toolbar-item ${dataViewType === key ? 'primaryBackgroundColor' : ''}`}
+                        key={`config-panel-right-footer-toolbar-item-${key}`}
+                        onClick={() => {
+                          setDataViewType(key);
+                        }}
+                      >
+                        {dataViewType === key ? hover : icon}
+                        <span className="item-title">{title}</span>
+                      </div>
+                    })
+                  }
+                </div>
+                <div className="config-panel-right-footer-body">
+
+                </div>
+              </Splitter.Panel>
+            </Splitter>
+          </div>
         </Splitter.Panel>
       </Splitter>
     </div >
@@ -323,6 +741,25 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
 };
 
 export default memo(ConfigPanel);
+
+const buttonList = [
+  {
+    title: '输入数据',
+    key: 'input',
+  },
+  {
+    title: '输出结果',
+    key: 'output',
+  },
+  {
+    title: '历史结果',
+    key: 'history',
+  },
+  {
+    title: '帮助',
+    key: 'help',
+  }
+];
 
 const FormatWidgetToDom = (props: any) => {
   const {
@@ -362,7 +799,7 @@ const FormatWidgetToDom = (props: any) => {
     suffix,
     type: type1,
   } = widget;
-  const name = config[0]; //`${config[0]}_$_${guid()}`;
+  const name = config[0];
   const [uploadValues, setUploadValues] = useState<any>({});
 
   useEffect(() => {
@@ -377,7 +814,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -395,7 +832,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={moment(value || undefined)}
           rules={[{ required: require, message: `${alias}` }]}
@@ -421,7 +858,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -436,7 +873,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={(_.isArray(value) ? value[0] : value) || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -468,7 +905,7 @@ const FormatWidgetToDom = (props: any) => {
         <>
           <Form.Item
             name={name}
-            label={`${alias}:`}
+            label={alias || name}
             tooltip={description || aliasDefault}
             initialValue={(_.isArray(value) ? value[0] : value) || undefined}
             rules={[{ required: require, message: `${alias}` }]}
@@ -492,7 +929,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={(_.isArray(value) ? value[0] : value) || false}
           rules={[{ required: require, message: `${alias}` }]}
@@ -518,7 +955,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -544,7 +981,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -567,7 +1004,7 @@ const FormatWidgetToDom = (props: any) => {
         <Fragment>
           <Form.Item
             name={name}
-            label={`${alias}:`}
+            label={alias || name}
             tooltip={description || aliasDefault}
             initialValue={
               !_.isNull(value) && !_.isNaN(value) ? value : defaultValue
@@ -594,7 +1031,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={
             !_.isUndefined(value) || !_.isNull(value)
@@ -616,7 +1053,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || false}
           valuePropName="checked"
@@ -633,7 +1070,7 @@ const FormatWidgetToDom = (props: any) => {
         <Form.Item
           shouldUpdate
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           valuePropName="file"
@@ -684,11 +1121,11 @@ const FormatWidgetToDom = (props: any) => {
         </Form.Item>
       );
     case 'Dir':
-      const title = uploadValues[name] || value;
+      const title = uploadValues[name];
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           valuePropName="file"
@@ -743,13 +1180,13 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
         >
-          <>
+          <div>
             {!!value ? (
               <Input.TextArea
-                rows={5}
+                autoSize={{ minRows: 3, maxRows: 6 }}
                 value={
                   language === 'json' && _.isObject(value)
                     ? formatJson(value)
@@ -775,7 +1212,7 @@ const FormatWidgetToDom = (props: any) => {
             >
               编辑
             </Button>
-          </>
+          </div>
         </Form.Item>
         // <Monaco
         //   width="100%"
@@ -795,7 +1232,7 @@ const FormatWidgetToDom = (props: any) => {
           <Form.Item
             shouldUpdate
             name={name}
-            label={`${alias}:`}
+            label={alias || name}
             tooltip={description || aliasDefault}
             initialValue={localPath || undefined}
             valuePropName="file"
@@ -853,7 +1290,7 @@ const FormatWidgetToDom = (props: any) => {
       return (
         <Form.Item
           name={name}
-          label={`${alias}:`}
+          label={alias || name}
           tooltip={description || aliasDefault}
           initialValue={value || undefined}
           rules={[{ required: require, message: `${alias}` }]}
@@ -871,66 +1308,63 @@ const FormatWidgetToDom = (props: any) => {
       );
     case 'DataMap':
       return (
-        <>
-          <Form.Item
-            name={name}
-            label={`${alias}:`}
-            tooltip={description || aliasDefault}
-          >
-            <div>
-              {(options || [])?.map?.((item: any, index: number) => {
-                const { id, label, value } = item;
-                return (
-                  <div
-                    className="flex-box"
-                    key={id || index}
-                    style={{
-                      marginBottom: index + 1 !== options.length ? 24 : 0,
-                    }}
-                  >
-                    <div style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
-                      原始值 :
-                    </div>
-                    <Input
-                      style={{ width: '50%' }}
-                      defaultValue={label}
-                    />
-                    <div style={{ padding: '0 12px', whiteSpace: 'nowrap' }}>
-                      映射值 :
-                    </div>
-                    <Input
-                      style={{ width: '50%' }}
-                      defaultValue={value}
+        <Form.Item
+          name={name}
+          label={alias || name}
+          tooltip={description || aliasDefault}
+        >
+          <div>
+            {Object.entries(value || {})?.map?.((item: any, index: number) => {
 
-                    />
-                    <MinusCircleOutlined
-                      style={{ marginLeft: 8 }}
-                      onClick={() => {
-
-                      }}
-                    />
+              return (
+                <div
+                  className="flex-box"
+                  key={item[0] || index}
+                  style={{
+                    marginBottom: index + 1 !== options.length ? 24 : 0,
+                    gap: 4
+                  }}
+                >
+                  <div style={{ whiteSpace: 'nowrap' }}>
+                    原始值:
                   </div>
-                );
-              })}
-              <Button
-                type="dashed"
-                style={{ marginTop: 24 }}
-                onClick={() => {
-                  const result = (options || []).concat({
-                    id: guid(),
-                    label: '',
-                    value: '',
-                  });
-                  widgetChange(name, result, parentName);
-                }}
-                block
-                icon={<PlusOutlined />}
-              >
-                添加可选项
-              </Button>
-            </div>
-          </Form.Item>
-        </>
+                  <Input
+                    style={{ width: '50%' }}
+                    defaultValue={item[0]}
+                  />
+                  <div style={{ whiteSpace: 'nowrap' }}>
+                    映射值:
+                  </div>
+                  <Input
+                    style={{ width: '50%' }}
+                    defaultValue={item[1]}
+                  />
+                  <MinusCircleOutlined
+                    onClick={() => {
+
+                    }}
+                  />
+                </div>
+              );
+            })}
+            <Button
+              type="dashed"
+              style={{ marginTop: 24 }}
+              onClick={() => {
+                const result = (options || []).concat({
+                  id: guid(),
+                  label: '',
+                  value: '',
+                });
+                widgetChange(name, result, parentName);
+              }}
+              block
+              icon={<PlusOutlined />}
+            >
+              添加可选项
+            </Button>
+          </div>
+        </Form.Item>
       );
     default:
       return null;

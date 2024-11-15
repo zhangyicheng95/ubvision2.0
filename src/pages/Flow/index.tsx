@@ -10,7 +10,7 @@ import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setCanvasDataBase, setCanvasPlugins, setCanvasStart, setLoading } from '@/redux/actions';
-import { generalConfigList, portTypeObj } from './common/constants';
+import { generalConfigList } from './common/constants';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { getPluginList } from '@/services/flowPlugin';
 import { getFlowStatusService, getParams } from '@/services/flowEditor';
@@ -50,7 +50,6 @@ const FlowPage: React.FC<Props> = (props: any) => {
                     ...top[1],
                     sort: index,
                   },
-                  color: portTypeObj[top[1].type]?.color || portTypeObj.default,
                 };
               }
             );
@@ -65,8 +64,6 @@ const FlowPage: React.FC<Props> = (props: any) => {
                     ...bottom[1],
                     sort: index,
                   },
-                  color:
-                    portTypeObj[bottom[1].type]?.color || portTypeObj.default,
                 };
               }
             );
@@ -164,7 +161,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
             <Splitter.Panel>
               <CanvasFlow />
             </Splitter.Panel>
-            <Splitter.Panel defaultSize="40%" min="10%" max="60%">
+            <Splitter.Panel defaultSize="50%" min="10%" max="80%">
               <ConfigPanel />
             </Splitter.Panel>
           </Splitter>

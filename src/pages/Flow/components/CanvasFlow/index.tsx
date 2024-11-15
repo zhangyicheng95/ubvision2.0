@@ -14,7 +14,7 @@ import MiniMapPanel from '../MinimapPanel';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setGraphData, setLoading, setSelectedNode } from '@/redux/actions';
 import { Transform } from '@antv/x6-plugin-transform';
-import { archSize, generalConfigList, portTypeObj } from '../../common/constants';
+import { archSize, generalConfigList } from '../../common/constants';
 import { Group } from '../../config/shape';
 import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
@@ -244,7 +244,6 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               id={id}
               label={label}
               group={group}
-              color={color}
               node={node}
             />);
           }
@@ -288,7 +287,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               targetMagnet,
             } = args;
             if (targetMagnet.getAttribute('port-group') === 'top') {
-              // 只能往上面的桩子上拖线，并且只有相同类型的能连线
+              // 只能从下面往上面的桩子上拖线，并且只有相同类型的能连线
               const source = sourceMagnet
                 .getElementsByTagName('div')[1]
                 ?.getAttribute('type');
@@ -350,6 +349,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         new MiniMap({
           scalable: true, // 是否可缩放
           container: document.getElementById('mini-map') || undefined, // 挂载小地图的容器
+          height: 200,
+          width: 300,
           graphOptions: {
             createCellView(cell: any) {
               // 可以返回三种类型数据
@@ -368,21 +369,21 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         })
       );
       // Transform
-      // graphRef.current.use(
-      //   new Transform({
-      //     //  调整节点大小的功能
-      //     resizing: {
-      //       enabled: true, // 节点大小可调
-      //       orthogonal: false, // 是否显示中间调整点
-      //       restrict: false, // 调整大小边界是否可以超出画布边缘
-      //       autoScroll: true, // 是否自动滚动画布
-      //       preserveAspectRatio: false, // 缩放过程中是否保持节点的宽高比例
-      //       allowReverse: false, // 到达最小宽度或者高度时是否允许控制点反向拖动
-      //       minWidth: archSize.nodeWidth,
-      //       minHeight: archSize.nodeHeight,
-      //     },
-      //   })
-      // );
+      graphRef.current.use(
+        new Transform({
+          //  调整节点大小的功能
+          resizing: {
+            enabled: true, // 节点大小可调
+            orthogonal: false, // 是否显示中间调整点
+            restrict: false, // 调整大小边界是否可以超出画布边缘
+            autoScroll: false, // 是否自动滚动画布
+            preserveAspectRatio: false, // 缩放过程中是否保持节点的宽高比例
+            allowReverse: false, // 到达最小宽度或者高度时是否允许控制点反向拖动
+            minWidth: archSize.nodeWidth,
+            minHeight: archSize.nodeHeight,
+          },
+        })
+      );
       // 框选功能
       graphRef.current.use(
         new Selection({
@@ -406,6 +407,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   useEffect(() => {
     if (canvasData?.id) {
       bindEvent();
+      positionChange();
     }
 
     return () => {
@@ -435,6 +437,100 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       graphRef?.current?.on('blank:dblclick', reset);
     }
   }, [graphRef.current, canvasData]);
+  // group相关
+  const positionChange = () => {
+    let ctrlPressed = false;
+    const embedPadding = 40;
+    graphRef.current?.on('node:embedding', (args: any) => {
+      const { e } = args;
+      ctrlPressed = e.metaKey || e.ctrlKey;
+    });
+
+    graphRef.current?.on('node:embedded', () => {
+      ctrlPressed = false;
+    });
+    graphRef.current?.on('node:change:size', (args: any) => {
+      const { node, options } = args;
+      if (options.skipParentHandler) {
+        return;
+      }
+
+      const children = node.getChildren();
+      if (children && children?.length) {
+        node.prop('originSize', node.getSize());
+      }
+    });
+    graphRef.current?.on('node:change:position', (args: any) => {
+      const { node, options } = args;
+      if (options.skipParentHandler || ctrlPressed) {
+        return;
+      }
+
+      const children = node.getChildren();
+      if (children && children?.length) {
+        node.prop('originPosition', node.getPosition());
+      }
+
+      const parent = node.getParent();
+      if (parent && parent.isNode()) {
+        let originSize = parent.prop('originSize');
+        if (originSize == null) {
+          originSize = parent.getSize();
+          parent.prop('originSize', originSize);
+        }
+
+        let originPosition = parent.prop('originPosition');
+        if (originPosition == null) {
+          originPosition = parent.getPosition();
+          parent.prop('originPosition', originPosition);
+        }
+
+        let { x } = originPosition;
+        let { y } = originPosition;
+        let cornerX = originPosition.x + originSize.width;
+        let cornerY = originPosition.y + originSize.height;
+        let hasChange = false;
+
+        const children = parent.getChildren();
+        if (children) {
+          children.forEach((child: any) => {
+            const bbox = child.getBBox().inflate(embedPadding);
+            const corner = bbox.getCorner();
+
+            if (bbox.x < x) {
+              x = bbox.x;
+              hasChange = true;
+            }
+
+            if (bbox.y < y) {
+              y = bbox.y;
+              hasChange = true;
+            }
+
+            if (corner.x > cornerX) {
+              cornerX = corner.x;
+              hasChange = true;
+            }
+
+            if (corner.y > cornerY) {
+              cornerY = corner.y;
+              hasChange = true;
+            }
+          });
+        }
+
+        if (hasChange) {
+          parent.prop(
+            {
+              position: { x, y },
+              size: { width: cornerX - x, height: cornerY - y },
+            },
+            { skipParentHandler: true }
+          );
+        }
+      }
+    });
+  };
   const unbindEvent = useCallback(() => {
     if (graphRef.current) {
       // 删除所有事件监听
@@ -457,28 +553,22 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       const formatPorts = (list: any) => {
         const prePorts = [].concat(list || []);
         const topPorts = (prePorts || [])?.filter((i: any) => i.group === 'top')?.map?.((item: any, index: number) => {
-          const color =
-            portTypeObj[item?.label?.type]?.color || portTypeObj.default;
           return Object.assign(
             {},
             item,
             !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
             {
               type: item?.label?.type,
-              color,
             }
           );
         })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
         const bottomPorts = (prePorts || [])?.filter((i: any) => i.group === 'bottom')?.map?.((item: any, index: number) => {
-          const color =
-            portTypeObj[item?.label?.type]?.color || portTypeObj.default;
           return Object.assign(
             {},
             item,
             !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
             {
               type: item?.label?.type,
-              color,
             }
           );
         })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
@@ -749,6 +839,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     const { node } = flow;
     const newNode = node?.store?.data?.config;
     if (!newNode || canvasData?.flowData?.nodes?.filter((i: any) => i?.id === newNode?.id)?.length > 0) return;
+    console.log('节点add');
     const result = {
       ...canvasData || {},
       flowData: {
@@ -773,7 +864,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     setTimeout(() => {
       // 组点击，可进行"解散组"操作
       if (node?.id?.indexOf('group_') > -1) {
-
+        dispatch(setSelectedNode(id));
       } else if (node?.store?.data?.customId?.indexOf('node_') > -1) {
         dispatch(setSelectedNode(`${customId}$%$${id}`));
       } else {
@@ -787,8 +878,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, []);
   const edgeHighLightFun = useCallback((node: any, ifLight: boolean, graph: any) => {
     try {
-      const inputs = graph?.getIncomingEdges(node);
-      const outputs = graph?.getOutgoingEdges(node);
+      const inputs = graphRef.current?.getIncomingEdges(node);
+      const outputs = graphRef.current?.getOutgoingEdges(node);
       const lineList = [].concat(inputs)?.concat(outputs)?.filter(Boolean);
       if (!!lineList?.length) {
         lineList.forEach((line: any) => {

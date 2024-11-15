@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { App, Layout, Menu, Spin } from 'antd';
+import { Layout, Menu, Spin } from 'antd';
 import { SunOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router';
 import SiderNav from '@/layouts/BasicLayout/components/siderNav';
@@ -32,26 +32,24 @@ const BasicLayout = (props: any) => {
 
   return (
     <div className={styles.basicLayoutWrapper}>
-      <App>
-        <CHeader />
-        <ErrorBoundary>
-          <Layout style={{ height: `calc(100% - 30px)` }}>
-            {ifShowSiderNav ? <SiderNav /> : null}
-            <Spin
-              spinning={loading}
-              tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>}
-              percent="auto"
-              indicator={<SunOutlined style={{ fontSize: 40 }}
-                spin
-              />}
-            >
-              <Layout className="basic-layout">
-                <Content className="basic-layout-content">{children}</Content>
-              </Layout>
-            </Spin>
-          </Layout>
-        </ErrorBoundary>
-      </App>
+      <CHeader />
+      <ErrorBoundary>
+        <Layout style={{ height: `calc(100% - 30px)` }}>
+          {ifShowSiderNav ? <SiderNav /> : null}
+          <Spin
+            spinning={loading}
+            tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>}
+            percent="auto"
+            indicator={<SunOutlined style={{ fontSize: 40 }}
+              spin
+            />}
+          >
+            <Layout className="basic-layout">
+              <Content className="basic-layout-content">{children}</Content>
+            </Layout>
+          </Spin>
+        </Layout>
+      </ErrorBoundary>
     </div>
   );
 };

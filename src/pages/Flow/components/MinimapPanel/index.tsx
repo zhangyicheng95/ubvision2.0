@@ -21,7 +21,9 @@ const MiniMapPanel: React.FC<Props> = (props) => {
   const [miniMapZoom, setMiniMapZoom] = useState(1);
 
   useEffect(() => {
-    setMiniMapZoom(Number(canvasData.zoom));
+    if (!!canvasData?.zoom) {
+      setMiniMapZoom(Number(canvasData.zoom));
+    }
   }, [canvasData?.zoom]);
 
   return (
@@ -43,8 +45,8 @@ const MiniMapPanel: React.FC<Props> = (props) => {
             autoFocus
             value={Number(miniMapZoom)}
             max={2}
-            min={0.1}
-            step={0.1}
+            min={0.05}
+            step={0.05}
             style={{ width: 60 }}
             onBlur={() => { return setInputToMiniMapZoom(false) }}
             onChange={(value: any) => {

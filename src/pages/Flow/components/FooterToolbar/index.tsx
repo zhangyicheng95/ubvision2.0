@@ -78,12 +78,6 @@ const buttonList = [
     hover: <FileTextFilled className="item-icon" />,
   },
   {
-    title: '操作记录',
-    key: 'operationLog',
-    icon: <HighlightOutlined className="item-icon" />,
-    hover: <HighlightFilled className="item-icon" />,
-  },
-  {
     title: '告警',
     key: 'problem',
     icon: <CloseCircleOutlined className="item-icon" />,

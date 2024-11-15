@@ -32,7 +32,7 @@ const TooltipDiv: React.FC<Props> = (props: any) => {
 
 const Header = (props: any) => {
   const { children, title = '', content = '', placement = 'topLeft' } = props;
-  if (title) {
+  if (title || content) {
     return <Popover title={title} content={content} placement={placement}>
       {children}
     </Popover>;

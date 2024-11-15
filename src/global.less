@@ -13,6 +13,10 @@
         background-color: #e6f4ff;
         color: rgb(114, 114, 114);
     }
+
+    .boxShadow {
+        box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.1);
+    }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,9 +31,10 @@
     .primaryBackgroundColor {
         background-color: @primaryColor;
     }
+    .boxShadow {
+        box-shadow: 0 1px 4px 1px rgba(255, 255, 255, 0.2);
+    }
 }
-
-
 
 .flex-box {
     display: flex;
@@ -144,10 +149,6 @@
         flex: 1;
         text-align: right;
     }
-}
-
-.boxShadow {
-    box-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.1);
 }
 
 .only-show-one-line {
