@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Layout, Menu, Spin } from 'antd';
 import { SunOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router';
@@ -19,8 +19,15 @@ interface Props {
 const BasicLayout = (props: any) => {
   const { children, route } = props;
   const { loading, projectList } = useSelector((state: IRootActions) => state);
+  const params: any = !!window.location.search
+    ? new URLSearchParams(window.location.search)
+    : !!window.location.href
+      ? new URLSearchParams(window.location.href)
+      : {};
   const location = useLocation();
   const { pathname = '/home' } = location;
+
+  const number = params.get('number') || 1;
   // 某些模块不需要展示侧边栏
   const ifShowSiderNav = useMemo(() => {
     return (
@@ -29,6 +36,21 @@ const BasicLayout = (props: any) => {
       pathname !== '/login'
     );
   }, [pathname]);
+
+  useEffect(() => {
+    const onKeyDown = (e: any) => {
+      if (e.code === "F12") {
+        window?.ipcRenderer?.invoke(`openDevTools-${number}`);
+      } else if (e.code === "F5") {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   return (
     <div className={styles.basicLayoutWrapper}>

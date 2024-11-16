@@ -33,14 +33,8 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   useEffect(() => {
     form?.resetFields?.();
     if (selectedNode?.indexOf('node_') > -1) {
-      setPortList((node?.getPorts() || [])?.map((item: any, index: number) => ({
-        ...item,
-        sort: index,
-        label: {
-          ...item.label,
-          sort: index
-        }
-      })));
+      const ports = (node?.getPorts() || []);
+      setPortList(ports);
       form.setFieldsValue({
         alias: nodeConfig?.alias,
         description: nodeConfig?.description
@@ -86,6 +80,65 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
       label: '基本信息'
     },
   ];
+  // 节点排序
+  const portSort = useCallback((index: number) => {
+    const target = {
+      ...portList[index] || {},
+      label: {
+        ...portList[index]?.label,
+        sort: portList[index - 1]?.sort,
+      },
+      sort: portList[index - 1]?.sort
+    };
+    const center = {
+      ...portList[index - 1] || {},
+      label: {
+        ...portList[index - 1]?.label,
+        sort: portList[index]?.sort,
+      },
+      sort: portList[index]?.sort,
+    };
+    const sourceEdges = graphData?.getIncomingEdges(node);
+    const targetEdges = graphData?.getOutgoingEdges(node);
+    const edges = (sourceEdges || [])?.concat(targetEdges || []);
+    edges?.forEach((edge: any) => {
+      graphData.removeEdge(edge);
+    });
+    node.removePort(target.id);
+    node.removePort(center.id);
+    node.insertPort(center.sort, center);
+    node.insertPort(target.sort, target);
+    setTimeout(() => {
+      edges?.forEach((edge: any) => {
+        const { data } = edge?.store || {};
+        if (!!data) {
+          graphData.addEdge(data);
+        }
+      });
+    }, 200);
+    setPortList((pre: any) => (pre || [])?.map((cen: any, cIndex: number) => {
+      if (cIndex === index - 1) {
+        return {
+          ...cen,
+          label: {
+            ...cen?.label,
+            sort: index,
+          },
+          sort: index,
+        };
+      } else if (cIndex === index) {
+        return {
+          ...cen,
+          label: {
+            ...cen?.label,
+            sort: index - 1,
+          },
+          sort: index - 1,
+        };
+      }
+      return cen;
+    }));
+  }, [portList]);
   // 节点保存
   const onSave = useCallback(() => {
     return new Promise((resolve, reject) => {
@@ -293,6 +346,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
+                console.log('config', nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}
@@ -339,7 +393,14 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                 ?.map((port: any, index: number) => {
                                   const { id, label, direction, sort } = port;
                                   const { alias, name, type, description, pushData, require } = label;
-                                  return <div className="port-item" key={`port-item-${id}`}>
+                                  return <div
+                                    key={`port-item-${id}`}
+                                    className="port-item"
+                                    style={!!portTypeObj[label?.type]?.color ? {
+                                      backgroundColor: portTypeObj[label?.type]?.color,
+                                      color: '#eee'
+                                    } : {}}
+                                  >
                                     <div className="flex-box-justify-between port-item-title">
                                       {
                                         !!name ?
@@ -348,7 +409,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                             initialValue={name}
                                             rules={[{ required: true, message: `${alias}` }]}
                                           >
-                                            <TooltipDiv>{name}</TooltipDiv>
+                                            <TooltipDiv style={{ color: '#fff' }}>{name}</TooltipDiv>
                                           </Form.Item>
                                           :
                                           <Form.Item
@@ -357,6 +418,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                           >
                                             <Input
                                               placeholder="name，输入后回车确认"
+                                              disabled={canvasStart}
                                               onPressEnter={(e: any) => {
                                                 const { value } = e?.target;
                                                 const center = {
@@ -380,6 +442,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                       <Button
                                         icon={<TooltipDiv content={"删除"} placement="right"><MinusOutlined /> </TooltipDiv>}
                                         style={{ width: 24, minWidth: 24 }}
+                                        disabled={canvasStart}
                                         onClick={() => {
                                           node.removePort(id);
                                           setPortList((pre: any) => pre?.filter((i: any) => i.id !== id));
@@ -393,7 +456,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                           initialValue={alias}
                                           rules={[{ required: false, message: `${alias}` }]}
                                         >
-                                          <Input placeholder="别名" />
+                                          <Input disabled={canvasStart} placeholder="别名" />
                                         </Form.Item>
                                         <Form.Item
                                           name={`port$%$${id}$%$type$%$${direction}`}
@@ -403,54 +466,21 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                         >
                                           <Select
                                             placeholder="链接桩类型"
+                                            disabled={canvasStart}
                                             options={Object.keys(portTypeObj)?.map?.((type) => ({ key: type, label: type, value: type }))}
                                           />
                                         </Form.Item>
                                         <Button
                                           icon={<TooltipDiv content={`排序向上: ${sort}`} placement="right"><ArrowUpOutlined /></TooltipDiv>}
-                                          disabled={index === 0}
+                                          disabled={index === 0 || canvasStart}
                                           style={{ width: 24, minWidth: 24 }}
                                           onClick={() => {
-                                            const target = {
-                                              ...portList[index] || {},
-                                              label: {
-                                                ...portList[index]?.label,
-                                                sort: portList[index - 1]?.sort,
-                                              },
-                                              sort: portList[index - 1]?.sort
-                                            };
-                                            const center = {
-                                              ...portList[index - 1] || {},
-                                              label: {
-                                                ...portList[index - 1]?.label,
-                                                sort: portList[index]?.sort,
-                                              },
-                                              sort: portList[index]?.sort,
-                                            };
-                                            node.setPortProp(center.id, center);
-                                            node.setPortProp(target.id, target);
-                                            setPortList((pre: any) => (pre || [])?.map((cen: any, cIndex: number) => {
-                                              if (cIndex === index - 1) {
-                                                return {
-                                                  ...cen,
-                                                  label: {
-                                                    ...cen?.label,
-                                                    sort: index,
-                                                  },
-                                                  sort: index,
-                                                };
-                                              } else if (cIndex === index) {
-                                                return {
-                                                  ...cen,
-                                                  label: {
-                                                    ...cen?.label,
-                                                    sort: index - 1,
-                                                  },
-                                                  sort: index - 1,
-                                                };
-                                              }
-                                              return cen;
-                                            }))
+                                            if (selectedTab === 'output') {
+                                              const indx = portList?.filter((i: any) => i.direction === 'input')?.length + index;
+                                              portSort(indx);
+                                            } else {
+                                              portSort(index);
+                                            }
                                           }}
                                         />
                                       </div>
@@ -462,6 +492,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                         <Input.TextArea
                                           autoSize={{ minRows: 1, maxRows: 3 }}
                                           placeholder="描述"
+                                          disabled={canvasStart}
                                           className="scrollbar-style"
                                         />
                                       </Form.Item>
@@ -476,6 +507,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                               rules={[{ required: false, message: `${alias}` }]}
                                             >
                                               <Switch
+                                                disabled={canvasStart}
                                                 className='port-item-body-switch'
                                               />
                                             </Form.Item>
@@ -489,6 +521,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                               rules={[{ required: false, message: `${alias}` }]}
                                             >
                                               <Switch
+                                                disabled={canvasStart}
                                                 className='port-item-body-switch'
                                                 defaultChecked={require}
                                               />
@@ -655,6 +688,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                     {
                       ['input', 'output']?.includes(selectedTab) ?
                         <Button
+                          disabled={canvasStart}
                           onClick={() => {
                             let port = {
                               "alias": "",
@@ -1085,6 +1119,7 @@ const FormatWidgetToDom = (props: any) => {
                 <a
                   style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
                   onClick={() => {
+                    if (disabled) return;
                     setUploadValues((prev: {}) => {
                       return { ...prev, [name]: undefined };
                     });
@@ -1147,6 +1182,7 @@ const FormatWidgetToDom = (props: any) => {
                 <a
                   style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
                   onClick={() => {
+                    if (disabled) return;
                     setUploadValues((prev: {}) => {
                       return { ...prev, [name]: undefined };
                     });
@@ -1248,6 +1284,7 @@ const FormatWidgetToDom = (props: any) => {
                   <a
                     style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
                     onClick={() => {
+                      if (disabled) return;
                       setUploadValues((prev: {}) => {
                         return { ...prev, [name]: undefined };
                       });

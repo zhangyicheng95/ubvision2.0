@@ -180,7 +180,6 @@ const PluginPanel: React.FC<Props> = (props: any) => {
             ?.reduce((pre: any, panel: any) => {
               const { data = {} } = panel;
               const {
-                ifShow = false,
                 alias = '',
                 name = '',
                 category = '',

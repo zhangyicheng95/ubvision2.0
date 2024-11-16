@@ -27,6 +27,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
       ? GetQueryObj(location.href)
       : {};
   const id = params?.['id'];
+  const number = params?.['number'];
 
   // 获取侧边栏配置算子列表
   const getPlugin = () => {
@@ -41,29 +42,33 @@ const FlowPage: React.FC<Props> = (props: any) => {
             }
             const topPorts = Object.entries(config?.input || {})?.map?.(
               (top: any, index) => {
+                const cen = {
+                  direction: 'input',
+                  name: top[0],
+                  ...top[1],
+                  sort: index,
+                };
                 return {
                   customId: `port_${guid()}`,
                   group: 'top',
-                  label: {
-                    direction: 'input',
-                    name: top[0],
-                    ...top[1],
-                    sort: index,
-                  },
+                  ...cen,
+                  label: cen
                 };
               }
             );
             const bottomPorts = Object.entries(config?.output || {})?.map?.(
               (bottom: any, index) => {
+                const cen = {
+                  direction: 'output',
+                  name: bottom[0],
+                  ...bottom[1],
+                  sort: Object.keys(config?.input)?.length + index,
+                };
                 return {
                   customId: `port_${guid()}`,
                   group: 'bottom',
-                  label: {
-                    direction: 'output',
-                    name: bottom[0],
-                    ...bottom[1],
-                    sort: index,
-                  },
+                  ...cen,
+                  label: cen
                 };
               }
             );
@@ -96,10 +101,42 @@ const FlowPage: React.FC<Props> = (props: any) => {
                       : generalConfigList),
                   },
                 },
-                ifShow: true,
+                ports: {
+                  groups: {
+                    "top": {
+                      "position": "top",
+                      "attrs": {
+                        "fo": {
+                          "r": 6,
+                          "magnet": true,
+                          "strokeWidth": 1,
+                          "fill": "#fff"
+                        }
+                      }
+                    },
+                    "bottom": {
+                      "position": "bottom",
+                      "attrs": {
+                        "fo": {
+                          "r": 6,
+                          "magnet": true,
+                          "strokeWidth": 1,
+                          "fill": "#fff"
+                        }
+                      }
+                    }
+                  },
+                  items: topPorts.concat(bottomPorts),
+                }
               },
-              ports: topPorts.concat(bottomPorts),
+              ports: {
+                groups: {
+                  "top": { "position": "top", "attrs": { "fo": { "r": 6, "magnet": true, "strokeWidth": 1, "fill": "#fff" } } }, "bottom": { "position": "bottom", "attrs": { "fo": { "r": 6, "magnet": true, "strokeWidth": 1, "fill": "#fff" } } }
+                },
+                items: topPorts.concat(bottomPorts),
+              }
             };
+
             return {
               ...prev,
               ...(cent.category

@@ -68,19 +68,9 @@ const AlgoNode: React.FC<Props> = (props) => {
   // 右键下拉菜单
   const settingList: any = [
     {
-      key: '0',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        copyUrlToClipBoard(id);
-      }}>
-        <CaretRightOutlined className="contextMenu-icon" />
-        停止流程
-        <span className="contextMenu-text">Stop</span>
-      </div>
-    },
-    {
       key: '1',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        copyUrlToClipBoard(id);
+
       }}>
         <CaretRightOutlined className="contextMenu-icon" />
         运行流程到此处
@@ -90,28 +80,18 @@ const AlgoNode: React.FC<Props> = (props) => {
     {
       key: '2',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        copyUrlToClipBoard(id);
+
       }}>
         <BugOutlined className="contextMenu-icon" />
         单元测试
         <span className="contextMenu-text">Run Self</span>
       </div>
     },
-    {
-      key: '3',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        copyUrlToClipBoard(id);
-      }}>
-        <BugOutlined className="contextMenu-icon" />
-        停止单元测试
-        <span className="contextMenu-text">Stop Self</span>
-      </div>
-    },
     { type: 'divider' },
     {
       key: '4',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
+        graph.removeNode(id);
       }}>
         <DeleteOutlined className="contextMenu-icon" />
         删除节点
@@ -121,7 +101,7 @@ const AlgoNode: React.FC<Props> = (props) => {
     {
       key: '5',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
+
       }}>
         <CopyOutlined className="contextMenu-icon" />
         复制节点
@@ -142,7 +122,7 @@ const AlgoNode: React.FC<Props> = (props) => {
     {
       key: '7',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
+
       }}>
         <SyncOutlined className="contextMenu-icon" />
         同步属性
@@ -152,34 +132,13 @@ const AlgoNode: React.FC<Props> = (props) => {
     {
       key: '8',
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
+
       }}>
         <CloudSyncOutlined className="contextMenu-icon" />
         同步链接桩
         <span className="contextMenu-text">Sync Ports</span>
       </div>
-    },
-    { type: 'divider' },
-    {
-      key: '9',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
-      }}>
-        <PlusOutlined className="contextMenu-icon" />
-        新增输入输出
-        <span className="contextMenu-text">Add Ports</span>
-      </div>
-    },
-    {
-      key: '10',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        // setRenameVisible(true);
-      }}>
-        <CloudDownloadOutlined className="contextMenu-icon" />
-        导出info
-        <span className="contextMenu-text">Export Info</span>
-      </div>
-    },
+    }
   ];
 
   return (

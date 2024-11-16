@@ -18,7 +18,7 @@ import { archSize, generalConfigList } from '../../common/constants';
 import { Group } from '../../config/shape';
 import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
-import { getActualWidthOfChars } from '@/utils/utils';
+import { copyUrlToClipBoard, getActualWidthOfChars, getuid, guid } from '@/utils/utils';
 
 const { confirm } = Modal;
 interface Props { }
@@ -29,6 +29,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   const dom = useRef<any>(null);
   const graphRef = useRef<any>(null);
   const updateTimerRef = useRef<any>(null);
+  const ctrlRef = useRef<any>(null);
   // 节点和线的删除按钮
   const removeBtnOption = {
     name: 'button',
@@ -97,7 +98,6 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       },
     },
   };
-
   // 初始化画布
   useEffect(() => {
     const container = dom.current;
@@ -319,9 +319,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             });
           },
         },
-      });
-      // 辅助线
-      graphRef.current.use(
+      }).use(
+        // 辅助线
         new Snapline({
           enabled: true,
           tolerance: 20, // 对齐精度，即移动节点时与目标位置的距离小于 tolerance 时触发显示对齐线
@@ -329,9 +328,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           resizing: true, // 改变节点大小时是否触发对齐线
           clean: true,
         }),
-      );
-      // 撤销/重做
-      graphRef.current.use(
+      ).use(
+        // 撤销/重做
         new History({
           // 撤销/重做
           enabled: true,
@@ -343,9 +341,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             return true;
           },
         })
-      );
-      // 小地图
-      graphRef.current.use(
+      ).use(
+        // 小地图
         new MiniMap({
           scalable: true, // 是否可缩放
           container: document.getElementById('mini-map') || undefined, // 挂载小地图的容器
@@ -367,9 +364,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             },
           },
         })
-      );
-      // Transform
-      graphRef.current.use(
+      ).use(
+        // Transform
         new Transform({
           //  调整节点大小的功能
           resizing: {
@@ -383,9 +379,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             minHeight: archSize.nodeHeight,
           },
         })
-      );
-      // 框选功能
-      graphRef.current.use(
+      ).use(
+        // 框选功能
         new Selection({
           enabled: false,
           multiple: true, // 是否启用点击多选，按住 ctrl 或 command 键点击节点实现多选。
@@ -405,15 +400,11 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, []);
   // 绑定事件
   useEffect(() => {
-    if (canvasData?.id) {
-      bindEvent();
-      positionChange();
-    }
+    bindEvent();
+    positionChange();
 
     return () => {
-      if (canvasData?.id) {
-        unbindEvent();
-      }
+      unbindEvent();
     }
   }, [graphRef.current, canvasData]);
   // 绑定事件
@@ -423,18 +414,15 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       graphRef?.current?.on('edge:mouseleave', edgeMoveOut);
       graphRef?.current?.on('edge:contextmenu', edgeRightClick);
       graphRef?.current?.on('node:added', nodeAdd);
+      graphRef?.current?.on('node:removed', nodeRemove);
       graphRef?.current?.on('node:click', nodeClick);
       graphRef?.current?.on('node:dblclick', nodeDoubleClick);
       graphRef?.current?.on('node:contextmenu', nodeRightClick);
       graphRef?.current?.on('node:mouseenter', nodeMoveIn);
       graphRef?.current?.on('node:mouseleave', nodeMoveOut);
-
-      // graphRef?.current?.on('edge:added', edgeAdd);
-      // graphRef?.current?.on('cell:added', cellAdd);
-      // graphRef?.current?.on('cell:removed', cellRemove);
-      // graphRef?.current?.on('node:change:data', nodeChange);
-      // graphRef?.current?.on('blank:click', reset);
       graphRef?.current?.on('blank:dblclick', reset);
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
     }
   }, [graphRef.current, canvasData]);
   // group相关
@@ -538,11 +526,14 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       graphRef?.current?.off('edge:mouseleave', edgeMoveOut);
       graphRef?.current?.off('edge:contextmenu', edgeRightClick);
       graphRef?.current?.off('node:added', nodeAdd);
+      graphRef?.current?.off('node:removed', nodeRemove);
       graphRef?.current?.off('node:click', nodeClick);
       graphRef?.current?.off('node:dblclick', nodeDoubleClick);
       graphRef?.current?.off('node:contextmenu', nodeRightClick);
       graphRef?.current?.off('node:mouseenter', nodeMoveIn);
       graphRef?.current?.off('node:mouseleave', nodeMoveOut);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
     }
   }, [graphRef.current, canvasData]);
   // 初始化渲染节点
@@ -552,26 +543,32 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       const { groups, nodes, edges } = canvasData?.flowData || {};
       const formatPorts = (list: any) => {
         const prePorts = [].concat(list || []);
-        const topPorts = (prePorts || [])?.filter((i: any) => i.group === 'top')?.map?.((item: any, index: number) => {
-          return Object.assign(
-            {},
-            item,
-            !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
-            {
+        const topPorts = (prePorts || [])
+          ?.filter((i: any) => i.group === 'top')
+          ?.map?.((item: any, index: number) => {
+            return {
+              ...item,
+              sort: index,
               type: item?.label?.type,
+              label: {
+                ...item?.label,
+                sort: index,
+              }
             }
-          );
-        })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
-        const bottomPorts = (prePorts || [])?.filter((i: any) => i.group === 'bottom')?.map?.((item: any, index: number) => {
-          return Object.assign(
-            {},
-            item,
-            !!item?.label?.sort ? {} : { label: { ...item?.label, ...item?.label?.sort ? {} : { sort: index } } },
-            {
+          })?.sort((a: any, b: any) => a?.sort - b?.sort);
+        const bottomPorts = (prePorts || [])
+          ?.filter((i: any) => i.group === 'bottom')
+          ?.map?.((item: any, index: number) => {
+            return {
+              ...item,
+              sort: (prePorts || [])?.filter((i: any) => i.group === 'top')?.length + index,
               type: item?.label?.type,
+              label: {
+                ...item?.label,
+                sort: (prePorts || [])?.filter((i: any) => i.group === 'top')?.length + index,
+              }
             }
-          );
-        })?.sort((a: any, b: any) => a?.label?.sort - b?.label?.sort);
+          })?.sort((a: any, b: any) => a?.sort - b?.sort);
         return { topPorts, bottomPorts };
       };
       let portTypeList: any = {};
@@ -795,7 +792,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         }));
         setTimeout(() => {
           resolve(true);
-        }, 3000);
+        }, 2000);
       }, 500);
     });
   }, [graphRef.current, canvasData?.id]);
@@ -834,6 +831,125 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       }
     }
   }, [graphRef.current, canvasData?.id]);
+  // 键盘按下
+  const onKeyDown = useCallback((event: any) => {
+    const { metaKey, ctrlKey, shiftKey, key } = event;
+    // 选中的节点
+    const selectedCells = (graphRef?.current?.getSelectedCells() || []);
+    const seletedGroups = selectedCells.filter((i: any) => i.id.indexOf('group_') > -1);
+    const seletedNodes = selectedCells.filter((i: any) => i?.store?.data?.customId.indexOf('node_') > -1);
+    if (key === 'Backspace') {
+      // 删除分组
+      if (seletedGroups?.length > 0) {
+        confirm({
+          title: `确定删除选中的${seletedGroups.length}个分组及其内所有节点?`,
+          content: '删除后无法恢复',
+          onOk() {
+            (seletedGroups || []).forEach((group: any) => {
+              (group?._children || [])?.forEach((node: any) => {
+                if (!!node) {
+                  const sourceEdges = graphRef.current?.getIncomingEdges(node);
+                  const targetEdges = graphRef.current?.getOutgoingEdges(node);
+                  const edges = (sourceEdges || [])?.concat(targetEdges || []);
+                  edges?.forEach((edge: any) => {
+                    graphRef.current.removeCell(edge);
+                  });
+                  graphRef.current.removeCell(node);
+                }
+              });
+              graphRef.current.removeCell?.(group.id)
+            });
+          },
+          onCancel() { },
+        });
+      } else {
+        // 删除节点
+        confirm({
+          title: `确定删除选中的${seletedNodes?.length}个节点?`,
+          content: '删除后无法恢复',
+          onOk() {
+            (seletedNodes || [])?.forEach((node: any) => {
+              if (!!node) {
+                const sourceEdges = graphRef.current?.getIncomingEdges(node);
+                const targetEdges = graphRef.current?.getOutgoingEdges(node);
+                const edges = (sourceEdges || [])?.concat(targetEdges || []);
+                edges?.forEach((edge: any) => {
+                  graphRef.current.removeCell(edge);
+                });
+                graphRef.current.removeCell(node);
+              }
+            });
+          },
+          onCancel() { },
+        });
+      }
+    } else if ((metaKey || ctrlKey) && key === 'c') {
+      // 复制节点
+      if (selectedCells?.length) {
+        const nodes = (seletedNodes || [])?.map((i: any) => {
+          return {
+            ...i?.store?.data?.config,
+            id: getuid(),
+            customId: `node_${guid()}`
+          };
+        });
+        copyUrlToClipBoard(
+          JSON.stringify({
+            node: JSON.parse(JSON.stringify(nodes)),
+            group: JSON.parse(JSON.stringify(seletedGroups))
+          })
+        );
+      };
+    } else if ((metaKey || ctrlKey) && key === 'v') {
+      // 粘贴节点
+      var input = document.createElement('input');
+      document.body.appendChild(input);
+      input.focus();
+      if (document?.execCommand?.('paste')) {
+        try {
+          const value = JSON.parse(input.value);
+          Object.entries(value)?.forEach((res: any) => {
+            if (res[0] === 'group') {
+              // 粘贴分组
+              console.log(res[1]);
+            } else if (res[0] === 'node') {
+              // 粘贴节点
+              console.log(res[1]);
+            }
+          });
+          if (value?.type === 'node') {
+
+          } else if (value?.type === 'group') {
+          }
+        } catch (err) { }
+      }
+      document.body.removeChild(input);
+    } else if ((metaKey || ctrlKey) && key === 's') {
+      // 保存方案
+    } else if ((metaKey || ctrlKey) && key === 'z' && !shiftKey) {
+      // undo
+      if (graphRef.current?.canUndo?.()) {
+        graphRef.current?.undo?.();
+      }
+    } else if ((metaKey || ctrlKey) && key === 'z' && shiftKey) {
+      // redo
+      if (graphRef.current?.canRedo?.()) {
+        graphRef.current?.redo?.();
+      }
+    } else if ((metaKey || ctrlKey) && key === 'f') {
+      // 查找节点
+    } else if (metaKey || ctrlKey) {
+      ctrlRef.current = true;
+    } else if (key === 'Escape') {
+      // 取消查找节点
+    } else if (key === 'Enter') {
+      // 查找节点-切换下一个
+    }
+  }, [canvasData]);
+  // 键盘抬起
+  const onKeyUp = useCallback((event: any) => {
+    ctrlRef.current = false;
+  }, [canvasData]);
   // 节点添加
   const nodeAdd = useCallback((flow: any) => {
     const { node } = flow;
@@ -849,11 +965,29 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     };
     dispatch(setCanvasData(result));
   }, [canvasData]);
+  // 节点删除
+  const nodeRemove = useCallback((flow: any) => {
+  }, [canvasData]);
   // 节点点击
   const nodeClick = useCallback((flow: any,) => {
     const { e, view, node } = flow;
     const { config, customId } = node?.store?.data;
-
+    // 防止事件冒泡影响选择功能
+    e.stopPropagation();
+    // 选中点击的节点
+    if (node.id?.indexOf('group_') > -1) {
+      // 如果点击的是分组，取消所有分组内的节点选中状态
+      (node?._children || []).forEach((node: any) => {
+        graphRef.current?.unselect(node);
+      });
+    } ''
+    if (ctrlRef.current) {
+      // 按住ctrl，多选
+    } else {
+      // 单选
+      graphRef.current?.cleanSelection?.();
+    }
+    graphRef.current?.select?.(node);
   }, []);
   // 节点双击
   const nodeDoubleClick = useCallback((flow: any) => {
@@ -967,6 +1101,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   // 空白处单击
   const reset = useCallback((event: any) => {
     dispatch(setSelectedNode(''));
+    // graphRef.current?.cleanSelection?.();
   }, []);
 
   return (

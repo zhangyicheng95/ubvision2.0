@@ -20,21 +20,6 @@ const CHeader: React.FC = (props: any) => {
   const number = params.get('number') || 1;
   var document: any = window.document;
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const onKeyDown = (e: any) => {
-      if (e.code === "F12") {
-        window?.ipcRenderer?.invoke(`openDevTools-${number}`);
-      } else if (e.code === "F5") {
-        window.location.reload();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
   // 展开/全屏
   const requestFullScreen = (element: any) => {
     var requestMethod =
