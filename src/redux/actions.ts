@@ -38,8 +38,8 @@ export interface IRootActions {
 	canvasPlugins: []; // 左侧插件列表
 	canvasData: {
 		id: '',
-		alias: '',
-		name: '',
+		alias: '默认方案',
+		name: '默认方案',
 		description: '',
 		plugin_dir: '',
 		pushData: boolean,

@@ -53,10 +53,3 @@ const AuthRouter = () => {
   );
 };
 export default AuthRouter;
-
-// 用户权限类型
-export const userType: any = {
-  user: '普通用户',
-  admin: '管理员',
-  superAdmin: '超级管理员',
-};

@@ -6,7 +6,7 @@ import { addUser, getGroupList, getUserById, updateUserById } from '@/services/a
 import { StoreEnum } from '@/pages/Auth/store/typing';
 import { cryptoEncryption, getUserData } from '@/utils/utils';
 import * as _ from 'lodash';
-import { userType } from '@/pages/Auth';
+import { userType } from '@/common/globalConstants';
 
 interface Props {
   dispatch: any;

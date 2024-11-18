@@ -7,7 +7,8 @@ import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
 import { deleteGroupById, getGroupList } from '@/services/auth';
 import moment from 'moment';
-import { userType } from '@/pages/Auth';
+import { userType } from '@/common/globalConstants';
+
 
 
 interface Props {

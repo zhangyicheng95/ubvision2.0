@@ -7,14 +7,14 @@ import { Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Ra
 import {
   CaretDownOutlined, CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, ExclamationCircleOutlined,
   MinusSquareOutlined, ArrowUpOutlined, MinusOutlined,
-
 } from '@ant-design/icons';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import TooltipDiv from '@/components/TooltipDiv';
 import { chooseFile, chooseFolder, openFolder } from '@/api/native-path';
 import moment from 'moment';
 import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
-import { formatJson, getuid, guid } from '@/utils/utils';
+import { formatJson, getuid, guid, sortList } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
 import { portTypeObj } from '../../common/constants';
 
@@ -30,20 +30,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   const [dataViewType, setDataViewType] = useState('output');
   const [portList, setPortList] = useState<any>([]);
 
-  useEffect(() => {
-    form?.resetFields?.();
-    if (selectedNode?.indexOf('node_') > -1) {
-      const ports = (node?.getPorts() || []);
-      setPortList(ports);
-      form.setFieldsValue({
-        alias: nodeConfig?.alias,
-        description: nodeConfig?.description
-      });
-    } else {
-      form.setFieldsValue({ ...canvasData });
-      setSelectedTab('params');
-    }
-  }, [canvasData.id, selectedNode]);
   // 选中的节点
   const node = useMemo(() => {
     if (!graphData) return null;
@@ -61,6 +47,20 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
       ;
     return selected?.[0] || null;
   }, [selectedNode, canvasData])
+  useEffect(() => {
+    form?.resetFields?.();
+    if (selectedNode?.indexOf('node_') > -1) {
+      const ports = (node?.getPorts() || []);
+      setPortList(ports);
+      form.setFieldsValue({
+        alias: nodeConfig?.alias,
+        description: nodeConfig?.description
+      });
+    } else {
+      form.setFieldsValue({ ...canvasData });
+      setSelectedTab('params');
+    }
+  }, [canvasData.id, nodeConfig, selectedNode]);
   // 节点不同的配置信息
   const items: TabsProps['items'] = [
     {
@@ -81,22 +81,38 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
     },
   ];
   // 节点排序
-  const portSort = useCallback((index: number) => {
+  const onDragEnd = (dragItem: any) => {
+    if (!dragItem.destination || (dragItem.source.index === dragItem.destination.index)) return;
+    const reorderedItems = sortList(dragItem.source.index, dragItem.destination.index, portList);
+    portSort(dragItem.source.index, dragItem.destination.index);
+    const result = reorderedItems?.map((i: any, index: number) => {
+      return {
+        ...i,
+        sort: index,
+        label: {
+          ...i.label,
+          sort: index
+        }
+      }
+    });
+    setPortList(result);
+  };
+  const portSort = useCallback((sourceInx: number, targetInx: number) => {
     const target = {
-      ...portList[index] || {},
+      ...portList[sourceInx] || {},
       label: {
-        ...portList[index]?.label,
-        sort: portList[index - 1]?.sort,
+        ...portList[sourceInx]?.label,
+        sort: portList[targetInx]?.sort,
       },
-      sort: portList[index - 1]?.sort
+      sort: portList[targetInx]?.sort
     };
     const center = {
-      ...portList[index - 1] || {},
+      ...portList[targetInx] || {},
       label: {
-        ...portList[index - 1]?.label,
-        sort: portList[index]?.sort,
+        ...portList[targetInx]?.label,
+        sort: portList[sourceInx]?.sort,
       },
-      sort: portList[index]?.sort,
+      sort: portList[sourceInx]?.sort,
     };
     const sourceEdges = graphData?.getIncomingEdges(node);
     const targetEdges = graphData?.getOutgoingEdges(node);
@@ -116,35 +132,12 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
         }
       });
     }, 200);
-    setPortList((pre: any) => (pre || [])?.map((cen: any, cIndex: number) => {
-      if (cIndex === index - 1) {
-        return {
-          ...cen,
-          label: {
-            ...cen?.label,
-            sort: index,
-          },
-          sort: index,
-        };
-      } else if (cIndex === index) {
-        return {
-          ...cen,
-          label: {
-            ...cen?.label,
-            sort: index - 1,
-          },
-          sort: index - 1,
-        };
-      }
-      return cen;
-    }));
   }, [portList]);
   // 节点保存
   const onSave = useCallback(() => {
     return new Promise((resolve, reject) => {
       validateFields()
         .then((values) => {
-          console.log(values);
           try {
             if (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) {
               // 节点编辑-保存
@@ -271,7 +264,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                     })
                 }
               };
-              console.log(params);
               dispatch(setCanvasData(params));
               setPortList(inputPort.concat(outputPort));
               resolve(true);
@@ -346,7 +338,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
-                console.log('config', nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}
@@ -387,150 +378,158 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                               }
                             </div>
                             <div style={['input', , 'output'].includes(selectedTab) ? {} : { display: 'none' }}>
-                              {(portList || [])
-                                ?.sort((a: any, b: any) => a.sort - b.sort)
-                                ?.filter((i: any) => i.direction === selectedTab)
-                                ?.map((port: any, index: number) => {
-                                  const { id, label, direction, sort } = port;
-                                  const { alias, name, type, description, pushData, require } = label;
-                                  return <div
-                                    key={`port-item-${id}`}
-                                    className="port-item"
-                                    style={!!portTypeObj[label?.type]?.color ? {
-                                      backgroundColor: portTypeObj[label?.type]?.color,
-                                      color: '#eee'
-                                    } : {}}
-                                  >
-                                    <div className="flex-box-justify-between port-item-title">
-                                      {
-                                        !!name ?
-                                          <Form.Item
-                                            name={`port$%$${id}$%$name$%$${direction}`}
-                                            initialValue={name}
-                                            rules={[{ required: true, message: `${alias}` }]}
-                                          >
-                                            <TooltipDiv style={{ color: '#fff' }}>{name}</TooltipDiv>
-                                          </Form.Item>
-                                          :
-                                          <Form.Item
-                                            name={`port$%$${id}$%$newname$%$${direction}`}
-                                            rules={[{ required: true, message: `${alias}` }]}
-                                          >
-                                            <Input
-                                              placeholder="name，输入后回车确认"
-                                              disabled={canvasStart}
-                                              onPressEnter={(e: any) => {
-                                                const { value } = e?.target;
-                                                const center = {
-                                                  ...port,
-                                                  name: value,
-                                                  label: {
-                                                    ...port?.label || {},
-                                                    name: value
-                                                  }
-                                                };
-                                                node.setPortProp(id, center);
-                                                setPortList((pre: any) => (pre || [])?.map((item: any) => {
-                                                  if (item.id === id) {
-                                                    return center;
-                                                  }
-                                                  return item;
-                                                }));
-                                              }} />
-                                          </Form.Item>
-                                      }
-                                      <Button
-                                        icon={<TooltipDiv content={"删除"} placement="right"><MinusOutlined /> </TooltipDiv>}
-                                        style={{ width: 24, minWidth: 24 }}
-                                        disabled={canvasStart}
-                                        onClick={() => {
-                                          node.removePort(id);
-                                          setPortList((pre: any) => pre?.filter((i: any) => i.id !== id));
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="port-item-body">
-                                      <div className="flex-box">
-                                        <Form.Item
-                                          name={`port$%$${id}$%$alias$%$${direction}`}
-                                          initialValue={alias}
-                                          rules={[{ required: false, message: `${alias}` }]}
-                                        >
-                                          <Input disabled={canvasStart} placeholder="别名" />
-                                        </Form.Item>
-                                        <Form.Item
-                                          name={`port$%$${id}$%$type$%$${direction}`}
-                                          initialValue={type}
-                                          style={{ width: 'calc(50% - 12px)', minWidth: 'calc(50% - 12px)' }}
-                                          rules={[{ required: false, message: `${alias}` }]}
-                                        >
-                                          <Select
-                                            placeholder="链接桩类型"
-                                            disabled={canvasStart}
-                                            options={Object.keys(portTypeObj)?.map?.((type) => ({ key: type, label: type, value: type }))}
-                                          />
-                                        </Form.Item>
-                                        <Button
-                                          icon={<TooltipDiv content={`排序向上: ${sort}`} placement="right"><ArrowUpOutlined /></TooltipDiv>}
-                                          disabled={index === 0 || canvasStart}
-                                          style={{ width: 24, minWidth: 24 }}
-                                          onClick={() => {
-                                            if (selectedTab === 'output') {
-                                              const indx = portList?.filter((i: any) => i.direction === 'input')?.length + index;
-                                              portSort(indx);
-                                            } else {
-                                              portSort(index);
-                                            }
-                                          }}
-                                        />
-                                      </div>
-                                      <Form.Item
-                                        name={`port$%$${id}$%$description$%$${direction}`}
-                                        initialValue={description}
-                                        rules={[{ required: false, message: `${alias}` }]}
-                                      >
-                                        <Input.TextArea
-                                          autoSize={{ minRows: 1, maxRows: 3 }}
-                                          placeholder="描述"
-                                          disabled={canvasStart}
-                                          className="scrollbar-style"
-                                        />
-                                      </Form.Item>
-                                      {
-                                        selectedTab === 'output'
-                                          ?
-                                          <TooltipDiv content={"数据推送"} placement="right">
-                                            <Form.Item
-                                              name={`port$%$${id}$%$pushData$%$${direction}`}
-                                              initialValue={pushData}
-                                              valuePropName="checked"
-                                              rules={[{ required: false, message: `${alias}` }]}
+                              <DragDropContext onDragEnd={onDragEnd}>
+                                <Droppable droppableId="droppable">
+                                  {(provided) => (
+                                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                                      {(portList || [])
+                                        ?.sort((a: any, b: any) => a.sort - b.sort)
+                                        ?.filter((i: any) => i.direction === selectedTab)
+                                        ?.map((port: any, index: number) => {
+                                          const { id, label, direction, sort } = port;
+                                          const { alias, name, type, description, pushData, require } = label;
+                                          return <Draggable key={port.id} draggableId={port.id} index={sort}>
+                                            {(provided) => (<div
+                                              key={`port-item-${id}`}
+                                              className="port-item"
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              style={{
+                                                ...provided.draggableProps.style,
+                                              }}
                                             >
-                                              <Switch
-                                                disabled={canvasStart}
-                                                className='port-item-body-switch'
-                                              />
-                                            </Form.Item>
-                                          </TooltipDiv>
-                                          :
-                                          <TooltipDiv content={"是否必要"} placement="right">
-                                            <Form.Item
-                                              name={`port$%$${id}$%$require$%$${direction}`}
-                                              initialValue={require}
-                                              valuePropName="checked"
-                                              rules={[{ required: false, message: `${alias}` }]}
-                                            >
-                                              <Switch
-                                                disabled={canvasStart}
-                                                className='port-item-body-switch'
-                                                defaultChecked={require}
-                                              />
-                                            </Form.Item>
-                                          </TooltipDiv>
-                                      }
+                                              <div className="flex-box-justify-between port-item-title">
+                                                {
+                                                  !!name ?
+                                                    <Form.Item
+                                                      name={`port$%$${id}$%$name$%$${direction}`}
+                                                      style={{
+                                                        backgroundColor: portTypeObj[label?.type]?.color,
+                                                        color: '#eee',
+                                                        lineHeight: '32px',
+                                                        paddingLeft: 8,
+                                                        marginLeft: 1
+                                                      }}
+                                                      initialValue={name}
+                                                      rules={[{ required: true, message: `${alias}` }]}
+                                                    >
+                                                      <TooltipDiv>{name}</TooltipDiv>
+                                                    </Form.Item>
+                                                    :
+                                                    <Form.Item
+                                                      name={`port$%$${id}$%$newname$%$${direction}`}
+                                                      rules={[{ required: true, message: `${alias}` }]}
+                                                    >
+                                                      <Input
+                                                        placeholder="name，输入后回车确认"
+                                                        disabled={canvasStart}
+                                                        onPressEnter={(e: any) => {
+                                                          const { value } = e?.target;
+                                                          const center = {
+                                                            ...port,
+                                                            name: value,
+                                                            label: {
+                                                              ...port?.label || {},
+                                                              name: value
+                                                            }
+                                                          };
+                                                          node.setPortProp(id, center);
+                                                          setPortList((pre: any) => (pre || [])?.map((item: any) => {
+                                                            if (item.id === id) {
+                                                              return center;
+                                                            }
+                                                            return item;
+                                                          }));
+                                                        }} />
+                                                    </Form.Item>
+                                                }
+                                                <Button
+                                                  icon={<TooltipDiv content={"删除"} placement="right"><MinusOutlined /> </TooltipDiv>}
+                                                  style={{ width: 24, minWidth: 24 }}
+                                                  disabled={canvasStart}
+                                                  onClick={() => {
+                                                    node.removePort(id);
+                                                    setPortList((pre: any) => pre?.filter((i: any) => i.id !== id));
+                                                  }}
+                                                />
+                                              </div>
+                                              <div className="port-item-body">
+                                                <div className="flex-box">
+                                                  <Form.Item
+                                                    name={`port$%$${id}$%$alias$%$${direction}`}
+                                                    initialValue={alias}
+                                                    rules={[{ required: false, message: `${alias}` }]}
+                                                  >
+                                                    <Input disabled={canvasStart} placeholder="别名" />
+                                                  </Form.Item>
+                                                  <Form.Item
+                                                    name={`port$%$${id}$%$type$%$${direction}`}
+                                                    initialValue={type}
+                                                    style={{ width: 'calc(50% - 12px)', minWidth: 'calc(50% - 12px)' }}
+                                                    rules={[{ required: false, message: `${alias}` }]}
+                                                  >
+                                                    <Select
+                                                      placeholder="链接桩类型"
+                                                      disabled={canvasStart}
+                                                      options={Object.keys(portTypeObj)?.map?.((type) => ({ key: type, label: type, value: type }))}
+                                                    />
+                                                  </Form.Item>
+                                                </div>
+                                                <Form.Item
+                                                  name={`port$%$${id}$%$description$%$${direction}`}
+                                                  initialValue={description}
+                                                  rules={[{ required: false, message: `${alias}` }]}
+                                                >
+                                                  <Input.TextArea
+                                                    autoSize={{ minRows: 1, maxRows: 3 }}
+                                                    placeholder="描述"
+                                                    disabled={canvasStart}
+                                                    className="scrollbar-style"
+                                                  />
+                                                </Form.Item>
+                                                {
+                                                  selectedTab === 'output'
+                                                    ?
+                                                    <TooltipDiv content={"数据推送"} placement="right">
+                                                      <Form.Item
+                                                        name={`port$%$${id}$%$pushData$%$${direction}`}
+                                                        initialValue={pushData}
+                                                        valuePropName="checked"
+                                                        rules={[{ required: false, message: `${alias}` }]}
+                                                      >
+                                                        <Switch
+                                                          disabled={canvasStart}
+                                                          className='port-item-body-switch'
+                                                        />
+                                                      </Form.Item>
+                                                    </TooltipDiv>
+                                                    :
+                                                    <TooltipDiv content={"是否必要"} placement="right">
+                                                      <Form.Item
+                                                        name={`port$%$${id}$%$require$%$${direction}`}
+                                                        initialValue={require}
+                                                        valuePropName="checked"
+                                                        rules={[{ required: false, message: `${alias}` }]}
+                                                      >
+                                                        <Switch
+                                                          disabled={canvasStart}
+                                                          className='port-item-body-switch'
+                                                          defaultChecked={require}
+                                                        />
+                                                      </Form.Item>
+                                                    </TooltipDiv>
+                                                }
+                                              </div>
+                                            </div>
+                                            )}
+                                          </Draggable>
+                                        })}
+                                      {provided.placeholder}
                                     </div>
-                                  </div>
-                                })}
+                                  )}
+                                </Droppable>
+                              </DragDropContext>
                             </div>
                             <div style={selectedTab === 'info' ? {} : { display: 'none' }}>
                               <div className='config-panel-left-body-info-box'>

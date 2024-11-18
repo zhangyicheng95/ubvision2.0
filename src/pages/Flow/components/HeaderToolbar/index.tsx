@@ -1,27 +1,119 @@
 import React, { memo, useCallback } from 'react';
 import { Button, message, Modal, Dropdown } from 'antd';
-import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined } from '@ant-design/icons';
+import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined, SaveOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
-import { startFlowService, stopFlowService } from '@/services/flowEditor';
+import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
+import { defaultConfig } from 'antd/es/theme/context';
+import { useNavigate } from 'react-router';
+import { GetQueryObj } from '@/utils/utils';
 
 const { confirm } = Modal;
 interface Props {
 }
 
 const HeaderToolbar: React.FC<Props> = (props) => {
+  const params: any = !!location.search
+    ? GetQueryObj(location.search)
+    : !!location.href
+      ? GetQueryObj(location.href)
+      : {};
+  const id = params?.['id'];
+  const number = params?.['number'];
   const { graphData, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  // 格式化方案数据
+  const formatGraphData = useCallback(() => {
+    const { cells } = graphData.toJSON({ deep: true });
+    const { groups, nodes } = canvasData?.flowData;
+    console.log(cells);
+
+    const { groupList, nodeList, edgeList } = (cells || [])
+      ?.reduce(
+        (prev: any, cent: any) => {
+          const { groupList, nodeList, edgeList } = prev;
+          const { shape, } = cent;
+          if (shape === "dag-group") {
+            const groupConfig: object = groups?.filter((i: any) => i.id === cent.id)?.[0] || {};
+            return {
+              ...prev,
+              groupList: groupList?.concat({
+                ...cent,
+                ..._.omit(groupConfig, 'childrenList'),
+              }),
+            }
+          } else if (shape === "dag-node") {
+            const { config, position } = cent;
+            const nodeConfig: object = nodes?.filter((i: any) => i.id === config.id)?.[0] || {};
+            return {
+              ...prev,
+              nodeList: nodeList?.concat({
+                ...config,
+                ...nodeConfig,
+                position
+              }),
+            }
+          } else if (shape === "dag-edge") {
+            const source = graphData.getCellById(cent.source.cell);
+            const target = graphData.getCellById(cent.target.cell);
+            if (!!source && !!target) {
+              return {
+                ...prev,
+                edgeList: edgeList?.concat(cent),
+              }
+            } else {
+              return prev;
+            };
+          }
+        }, {
+        groupList: [],
+        nodeList: [],
+        edgeList: [],
+      });
+    return { groupList, nodeList, edgeList };
+  }, [graphData, canvasData]);
   // 保存业务
-  const saveGraph = () => {
+  const saveGraph = useCallback(() => {
+    dispatch(setLoading(true));
     return new Promise((resolve, reject) => {
-      console.log('toObject', graphData?.toJSON());
+      const { groupList, nodeList, edgeList } = formatGraphData();
+      const params = {
+        ...canvasData,
+        flowData: { groups: groupList, nodes: nodeList, edges: edgeList }
+      };
+      if (canvasData?.id) {
+        // 有id，代表修改
+        updateParams(canvasData?.id, params).then((res) => {
+          if (!!res && res.code === 'SUCCESS') {
+            message.success('保存成功');
+          } else {
+            message.error(res?.message || '接口异常');
+
+          }
+          dispatch(setLoading(false));
+        });
+      } else {
+        // 没id，代表添加
+        addParams(_.omit(params, 'id')).then((res) => {
+          if (!!res && res.code === 'SUCCESS' && !!res?.data?.id) {
+            message.success('保存成功');
+            dispatch(setLoading(false));
+            navigate(`/flow?id=${res.data?.id}&number=${number}`, {
+              state: res.data,
+            });
+          } else {
+            message.error(res?.message || '接口异常');
+          }
+          dispatch(setLoading(false));
+        });
+      }
       resolve(true);
     });
-  };
+  }, [graphData, canvasData]);
   // 启动业务
   const startFlow = useCallback((type?: string) => {
     if (canvasData?.id) {
@@ -36,7 +128,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
             dispatch(setCanvasStart(true));
             (graphData?.getNodes?.() || [])?.forEach((node: any) => {
               console.log(node?.getData?.());
-              
+
               node.setData?.({
                 ...node?.getData?.() || {},
                 canvasStart: true
@@ -134,6 +226,15 @@ const HeaderToolbar: React.FC<Props> = (props) => {
 
       </div>
       <div className="flex-box header-toolbar-operation-box">
+        <Button
+          size='small'
+          icon={<SaveOutlined />}
+          className={!!canvasStart ? '' : 'info-font'}
+          disabled={!!canvasStart}
+          onClick={() => {
+            saveGraph();
+          }}
+        >保存</Button>
         <Dropdown
           getPopupContainer={(triggerNode: any) => {
             return triggerNode.parentNode || document.body;

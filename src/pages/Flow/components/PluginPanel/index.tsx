@@ -85,7 +85,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         const nodeHeight = archSize.nodeHeight;
 
         register({
-          shape: `dag-node-${customId}`,
+          shape: `dag-node`,
           // @ts-ignore
           component: <AlgoNode key={id} data={realData} />,
           ports: {
@@ -117,7 +117,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         });
 
         return graphData?.createNode({
-          shape: `dag-node-${customId}`,
+          shape: `dag-node`,
           id,
           ports: data.ports,
           portMarkup: [Markup.getForeignObjectMarkup()],

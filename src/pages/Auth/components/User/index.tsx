@@ -6,7 +6,8 @@ import { getUserAuth, getUserAuthList, getUserData, guid } from '@/utils/utils';
 import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
 import { deleteUserById, getUserList } from '@/services/auth';
-import { userType } from '@/pages/Auth';
+import { userType } from '@/common/globalConstants';
+
 
 interface Props {
 

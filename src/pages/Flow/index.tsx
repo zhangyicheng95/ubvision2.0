@@ -181,6 +181,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
           });
         } else {
           message.error(res?.message || '接口异常');
+          dispatch(setLoading(false));
         }
       });
     }

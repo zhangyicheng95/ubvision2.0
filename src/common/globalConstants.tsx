@@ -1,4 +1,10 @@
 import * as _ from 'lodash-es';
+// 用户权限类型
+export const userType: any = {
+    user: '普通用户',
+    admin: '管理员',
+    superAdmin: '超级管理员',
+};
 /**
  * 授权校验规则：
  * 1.累计运行计数>允许的计数
@@ -42,4 +48,21 @@ export const permissionRule = (local: localProps, center: centerProps) => {
         center.today <= (center.time + center.useNum * 3600 * 1000)
         ||
         center.hostName !== local.hostName;
+};
+// 判断字符串是不是图片链接
+export const isImgFun = (item: string) => {
+    return (
+        item?.indexOf('http') > -1 &&
+        (item?.indexOf('jpg') > -1 ||
+            item?.indexOf('jpeg') > -1 ||
+            item?.indexOf('png') > -1 ||
+            item?.indexOf('bmp') > -1)
+    );
+};
+// 判断字符串是不是3D链接
+export const is3DFun = (item: string) => {
+    return (
+        item?.indexOf('http') > -1 &&
+        (item?.indexOf('ply') > -1 || item?.indexOf('pcd') > -1 || item?.indexOf('stl') > -1)
+    );
 };

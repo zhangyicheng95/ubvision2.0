@@ -11,8 +11,8 @@ const initalState: IRootActions = {
 	canvasPlugins: [],
 	canvasData: {
 		id: '',
-		alias: '',
-		name: '',
+		alias: '默认方案',
+		name: '默认方案',
 		description: '',
 		plugin_dir: '',
 		pushData: false,

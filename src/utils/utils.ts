@@ -383,3 +383,16 @@ export function getActualWidthOfChars(text = '', options?: any) {
         return truncateText(text, size, boxSize - 15) + '...';
     }
 }
+/**
+ * 数组排序
+ * @param source 拖拽的节点下标
+ * @param target 拖拽目标位置下标
+ * @param list 排序的数组
+ * @returns 
+ */
+export function sortList(source: number, target: number, list: any) {
+    const reorderedItems = Array.from(list);
+    const [removed] = reorderedItems.splice(source, 1);
+    reorderedItems.splice(target, 0, removed);
+    return reorderedItems || [];
+}

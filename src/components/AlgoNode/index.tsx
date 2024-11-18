@@ -13,24 +13,6 @@ import { nodeStatusColor } from '@/pages/Flow/common/constants';
 
 const { Graph, Markup, Path, Shape, Cell, NodeView, Vector } = X6;
 const { confirm } = Modal;
-
-// @ts-ignore
-export const isImgFun = (item: string) => {
-  return (
-    item?.indexOf('http') > -1 &&
-    (item?.indexOf('jpg') > -1 ||
-      item?.indexOf('jpeg') > -1 ||
-      item?.indexOf('png') > -1 ||
-      item?.indexOf('bmp') > -1)
-  );
-};
-export const is3DFun = (item: string) => {
-  return (
-    item?.indexOf('http') > -1 &&
-    (item?.indexOf('ply') > -1 || item?.indexOf('pcd') > -1 || item?.indexOf('stl') > -1)
-  );
-};
-
 interface Props {
   graph?: any;
   node?: any;

@@ -33,8 +33,8 @@ const MiniMapPanel: React.FC<Props> = (props) => {
           className="toolbar-btn"
           onClick={() => {
             const zoomCur = graphData.zoom();
-            const zoomto = Number((zoomCur - 0.1).toFixed(2));
-            if (zoomto >= 0.1) {
+            const zoomto = Math.max(Number((zoomCur - 0.1).toFixed(2)), 0.05);
+            if (zoomto >= 0.05) {
               graphData.zoomTo(zoomto);
               setMiniMapZoom(zoomto);
             }
@@ -66,7 +66,7 @@ const MiniMapPanel: React.FC<Props> = (props) => {
           className="toolbar-btn"
           onClick={() => {
             const zoomCur = graphData.zoom();
-            const zoomto = Number((zoomCur + 0.1).toFixed(1));
+            const zoomto = Math.min(Number((zoomCur + 0.1).toFixed(1)), 2);
             if (zoomto <= 2.0) {
               graphData.zoomTo(zoomto);
               setMiniMapZoom(zoomto);
