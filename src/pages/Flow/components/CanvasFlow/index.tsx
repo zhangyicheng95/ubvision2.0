@@ -27,7 +27,7 @@ const { confirm } = Modal;
 interface Props { }
 
 const CanvasFlow: React.FC<Props> = (props: any) => {
-  const { canvasData, canvasStart, selectedNode } = useSelector((state: IRootActions) => state);
+  const { canvasData, canvasStart, selectedNode, saveGraph } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const dom = useRef<any>(null);
   const graphRef = useRef<any>(null);
@@ -41,7 +41,6 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   const nodeSearchNumRef = useRef<any>(0);
   // 搜索框
   const [nodeSelectVisible, setNodeSelectVisible] = useState(false);
-
   // 节点和线的删除按钮
   const removeBtnOption = {
     name: 'button',
@@ -567,81 +566,82 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       const groupList = (groups || []).reduce((prev: any, cent: any) => {
         return { ...prev, [cent.customId]: cent };
       }, {});
-      const nodeList = (nodes || []).reduce((prev: any, cent: any) => {
-        if (!cent) {
-          return prev;
-        }
+      const nodeList = (nodes || []).map((cent: any) => {
         const { topPorts, bottomPorts } = formatPorts(cent?.ports?.items || []);
-        return {
-          ...prev,
-          [cent?.customId]: {
-            ...cent,
-            config: {
-              ...cent.config,
-              generalConfig: {
-                ...(!!cent.config?.generalConfig
-                  ? Object.entries(generalConfigList)?.reduce(
-                    (pre: any, cen: any) => {
-                      return Object.assign({}, pre, {
-                        [cen[0]]: {
-                          ...cen[1],
-                          ...(!!cent.config?.generalConfig[cen[0]]
-                            ? {
-                              value:
-                                cent.config?.generalConfig[cen[0]]?.value,
-                            }
-                            : {}),
-                        },
-                      });
-                    },
-                    {}
-                  )
-                  : generalConfigList),
-              },
+        const config = {
+          ...cent,
+          config: {
+            ...cent.config,
+            generalConfig: {
+              ...(!!cent.config?.generalConfig
+                ? Object.entries(generalConfigList)?.reduce(
+                  (pre: any, cen: any) => {
+                    return Object.assign({}, pre, {
+                      [cen[0]]: {
+                        ...cen[1],
+                        ...(!!cent.config?.generalConfig[cen[0]]
+                          ? {
+                            value:
+                              cent.config?.generalConfig[cen[0]]?.value,
+                          }
+                          : {}),
+                      },
+                    });
+                  },
+                  {}
+                )
+                : generalConfigList),
             },
-            ports: {
-              ...cent?.ports,
-              items: topPorts.concat(bottomPorts)
-            }
           },
+          ports: {
+            ...cent?.ports,
+            items: topPorts.concat(bottomPorts)
+          }
         };
-      }, {});
-      const edgeList = (edges || []).reduce((prev: any, cent: any) => {
-        return { ...prev, [cent.id]: cent };
-      }, {});
-      setTimeout(() => {
-        Object.entries(nodeList || {}).forEach((node: any) => {
-          const { width = 0, height = 0 } = node[1]?.size || {};
-          register({
-            shape: `dag-node`,
-            // @ts-ignore
-            component: (
-              <AlgoNode
-                data={node[1]}
-              />
-            ),
-          });
-          const { topPorts, bottomPorts } = formatPorts(node[1]?.ports?.items || []);
-          const nodeCanvas = graphRef?.current.addNode({
-            shape: `dag-node`,
-            id: node[1].id,
-            portMarkup: [Markup.getForeignObjectMarkup()],
-            ports: Object.assign({}, node[1]?.ports, {
-              items: topPorts.concat(bottomPorts)
-            }),
-            data: { status: 'STOPPED', graphLock: false },
-            position: node[1].position,
-            size: {
-              width: width < archSize.nodeWidth ? archSize.nodeWidth : width,
-              height:
-                height < archSize.nodeHeight ? archSize.nodeHeight : height,
-            },
-            config: node[1],
-            customId: node[1].customId,
-          });
-          const data = nodeCanvas?.getData() || {};
-          nodeCanvas.setData({ ...data });
+        register({
+          shape: `dag-node-${cent.customId}`,
+          // @ts-ignore
+          component: (
+            <AlgoNode data={config} />
+          ),
         });
+        const node = graphRef?.current.createNode({
+          shape: `dag-node-${cent.customId}`,
+          id: config.id,
+          portMarkup: [Markup.getForeignObjectMarkup()],
+          ports: Object.assign({}, config?.ports, {
+            items: topPorts.concat(bottomPorts)
+          }),
+          data: { status: 'STOPPED', graphLock: false },
+          position: config.position,
+          size: {
+            width: config?.size?.width || archSize.nodeWidth,
+            height: config?.size?.height || archSize.nodeHeight,
+          },
+          config: config,
+          customId: config.customId,
+        });
+        return node;
+      });
+      const edgeList = (edges || []).map((cent: any) => {
+        const { attrs, source } = cent;
+        const stroke = portTypeList[source?.port];
+        const edge = graphRef?.current.createEdge(
+          Object.assign({}, _.omit(_.omit(cent, 'parent'), 'connector'), {
+            attrs: {
+              line: Object.assign(
+                {},
+                attrs?.line,
+                { strokeWidth: 6, strokeDasharray: '' },
+                stroke ? { stroke } : {}
+              ),
+            },
+          })
+        );
+        return edge;
+      });
+      setTimeout(() => {
+        graphRef.current.addNodes(nodeList);
         Object.entries(groupList || {}).forEach((group: any) => {
           const {
             id,
@@ -671,22 +671,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             parent.toggleCollapse();
           }
         });
-        Object.entries(edgeList || {}).forEach((edge: any) => {
-          const { attrs, source } = edge[1];
-          const stroke = portTypeList[source?.port];
-          graphRef?.current.addEdge(
-            Object.assign({}, _.omit(_.omit(edge[1], 'parent'), 'connector'), {
-              attrs: {
-                line: Object.assign(
-                  {},
-                  attrs?.line,
-                  { strokeWidth: 6, strokeDasharray: '' },
-                  stroke ? { stroke } : {}
-                ),
-              },
-            })
-          );
-        });
+        graphRef.current.addEdges(edgeList);
         graphRef?.current.zoomToFit({ absolute: true, maxScale: 1 });
         dispatch(setCanvasData({
           ...canvasData,
@@ -705,8 +690,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       let ifHasRequireNotWrite = false;
       const node = graphRef.current?.getCellById(item.id);
       try {
-        Object.entries(initParams || {})?.forEach((item: any) => {
-          if (item?.[1]?.require && (_.isUndefined(item[1]?.value) || _.isNull(item[1]?.value))) {
+        Object.entries(initParams || {})?.forEach((init: any) => {
+          if (init?.[1]?.require && (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value))) {
             // 有必填项没填
             ifHasRequireNotWrite = true;
             throw new Error();
@@ -720,6 +705,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         input_check: !!generalConfig?.input_check?.value,
         initParams_check: !ifHasRequireNotWrite,
         canvasStart,
+        graphLock: canvasData.graphLock
       });
     })
   }, [canvasData, canvasStart]);
@@ -787,6 +773,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         });
       }
     } else if ((metaKey || ctrlKey) && key === 'c') {
+      if (!!nodeSearchRef.current) return;
       if (seletedGroups?.length > 0) {
         // 复制分组-每次只能复制一个
         const group = seletedGroups?.[0];
@@ -822,6 +809,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         );
       };
     } else if ((metaKey || ctrlKey) && key === 'v') {
+      if (!!nodeSearchRef.current) return;
       // 粘贴节点
       var input = document.createElement('input');
       document.body.appendChild(input);
@@ -853,7 +841,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               (nodes || []).forEach((node: any) => {
                 const { width = 0, height = 0 } = node?.size || {};
                 register({
-                  shape: `dag-node`,
+                  shape: `dag-node-${node.customId}`,
                   // @ts-ignore
                   component: (
                     <AlgoNode
@@ -863,7 +851,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                 });
                 const { topPorts, bottomPorts } = formatPorts(node?.ports?.items || []);
                 const nodeCanvas = graphRef?.current.createNode({
-                  shape: `dag-node`,
+                  shape: `dag-node-${node.customId}`,
                   id: node.id,
                   portMarkup: [Markup.getForeignObjectMarkup()],
                   ports: Object.assign({}, node?.ports, {
@@ -925,7 +913,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               (res[1] || []).forEach((node: any) => {
                 const { width = 0, height = 0 } = node?.size || {};
                 register({
-                  shape: `dag-node`,
+                  shape: `dag-node-${node.customId}`,
                   // @ts-ignore
                   component: (
                     <AlgoNode
@@ -935,7 +923,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                 });
                 const { topPorts, bottomPorts } = formatPorts(node?.ports?.items || []);
                 const nodeCanvas = graphRef?.current.createNode({
-                  shape: `dag-node`,
+                  shape: `dag-node-${node.customId}`,
                   id: node.id,
                   portMarkup: [Markup.getForeignObjectMarkup()],
                   ports: Object.assign({}, node?.ports, {
@@ -982,6 +970,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       document.body.removeChild(input);
     } else if ((metaKey || ctrlKey) && key === 's') {
       // 保存方案
+      saveGraph(canvasData);
     } else if ((metaKey || ctrlKey) && key === 'z' && !shiftKey) {
       // undo
       if (graphRef.current?.canUndo?.()) {
@@ -1004,9 +993,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       ctrlRef.current = true;
     } else if (key === 'Escape') {
       // 取消查找节点
-      onNodeSearch('');
-      setNodeSelectVisible(false);
-      nodeSearchNumRef.current = 0;
+      closeNodeSearch();
     }
   }, [canvasData]);
   // 键盘抬起
@@ -1174,7 +1161,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     dispatch(setSelectedNode(''));
   };
   // 节点搜索
-  const onNodeSearch = (val: any) => {
+  const onNodeSearch = useCallback((val: any) => {
     const nodes = graphRef.current
       .getNodes()
       ?.filter((i: any) => i?.id?.indexOf('group') < 0)
@@ -1185,6 +1172,24 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           i.store.data.config.id?.indexOf(val) > -1 ||
           i.store.data.config.customId?.indexOf(val) > -1
       );
+    if (nodes?.length <= 0) {
+      message.warning('搜索的节点不存在');
+      return;
+    }
+    (nodes || []).forEach((node: any) => {
+      const nodeData = node?.getData() || {};
+      const customId = node?.store?.data?.config?.customId;
+      const realNode: any = canvasData.flowData?.nodes?.filter((i: any) => i.customId === customId)?.[0];
+      const input_check = realNode?.config?.generalConfig?.input_check?.value;
+      // 取消搜索高亮 STOPPED
+      node?.updateData({ ...nodeData, input_check, status: !!val ? 'SEARCH' : 'STOPPED' }, { overwrite: true });
+    });
+    if (nodeSearchNumRef.current === 0) {
+      nodeSearchNumRef.current = 1;
+      return;
+    } else {
+      nodeSearchNumRef.current += 1;
+    };
     try {
       if (!!val) {
         if (nodeSearchNumRef.current >= nodes.length) {
@@ -1206,6 +1211,14 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         graphRef.current.zoomToFit({ absolute: true, maxScale: 1 });
       }
     } catch (err) { }
+  }, [graphRef.current, canvasData]);
+  // 关闭节点搜索
+  const closeNodeSearch = () => {
+    onNodeSearch('');
+    setNodeSelectVisible(false);
+    nodeSearchNumRef.current = 0;
+    nodeSearchRef.current = null;
+    graphRef.current.zoomToFit({ absolute: true, maxScale: 1 });
   };
 
   return (
@@ -1218,17 +1231,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           <Input.Search
             ref={nodeSearchRef}
             onSearch={(val) => {
-              nodeSearchNumRef.current += 1;
               onNodeSearch(val);
             }}
           />
           <Button
             icon={<CloseOutlined />}
-            onClick={() => {
-              onNodeSearch('');
-              setNodeSelectVisible(false);
-              nodeSearchNumRef.current = 0;
-            }}
+            onClick={closeNodeSearch}
           />
         </div>
       ) : null}

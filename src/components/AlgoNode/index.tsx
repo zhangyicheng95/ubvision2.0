@@ -160,7 +160,6 @@ const AlgoNode: React.FC<Props> = (props) => {
               <TooltipDiv
                 style={{
                   fontSize: 24,
-                  opacity: 0.6,
                   marginRight: 16,
                 }}
               >
@@ -168,7 +167,6 @@ const AlgoNode: React.FC<Props> = (props) => {
               </TooltipDiv>
               <div
                 style={{
-                  opacity: 0.6,
                   marginRight: 4,
                   lineHeight: 1
                 }}

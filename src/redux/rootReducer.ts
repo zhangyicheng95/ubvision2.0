@@ -9,6 +9,7 @@ const initalState: IRootActions = {
 	selectedRows: [],
 	graphData: null,
 	canvasPlugins: [],
+	canvasDirPlugins: [],
 	canvasData: {
 		id: '',
 		alias: '默认方案',
@@ -21,7 +22,8 @@ const initalState: IRootActions = {
 			edges: [],
 			nodes: [],
 			groups: []
-		}
+		},
+		graphLock: false, // 画布锁
 	},
 	canvasDataBase: {
 		id: '',
@@ -35,10 +37,13 @@ const initalState: IRootActions = {
 			edges: [],
 			nodes: [],
 			groups: []
-		}
+		},
+		graphLock: false, // 画布锁
 	},
 	canvasStart: false,
 	selectedNode: '',
+	saveGraph: (param?: any) => null,
+	getCanvasPlugins: () => null, // 获取侧边插件列表
 };
 
 const rootReducer = (state = initalState, actions: any) => {
@@ -91,6 +96,12 @@ const rootReducer = (state = initalState, actions: any) => {
 				...state,
 				canvasPlugins: actions.canvasPlugins,
 			};
+		// 设置画布内置插件列表
+		case rootActionTypes.SET_CANVAS_DIR_PLUGINS:
+			return {
+				...state,
+				canvasDirPlugins: actions.canvasDirPlugins,
+			};
 		// 设置方案数据
 		case rootActionTypes.SET_CANVAS_DATA:
 			return {
@@ -114,6 +125,18 @@ const rootReducer = (state = initalState, actions: any) => {
 			return {
 				...state,
 				selectedNode: actions.selectedNode,
+			};
+		// 方案保存函数
+		case rootActionTypes.SET_SAVE_GRAPH:
+			return {
+				...state,
+				saveGraph: actions.saveGraph,
+			};
+		// // 流程图-获取插件列表
+		case rootActionTypes.SET_GET_CANVAS_PLUGINS:
+			return {
+				...state,
+				getCanvasPlugins: actions.getCanvasPlugins,
 			};
 		// 清理所有数据
 		case rootActionTypes.CLEAR_ALL_DATA:

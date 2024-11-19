@@ -17,10 +17,13 @@ export enum rootActionTypes {
 	"SET_SELECTED_ROWS" = "SET_SELECTED_ROWS",
 	"SET_GRAPH_DATA" = "SET_GRAPH_DATA",
 	"SET_CANVAS_PLUGINS" = "SET_CANVAS_PLUGINS",
+	"SET_CANVAS_DIR_PLUGINS" = "SET_CANVAS_DIR_PLUGINS",
 	"SET_CANVAS_DATA" = "SET_CANVAS_DATA",
 	"SET_CANVAS_DATA_BASE" = "SET_CANVAS_DATA_BASE",
 	"SET_CANVAS_START" = "SET_CANVAS_START",
 	"SET_SELECTED_NODE" = "SET_SELECTED_NODE",
+	"SET_SAVE_GRAPH" = "SET_SAVE_GRAPH",
+	"SET_GET_CANVAS_PLUGINS" = "SET_GET_CANVAS_PLUGINS",
 	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
 }
 
@@ -36,6 +39,7 @@ export interface IRootActions {
 	// 流程图画布相关
 	graphData: any, // 画布实例
 	canvasPlugins: []; // 左侧插件列表
+	canvasDirPlugins: []; // 内置插件列表
 	canvasData: {
 		id: '',
 		alias: '默认方案',
@@ -48,7 +52,8 @@ export interface IRootActions {
 			edges: [],
 			nodes: [],
 			groups: []
-		}
+		},
+		graphLock: boolean, // 画布锁
 	}; // 画布数据
 	canvasDataBase: {
 		id: '',
@@ -62,10 +67,13 @@ export interface IRootActions {
 			edges: [],
 			nodes: [],
 			groups: []
-		}
+		},
+		graphLock: boolean, // 画布锁
 	}; // 画布数据备份
 	canvasStart: false; // 方案启动
 	selectedNode: string, // 双击选中节点
+	saveGraph: (param?: any) => null, // 方案保存函数
+	getCanvasPlugins: () => null, // 获取侧边插件列表
 }
 
 // 缓存用户token
@@ -124,6 +132,13 @@ export const setCanvasPlugins = (canvasPlugins: []) => {
 		canvasPlugins
 	};
 };
+// 流程图-内置插件列表
+export const setCanvasDirPlugins = (canvasDirPlugins: []) => {
+	return {
+		type: rootActionTypes.SET_CANVAS_DIR_PLUGINS,
+		canvasDirPlugins
+	};
+};
 // 流程图-方案信息
 export const setCanvasData = (canvasData: {}) => {
 	return {
@@ -151,7 +166,21 @@ export const setSelectedNode: any = (selectedNode: '') => {
 		type: rootActionTypes.SET_SELECTED_NODE,
 		selectedNode
 	}
-}
+};
+// 流程图-保存方案信息
+export const setSaveGraph: any = (saveGraph: any) => {
+	return {
+		type: rootActionTypes.SET_SAVE_GRAPH,
+		saveGraph
+	}
+};
+// 流程图-获取插件列表
+export const setGetCanvasPlugins = (getCanvasPlugins: any) => {
+	return {
+		type: rootActionTypes.SET_GET_CANVAS_PLUGINS,
+		getCanvasPlugins
+	};
+};
 // 重置所有的init
 export const clearAllData = () => {
 	return {

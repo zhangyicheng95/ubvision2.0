@@ -82,7 +82,7 @@ const IpInput: React.FC<Props> = (props: any) => {
               ref={refList[index]}
               value={item[1]}
               maxLength={3}
-              onBlur={(e) => { handleNumberChange(e, item[0]) }}
+              onChange={(e) => { handleNumberChange(e, item[0]) }}
             // onKeyUp={(e) => turnIpPOS(e, index)}
             />
             {

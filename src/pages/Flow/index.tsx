@@ -9,10 +9,13 @@ import ConfigPanel from './components/ConfigPanel';
 import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setCanvasDataBase, setCanvasPlugins, setCanvasStart, setLoading } from '@/redux/actions';
+import {
+  IRootActions, setCanvasData, setCanvasDataBase, setCanvasDirPlugins, setCanvasPlugins,
+  setCanvasStart, setGetCanvasPlugins, setLoading
+} from '@/redux/actions';
 import { generalConfigList } from './common/constants';
 import { GetQueryObj, guid } from '@/utils/utils';
-import { getPluginList } from '@/services/flowPlugin';
+import { getDirPluginList, getPluginList } from '@/services/flowPlugin';
 import { getFlowStatusService, getParams } from '@/services/flowEditor';
 
 const X6ReactPortalProvider = Portal.getProvider(); // 注意，一个 graph 只能申明一个 portal provider
@@ -35,121 +38,8 @@ const FlowPage: React.FC<Props> = (props: any) => {
       // pluginApi.list().then((res: any) => {
       getPluginList().then((res: any) => {
         if (!!res && res.code === 'SUCCESS') {
-          const result = (res.data || []).reduce((prev: any, cent: any) => {
-            const { config = {} } = cent;
-            if (!cent.category) {
-              cent['category'] = '未命名';
-            }
-            const topPorts = Object.entries(config?.input || {})?.map?.(
-              (top: any, index) => {
-                const cen = {
-                  direction: 'input',
-                  name: top[0],
-                  ...top[1],
-                  sort: index,
-                };
-                return {
-                  customId: `port_${guid()}`,
-                  group: 'top',
-                  ...cen,
-                  label: cen
-                };
-              }
-            );
-            const bottomPorts = Object.entries(config?.output || {})?.map?.(
-              (bottom: any, index) => {
-                const cen = {
-                  direction: 'output',
-                  name: bottom[0],
-                  ...bottom[1],
-                  sort: Object.keys(config?.input)?.length + index,
-                };
-                return {
-                  customId: `port_${guid()}`,
-                  group: 'bottom',
-                  ...cen,
-                  label: cen
-                };
-              }
-            );
-            const id = `node_${guid()}`;
-            const item: any = {
-              // id: id,
-              data: {
-                ...cent,
-                config: {
-                  ...cent.config,
-                  generalConfig: {
-                    ...(!!cent.config?.generalConfig
-                      ? Object.entries(generalConfigList)?.reduce(
-                        (pre: any, cen: any) => {
-                          return Object.assign({}, pre, {
-                            [cen[0]]: {
-                              ...cen[1],
-                              ...(!!cent.config?.generalConfig[cen[0]]
-                                ? {
-                                  value:
-                                    cent.config?.generalConfig[cen[0]]
-                                      ?.value,
-                                }
-                                : {}),
-                            },
-                          });
-                        },
-                        {}
-                      )
-                      : generalConfigList),
-                  },
-                },
-                ports: {
-                  groups: {
-                    "top": {
-                      "position": "top",
-                      "attrs": {
-                        "fo": {
-                          "r": 6,
-                          "magnet": true,
-                          "strokeWidth": 1,
-                          "fill": "#fff"
-                        }
-                      }
-                    },
-                    "bottom": {
-                      "position": "bottom",
-                      "attrs": {
-                        "fo": {
-                          "r": 6,
-                          "magnet": true,
-                          "strokeWidth": 1,
-                          "fill": "#fff"
-                        }
-                      }
-                    }
-                  },
-                  items: topPorts.concat(bottomPorts),
-                }
-              },
-              ports: {
-                groups: {
-                  "top": { "position": "top", "attrs": { "fo": { "r": 6, "magnet": true, "strokeWidth": 1, "fill": "#fff" } } }, "bottom": { "position": "bottom", "attrs": { "fo": { "r": 6, "magnet": true, "strokeWidth": 1, "fill": "#fff" } } }
-                },
-                items: topPorts.concat(bottomPorts),
-              }
-            };
-
-            return {
-              ...prev,
-              ...(cent.category
-                ? {
-                  [cent.category]: _.has(prev, cent.category)
-                    ? prev[cent.category].concat(item)
-                    : [].concat(item),
-                }
-                : {}),
-            };
-          }, {});
-          dispatch(setCanvasPlugins(result));
-          resolve(result);
+          dispatch(setCanvasPlugins(res.data || []));
+          resolve(res.data || []);
 
         } else {
           message.error(res?.message || '接口异常');
@@ -157,8 +47,20 @@ const FlowPage: React.FC<Props> = (props: any) => {
       });
     });
   };
+  // 获取云端的内置插件列表
+  const getBuildInPlugin = () => {
+    getDirPluginList().then((res: any) => {
+      if (!!res && res.code === 'SUCCESS') {
+        dispatch(setCanvasDirPlugins(res.data || []));
+      } else {
+        message.error(res?.message || '接口异常');
+      }
+    });
+  };
   useLayoutEffect(() => {
     getPlugin();
+    getBuildInPlugin();
+    dispatch(setGetCanvasPlugins(getPlugin));
   }, []);
   useLayoutEffect(() => {
     if (id) {

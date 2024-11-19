@@ -1,10 +1,10 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { Button, message, Modal, Dropdown } from 'antd';
 import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined, SaveOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
+import { IRootActions, setCanvasStart, setLoading, setSaveGraph } from '@/redux/actions';
 import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
 import { defaultConfig } from 'antd/es/theme/context';
 import { useNavigate } from 'react-router';
@@ -30,8 +30,6 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   const formatGraphData = useCallback(() => {
     const { cells } = graphData.toJSON({ deep: true });
     const { groups, nodes } = canvasData?.flowData;
-    console.log(cells);
-
     const { groupList, nodeList, edgeList } = (cells || [])
       ?.reduce(
         (prev: any, cent: any) => {
@@ -45,18 +43,19 @@ const HeaderToolbar: React.FC<Props> = (props) => {
                 ...cent,
                 ..._.omit(groupConfig, 'childrenList'),
               }),
-            }
-          } else if (shape === "dag-node") {
-            const { config, position } = cent;
+            };
+          } else if (shape?.indexOf("dag-node") > -1) {
+            const { config, position, size } = cent;
             const nodeConfig: object = nodes?.filter((i: any) => i.id === config.id)?.[0] || {};
             return {
               ...prev,
               nodeList: nodeList?.concat({
                 ...config,
                 ...nodeConfig,
-                position
+                position,
+                size
               }),
-            }
+            };
           } else if (shape === "dag-edge") {
             const source = graphData.getCellById(cent.source.cell);
             const target = graphData.getCellById(cent.target.cell);
@@ -69,6 +68,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
               return prev;
             };
           }
+          return prev;
         }, {
         groupList: [],
         nodeList: [],
@@ -77,22 +77,24 @@ const HeaderToolbar: React.FC<Props> = (props) => {
     return { groupList, nodeList, edgeList };
   }, [graphData, canvasData]);
   // 保存业务
-  const saveGraph = useCallback(() => {
+  const saveGraph = useCallback((param?: any) => {
     dispatch(setLoading(true));
     return new Promise((resolve, reject) => {
       const { groupList, nodeList, edgeList } = formatGraphData();
       const params = {
-        ...canvasData,
+        ...param || canvasData,
         flowData: { groups: groupList, nodes: nodeList, edges: edgeList }
       };
+      console.log(params);
+
       if (canvasData?.id) {
         // 有id，代表修改
         updateParams(canvasData?.id, params).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             message.success('保存成功');
+            resolve(true);
           } else {
             message.error(res?.message || '接口异常');
-
           }
           dispatch(setLoading(false));
         });
@@ -111,14 +113,16 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           dispatch(setLoading(false));
         });
       }
-      resolve(true);
     });
+  }, [graphData, canvasData]);
+  useEffect(() => {
+    dispatch(setSaveGraph(saveGraph));
   }, [graphData, canvasData]);
   // 启动业务
   const startFlow = useCallback((type?: string) => {
     if (canvasData?.id) {
-      dispatch(setLoading(true));
       saveGraph().then((res) => {
+        dispatch(setLoading(true));
         startFlowService({
           ...canvasData,
           id: canvasData?.id,
@@ -127,8 +131,6 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           if (['success', 'SUCCESS'].includes(res?.code)) {
             dispatch(setCanvasStart(true));
             (graphData?.getNodes?.() || [])?.forEach((node: any) => {
-              console.log(node?.getData?.());
-
               node.setData?.({
                 ...node?.getData?.() || {},
                 canvasStart: true

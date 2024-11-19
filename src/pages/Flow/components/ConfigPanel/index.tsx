@@ -1217,6 +1217,7 @@ const FormatWidgetToDom = (props: any) => {
           name={name}
           label={alias || name}
           tooltip={description || aliasDefault}
+          rules={[{ required: require, message: `${alias}` }]}
         >
           <div>
             {!!value ? (
@@ -1348,6 +1349,7 @@ const FormatWidgetToDom = (props: any) => {
           name={name}
           label={alias || name}
           tooltip={description || aliasDefault}
+          rules={[{ required: require, message: `${alias}` }]}
         >
           <div>
             {Object.entries(value || {})?.map?.((item: any, index: number) => {

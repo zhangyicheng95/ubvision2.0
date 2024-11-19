@@ -1,17 +1,21 @@
 import React, { memo, useCallback, useState } from 'react';
-import { Button, message, Modal, Dropdown } from 'antd';
+import { Button, message, Modal, Dropdown, Upload, Radio, Input } from 'antd';
 import {
-  ScissorOutlined, GatewayOutlined, GroupOutlined, PauseOutlined, SaveOutlined,
+  ScissorOutlined, GatewayOutlined, GroupOutlined, UngroupOutlined, ClearOutlined,
+  UnlockOutlined, LockOutlined, CloudSyncOutlined
 } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasStart, setLoading } from '@/redux/actions';
+import { IRootActions, setCanvasData, setCanvasStart, setLoading } from '@/redux/actions';
 import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
 import { defaultConfig } from 'antd/es/theme/context';
 import { useNavigate } from 'react-router';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { createGroup } from '@/pages/Flow/utils';
+import { DagreLayout } from '@antv/layout'
+import { archSize } from '@/pages/Flow/common/constants';
+import BasicTable from '@/components/BasicTable';
 
 const { confirm } = Modal;
 interface Props {
@@ -32,95 +36,11 @@ const Toolbar: React.FC<Props> = (props) => {
   const [canvasBarOption, setCanvasBarOption] = useState({
     selection: false, // 框选
   });
-
-  // 格式化方案数据
-  const formatGraphData = useCallback(() => {
-    const { cells } = graphData.toJSON({ deep: true });
-    const { groups, nodes } = canvasData?.flowData;
-    console.log(cells);
-
-    const { groupList, nodeList, edgeList } = (cells || [])
-      ?.reduce(
-        (prev: any, cent: any) => {
-          const { groupList, nodeList, edgeList } = prev;
-          const { shape, } = cent;
-          if (shape === "dag-group") {
-            const groupConfig: object = groups?.filter((i: any) => i.id === cent.id)?.[0] || {};
-            return {
-              ...prev,
-              groupList: groupList?.concat({
-                ...cent,
-                ..._.omit(groupConfig, 'childrenList'),
-              }),
-            }
-          } else if (shape === "dag-node") {
-            const { config, position } = cent;
-            const nodeConfig: object = nodes?.filter((i: any) => i.id === config.id)?.[0] || {};
-            return {
-              ...prev,
-              nodeList: nodeList?.concat({
-                ...config,
-                ...nodeConfig,
-                position
-              }),
-            }
-          } else if (shape === "dag-edge") {
-            const source = graphData.getCellById(cent.source.cell);
-            const target = graphData.getCellById(cent.target.cell);
-            if (!!source && !!target) {
-              return {
-                ...prev,
-                edgeList: edgeList?.concat(cent),
-              }
-            } else {
-              return prev;
-            };
-          }
-        }, {
-        groupList: [],
-        nodeList: [],
-        edgeList: [],
-      });
-    return { groupList, nodeList, edgeList };
-  }, [graphData, canvasData]);
-  // 保存业务
-  const saveGraph = useCallback(() => {
-    dispatch(setLoading(true));
-    return new Promise((resolve, reject) => {
-      const { groupList, nodeList, edgeList } = formatGraphData();
-      const params = {
-        ...canvasData,
-        flowData: { groups: groupList, nodes: nodeList, edges: edgeList }
-      };
-      if (canvasData?.id) {
-        // 有id，代表修改
-        updateParams(canvasData?.id, params).then((res) => {
-          if (!!res && res.code === 'SUCCESS') {
-            message.success('保存成功');
-          } else {
-            message.error(res?.message || '接口异常');
-
-          }
-          dispatch(setLoading(false));
-        });
-      } else {
-        // 没id，代表添加
-        addParams(_.omit(params, 'id')).then((res) => {
-          if (!!res && res.code === 'SUCCESS' && !!res?.data?.id) {
-            message.success('保存成功');
-            dispatch(setLoading(false));
-            navigate(`/flow?id=${res.data?.id}&number=${number}`, {
-              state: res.data,
-            });
-          } else {
-            message.error(res?.message || '接口异常');
-          }
-          dispatch(setLoading(false));
-        });
-      }
-      resolve(true);
-    });
-  }, [graphData, canvasData]);
+  const [cloudNodeList, setCloudNodeList] = useState<any>([]);
+  const [nodeVisible, setNodeVisible] = useState(false);
+  const [cloudNodeType, setCloudNodeType] = useState('id');
+  const [cloudNodeSearch, setCloudNodeSearch] = useState('');
+  const [selectedRows, setSelectedRows] = useState([]);
   // 开启框选
   const selectionNode = () => {
     if (graphData.isSelectionEnabled()) {
@@ -204,7 +124,6 @@ const Toolbar: React.FC<Props> = (props) => {
         (edges || [])?.forEach((edge: any) => {
           graphData.addEdge(edge);
         });
-        graphData.cleanSelection?.();
       } else {
         // 选中的包含分组
         let groupNodes: any = seletedNodes;
@@ -239,57 +158,136 @@ const Toolbar: React.FC<Props> = (props) => {
         (edges || [])?.forEach((edge: any) => {
           graphData.addEdge(edge);
         });
-        graphData.cleanSelection?.();
       };
+      graphData.cleanSelection?.();
     } catch (err) { }
   };
   // 解散群组
   const unBuildGroup = () => {
+    const selectedCells = graphData.getSelectedCells();
+    const seletedGroups = selectedCells.filter((i: any) => i.id.indexOf('group_') > -1);
     try {
-      const selectedGroup = graphData.getCellById(
-        canvasBarOption.selectedGroup
-      );
-      if (selectedGroup) {
-        const { id, store } = selectedGroup;
-        const { data } = store;
-        const { children } = data;
-        let edges: any[] = [];
-        const childList = (children || [])
-          ?.map?.((node: any) => {
+      if (seletedGroups?.length > 0) {
+        let edges: any = [];
+        let nodes: any = [];
+        // 解散原有的所有分组
+        (seletedGroups || [])?.forEach((group: any) => {
+          const { id, store, _children } = group;
+          nodes = _children?.filter((i: any) => i.store?.data?.customId?.indexOf('node_') > -1);
+          (_children || [])?.forEach((node: any) => {
             edges = edges.concat(graphData.removeConnectedEdges(node));
-            return graphData.getCellById(node);
-          })
-          .filter(Boolean);
-        graphData.removeCell(selectedGroup);
-        setTimeout(() => {
-          (childList.concat(edges) || []).forEach((cell: any) => {
-            const { store = {} } = cell;
-            const { data = {} } = store;
-            cell.store.data.config = flowLocalData.nodes[data.customId];
-            graphData.addCell(cell);
           });
-        }, 50);
-        dispatch({
-          type: StoreEnum.flowLocalData,
-          value: {
-            groups: _.omit(flowLocalData.groups, id),
-          },
+          graphData.removeCells(_children.concat(group));
         });
-        setCanvasBarOption({
-          selection: false,
-          selectedGroup: '',
-          selectedNode: '',
-          sideBarType: '',
-        });
+        nodes = _.uniqBy(nodes, 'id');
+        edges = _.uniqBy(edges, 'id');
+        graphData.addNodes(nodes);
+        graphData.addEdges(edges);
+        selectionNode();
+        graphData.cleanSelection?.();
+      } else {
+        message.destroy();
+        message.warning('请按下ctrl键并选择一个分组');
       }
     } catch (err) { }
+  };
+  // 清空画布
+  const clearGraph = () => {
+    confirm({
+      title: `确认清空画布吗?`,
+      content: '',
+      onOk() {
+        graphData.clearCells();
+      },
+      onCancel() { },
+    });
+  };
+  // 导入插件配置
+  const uploadProps = {
+    accept: '.json',
+    showUploadList: false,
+    multiple: false,
+    beforeUpload(file: any) {
+      const reader = new FileReader(); // 创建文件对象
+      reader.readAsText(file); // 读取文件的内容/URL
+      reader.onload = (res: any) => {
+        const {
+          target: { result },
+        } = res;
+        try {
+          const data = JSON.parse(result);
+          if (_.isArray(data)) {
+            setCloudNodeList(data);
+            setNodeVisible(true);
+          } else {
+            message.error('导入的json有误，请检查');
+          }
+        } catch (err) {
+          message.error('json文件格式错误，请修改后上传。');
+          console.error(err);
+        }
+      };
+      return false;
+    },
+  };
+  const columns = [
+    {
+      title: '节点名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: '30%',
+    },
+    {
+      title: '节点别名',
+      dataIndex: 'alias',
+      key: 'alias',
+      width: '30%',
+    },
+    {
+      title: '节点ID',
+      dataIndex: 'customId',
+      key: 'customId',
+      width: '30%',
+    },
+  ];
+  // 列表多选
+  const rowSelection = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: []) => {
+      setSelectedRows(selectedRows);
+    },
+    getCheckboxProps: (record: any) => {
+      const { nodes } = canvasData.flowData;
+      const nodeList = (graphData.getNodes() || [])
+        ?.map?.((node: any) => {
+          if (node?.store?.data?.config?.customId) {
+            const realNodeConfig: object = nodes?.filter((i: any) => i.customId === node?.store?.data?.config?.customId)?.[0];
+            console.log(realNodeConfig);
+
+            return {
+              ...node?.store?.data?.config,
+              ...realNodeConfig || {},
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+      let result = false;
+      if (cloudNodeType === 'id') {
+        result = !nodeList.filter((i: any) => (i?.customId === record?.customId) || (i?.id === record?.id))?.length;
+      } else {
+        result = !nodeList.filter((i: any) => i?.alias === record?.alias)?.length;
+      }
+      return {
+        disabled: result, // Column configuration not to be checked
+        name: record.id,
+      };
+    },
   };
 
   return (
     <div className={`flex-box ${styles.toolbar} boxShadow`}>
       <Button
         size='small'
-        // type="text"
         icon={<ScissorOutlined />}
         name="截图"
         disabled={!!canvasStart}
@@ -309,14 +307,133 @@ const Toolbar: React.FC<Props> = (props) => {
       />
       <Button
         size='small'
-        // type="text"
         icon={<GroupOutlined />}
-        name="截图"
+        name="结组"
         disabled={!!canvasStart || !canvasBarOption.selection}
         onClick={() => {
           buildGroup();
         }}
       />
+      <Button
+        size='small'
+        icon={<UngroupOutlined />}
+        name="解组"
+        disabled={!!canvasStart}
+        onClick={() => {
+          unBuildGroup();
+        }}
+      />
+      <Button
+        size='small'
+        icon={<ClearOutlined />}
+        name="清空画布"
+        disabled={!!canvasStart}
+        onClick={() => {
+          clearGraph();
+        }}
+      />
+      <Button
+        size='small'
+        icon={!!canvasData.graphLock ? <LockOutlined /> : <UnlockOutlined />}
+        name="锁定画布"
+        disabled={!!canvasStart}
+        onClick={() => {
+          const nodes = graphData.getNodes();
+          nodes.forEach((node: any) => {
+            node.updateData({ graphLock: !canvasData.graphLock });
+          });
+          dispatch(setCanvasData({
+            ...canvasData,
+            graphLock: !canvasData.graphLock
+          }));
+        }}
+      />
+      <Upload {...uploadProps}>
+        <Button
+          size='small'
+          icon={<CloudSyncOutlined />}
+          name="上传插件配置"
+          disabled={!!canvasStart}
+          onClick={() => {
+
+          }}
+        />
+      </Upload>
+
+      {
+        // 导入节点列表
+        nodeVisible ? (
+          <Modal
+            title={
+              <div className="flex-box" style={{ gap: 24 }}>
+                导入插件配置
+                <Radio.Group
+                  onChange={(e: any) => setCloudNodeType(e.target.value)}
+                  value={cloudNodeType}
+                >
+                  <Radio.Button value="id">按节点ID上传</Radio.Button>
+                  <Radio.Button value="alias">按节点别名上传</Radio.Button>
+                </Radio.Group>
+                <div style={{ width: 250 }}>
+                  <Input.Search
+                    placeholder="搜索组件"
+                    onSearch={(val: any) => {
+                      setCloudNodeSearch(val);
+                    }}
+                  />
+                </div>
+              </div>
+            }
+            width="calc(100vw - 48px)"
+            wrapClassName={'modal-table-btn'}
+            centered
+            open={nodeVisible}
+            maskClosable={false}
+            getContainer={false}
+            onCancel={() => {
+              setNodeVisible(false);
+              setCloudNodeList([]);
+              setCloudNodeType('id');
+            }}
+            onOk={() => {
+              const selectList = (selectedRows || [])?.reduce(
+                (pre: any, cen: any) => {
+                  return {
+                    ...pre,
+                    [cen.customId]: cen?.config?.initParams,
+                    [cen.alias]: cen?.config?.initParams,
+                  };
+                },
+                {}
+              );
+              message.success('参数属性导入成功');
+              setNodeVisible(false);
+              setCloudNodeList([]);
+              setCloudNodeType('id');
+            }}
+          >
+            <BasicTable
+              className="plugin-list-table"
+              columns={columns}
+              rowSelection={{
+                ...rowSelection,
+              }}
+              pagination={null}
+              dataSource={cloudNodeList?.filter(
+                (plu: any) => {
+                  return (
+                    _.toUpper(plu?.name).indexOf(_.toUpper(cloudNodeSearch)) > -1 ||
+                    _.toUpper(plu?.alias).indexOf(_.toUpper(cloudNodeSearch)) > -1
+                  );
+                }
+              )}
+              rowKey={(record: any) => {
+                return record?.id;
+              }}
+            />
+          </Modal>
+        ) : null
+      }
     </div>
   );
 };

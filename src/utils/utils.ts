@@ -382,7 +382,7 @@ export function getActualWidthOfChars(text = '', options?: any) {
     } else {
         return truncateText(text, size, boxSize - 15) + '...';
     }
-}
+};
 /**
  * 数组排序
  * @param source 拖拽的节点下标
@@ -395,4 +395,22 @@ export function sortList(source: number, target: number, list: any) {
     const [removed] = reorderedItems.splice(source, 1);
     reorderedItems.splice(target, 0, removed);
     return reorderedItems || [];
-}
+};
+/**
+ * 对比对象数组A中是否包含对象数组B中某一个item中的某一个元素
+ * @param arrayA 
+ * @param arrayB 
+ * @param name 
+ * @returns []
+ */
+export function intersectionABList(arrayA: any, arrayB: any, name: string) {
+    // 提取对象数组中的id或其他属性
+    const idsA = _.map(arrayA, name);
+    const idsB = _.map(arrayB, name);
+    // 查找交集
+    const commonIds = _.intersection(idsA, idsB);
+    // 确定交集是否为空
+    const hasCommonElement = !_.isEmpty(commonIds);
+    // 返回交集
+    return commonIds;
+};
