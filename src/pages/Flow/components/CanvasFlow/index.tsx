@@ -20,7 +20,7 @@ import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
 import { copyUrlToClipBoard, getActualWidthOfChars, getuid, guid } from '@/utils/utils';
 import { createGroup, formatPorts } from '../../utils';
-import Toolbar from './components/Toolbar';
+import Toolbar from './Toolbar';
 import { Export } from '@antv/x6-plugin-export';
 
 const { confirm } = Modal;
@@ -773,7 +773,6 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         });
       }
     } else if ((metaKey || ctrlKey) && key === 'c') {
-      if (!!nodeSearchRef.current) return;
       if (seletedGroups?.length > 0) {
         // 复制分组-每次只能复制一个
         const group = seletedGroups?.[0];

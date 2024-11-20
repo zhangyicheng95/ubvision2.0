@@ -539,7 +539,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
               } else {
                 confirm({
                   title: `${alias || name} 已存在`,
-                  content: (
+                  content: sameList?.length > 1 ? (
                     <BasicConfirm
                       ifAllOk
                       ifAllOkClick={(e: boolean) => {
@@ -548,7 +548,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                     >
                       确认覆盖？
                     </BasicConfirm>
-                  ),
+                  ) : null,
                   okText: '覆盖',
                   cancelText: '跳过',
                   onOk() {

@@ -1,6 +1,5 @@
 import React, { Fragment, memo, useLayoutEffect } from 'react';
 import { message, Splitter } from 'antd';
-import { Portal } from '@antv/x6-react-shape';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import HeaderToolbar from './components/HeaderToolbar';
@@ -13,12 +12,10 @@ import {
   IRootActions, setCanvasData, setCanvasDataBase, setCanvasDirPlugins, setCanvasPlugins,
   setCanvasStart, setGetCanvasPlugins, setLoading
 } from '@/redux/actions';
-import { generalConfigList } from './common/constants';
-import { GetQueryObj, guid } from '@/utils/utils';
+import { GetQueryObj } from '@/utils/utils';
 import { getDirPluginList, getPluginList } from '@/services/flowPlugin';
 import { getFlowStatusService, getParams } from '@/services/flowEditor';
 
-const X6ReactPortalProvider = Portal.getProvider(); // 注意，一个 graph 只能申明一个 portal provider
 interface Props { }
 
 const FlowPage: React.FC<Props> = (props: any) => {

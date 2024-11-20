@@ -979,7 +979,7 @@ const ProjectItem = (props: any) => {
           <Modal
             title={`历史记录-${historyVisible}`}
             // width="calc(100vw - 48px)"
-            wrapClassName={'project-history-modal'}
+            wrapClassName={'modal-no-btn'}
             centered
             open={!!historyVisible}
             maskClosable={false}
@@ -987,17 +987,15 @@ const ProjectItem = (props: any) => {
             footer={null}
             getContainer={false}
           >
-            <div className="plugin-manager-modal-body">
-              <BasicTable
-                className="plugin-list-table"
-                columns={columns}
-                pagination={null}
-                dataSource={historyList}
-                rowKey={(record: any) => {
-                  return record?.createdAt;
-                }}
-              />
-            </div>
+            <BasicTable
+              className="plugin-list-table"
+              columns={columns}
+              pagination={null}
+              dataSource={historyList}
+              rowKey={(record: any) => {
+                return record?.createdAt;
+              }}
+            />
           </Modal>
         ) : null
       }

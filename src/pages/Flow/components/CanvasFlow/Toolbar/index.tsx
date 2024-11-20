@@ -256,32 +256,14 @@ const Toolbar: React.FC<Props> = (props) => {
       setSelectedRows(selectedRows);
     },
     getCheckboxProps: (record: any) => {
-      const { nodes } = canvasData.flowData;
-      const nodeList = (graphData.getNodes() || [])
-        ?.map?.((node: any) => {
-          if (node?.store?.data?.config?.customId) {
-            const realNodeConfig: object = nodes?.filter((i: any) => i.customId === node?.store?.data?.config?.customId)?.[0];
-            console.log(realNodeConfig);
-
-            return {
-              ...node?.store?.data?.config,
-              ...realNodeConfig || {},
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
+      const nodeList = (graphData.getNodes() || [])?.map?.((node: any) => node?.store?.data?.config).filter(Boolean);
       let result = false;
-      if (cloudNodeType === 'id') {
-        result = !nodeList.filter((i: any) => (i?.customId === record?.customId) || (i?.id === record?.id))?.length;
-      } else {
-        result = !nodeList.filter((i: any) => i?.alias === record?.alias)?.length;
-      }
+      result = !nodeList.filter((i: any) => i?.[cloudNodeType] === record?.[cloudNodeType])?.length;
       return {
         disabled: result, // Column configuration not to be checked
         name: record.id,
       };
-    },
+    }
   };
 
   return (
@@ -354,9 +336,6 @@ const Toolbar: React.FC<Props> = (props) => {
           icon={<CloudSyncOutlined />}
           name="上传插件配置"
           disabled={!!canvasStart}
-          onClick={() => {
-
-          }}
         />
       </Upload>
 
@@ -368,7 +347,9 @@ const Toolbar: React.FC<Props> = (props) => {
               <div className="flex-box" style={{ gap: 24 }}>
                 导入插件配置
                 <Radio.Group
-                  onChange={(e: any) => setCloudNodeType(e.target.value)}
+                  onChange={(e: any) => {
+                    setCloudNodeType(e.target.value);
+                  }}
                   value={cloudNodeType}
                 >
                   <Radio.Button value="id">按节点ID上传</Radio.Button>
@@ -396,16 +377,38 @@ const Toolbar: React.FC<Props> = (props) => {
               setCloudNodeType('id');
             }}
             onOk={() => {
-              const selectList = (selectedRows || [])?.reduce(
-                (pre: any, cen: any) => {
+              const selectList = (selectedRows || [])
+                ?.reduce(
+                  (pre: any, cen: any) => {
+                    return {
+                      ...pre,
+                      [cen?.[cloudNodeType]]: {
+                        initParams: cen?.config?.initParams,
+                        generalConfig: cen?.config?.generalConfig,
+                      }
+                    };
+                  }, {});
+              const nodes = (canvasData.flowData.nodes || [])?.map((node: any) => {
+                if (selectList[node?.[cloudNodeType]]) {
                   return {
-                    ...pre,
-                    [cen.customId]: cen?.config?.initParams,
-                    [cen.alias]: cen?.config?.initParams,
-                  };
-                },
-                {}
-              );
+                    ...node,
+                    config: {
+                      ...node.config,
+                      initParams: selectList[node?.[cloudNodeType]]?.initParams,
+                      generalConfig: selectList[node?.[cloudNodeType]]?.generalConfig,
+                    }
+                  }
+                } else {
+                  return node;
+                }
+              }).filter(Boolean);
+              dispatch(setCanvasData({
+                ...canvasData,
+                flowData: {
+                  ...canvasData.flowData,
+                  nodes,
+                }
+              }))
               message.success('参数属性导入成功');
               setNodeVisible(false);
               setCloudNodeList([]);

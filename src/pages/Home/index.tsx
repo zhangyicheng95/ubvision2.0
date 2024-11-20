@@ -298,6 +298,7 @@ const Home: React.FC<Props> = (props: any) => {
                     className="case-item-box"
                     key={`case-item-box-${index}`}
                     onClick={() => {
+                      message.destroy();
                       message.info('功能开发中，敬请期待。')
                       console.log(item);
                       return;

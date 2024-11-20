@@ -3,10 +3,12 @@ import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
-import { Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select, Splitter, Switch, Tabs, TabsProps, Upload } from 'antd';
 import {
-  CaretDownOutlined, CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, ExclamationCircleOutlined,
-  MinusSquareOutlined, ArrowUpOutlined, MinusOutlined,
+  Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select,
+  Splitter, Switch, Tabs, TabsProps,
+} from 'antd';
+import {
+  CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, MinusOutlined,
 } from '@ant-design/icons';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import TooltipDiv from '@/components/TooltipDiv';
@@ -17,6 +19,7 @@ import SliderGroup from '@/components/SliderGroup';
 import { formatJson, getuid, guid, sortList } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
 import { portTypeObj } from '../../common/constants';
+import ShowDataPanel from '../ShowDataPanel';
 
 const { confirm } = Modal;
 interface Props { }
@@ -25,17 +28,18 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   const { graphData, selectedNode, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
-  const { validateFields, getFieldsValue, setFieldsValue } = form;
+  const { validateFields } = form;
+  const [saveBtnDisabled, setSaveBtnDisabled] = useState(true);
   const [selectedTab, setSelectedTab] = useState('params');
-  const [dataViewType, setDataViewType] = useState('output');
   const [portList, setPortList] = useState<any>([]);
 
-  // 选中的节点
+  // 选中的节点实例
   const node = useMemo(() => {
     if (!graphData) return null;
     const nodeId = selectedNode?.split('$%$')?.[1];
     return graphData.getCellById(nodeId)
   }, [graphData, selectedNode]);
+  // 根据选中的节点ID，拿到节点config
   const nodeConfig = useMemo<any>(() => {
     const { groups, nodes } = canvasData?.flowData || {};
     const selected = selectedNode?.indexOf('node_') > -1 ?
@@ -46,7 +50,8 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
         : null
       ;
     return selected?.[0] || null;
-  }, [selectedNode, canvasData])
+  }, [selectedNode, canvasData]);
+  // 初始化配置
   useEffect(() => {
     form?.resetFields?.();
     if (selectedNode?.indexOf('node_') > -1) {
@@ -97,6 +102,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
     });
     setPortList(result);
   };
+  // 排序方法函数
   const portSort = useCallback((sourceInx: number, targetInx: number) => {
     const target = {
       ...portList[sourceInx] || {},
@@ -133,7 +139,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
       });
     }, 200);
   }, [portList]);
-  // 节点保存
+  // 配置保存
   const onSave = useCallback(() => {
     return new Promise((resolve, reject) => {
       validateFields()
@@ -151,8 +157,8 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
               let ports: any = {};
               Object.entries(values)?.forEach((res: any) => {
                 if (res[0]?.indexOf('port$%$') > -1) {
-                  const item = res[0]?.split('$%$');
                   // 代表是编辑连接桩
+                  const item = res[0]?.split('$%$');
                   const id = item?.[1];
                   const name = item?.[2];
                   const direction = item?.[3];
@@ -313,7 +319,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
               // 方案编辑-保存
               const result = {
                 ...canvasData,
-                ...values
+                ...values,
               };
               dispatch(setCanvasData(result));
               resolve(true);
@@ -604,6 +610,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                 <Input
                                   placeholder="请输入方案名称"
                                   disabled={canvasStart}
+                                  onFocus={() => setSaveBtnDisabled(false)}
                                 />
                               </Form.Item>
                               <Form.Item
@@ -617,6 +624,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                   maxLength={200}
                                   placeholder="请输入方案描述"
                                   disabled={canvasStart}
+                                  onFocus={() => setSaveBtnDisabled(false)}
                                 />
                               </Form.Item>
                               <Form.Item
@@ -639,6 +647,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                           style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
                                           onClick={() => {
                                             if (canvasStart) return;
+                                            setSaveBtnDisabled(false);
                                             form.setFieldsValue({ plugin_dir: '' })
                                             dispatch(setCanvasData({
                                               ...canvasData,
@@ -655,6 +664,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                     icon={<CloudUploadOutlined />}
                                     disabled={canvasStart}
                                     onClick={() => {
+                                      setSaveBtnDisabled(false);
                                       chooseFolder((res: any) => {
                                         const path = _.isArray(res) ? res[0] : res;
                                         form.setFieldsValue({ plugin_dir: path })
@@ -669,15 +679,53 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                   </Button>
                                 </code>
                               </Form.Item>
+                              <Divider>高级设置</Divider>
                               <Form.Item
                                 name={`pushData`}
                                 label="数据推送:"
-                                tooltip="节点数据推送的总开关"
+                                tooltip="流程中所有节点，数据推送的总开关"
                                 initialValue={canvasData?.pushData}
                                 valuePropName="checked"
                                 rules={[{ required: false, message: '数据推送' }]}
                               >
-                                <Switch disabled={canvasStart} />
+                                <Switch disabled={canvasStart} onChange={(checked) => {
+                                  const result = {
+                                    ...canvasData,
+                                    pushData: checked,
+                                    flowData: {
+                                      ...canvasData.flowData,
+                                      nodes: (canvasData.flowData?.nodes || [])?.map((node: any) => {
+                                        const nodeCanvas = graphData.getCellById(node.id);
+                                        return {
+                                          ...node,
+                                          ports: {
+                                            ...node.ports,
+                                            items: (node.ports.items || [])?.map((port: any) => {
+                                              if (port.direction === "output") {
+                                                const result = {
+                                                  ...port,
+                                                  pushData: checked,
+                                                  label: {
+                                                    ...port.label,
+                                                    pushData: checked,
+                                                  }
+                                                };
+                                                // 把更新的状态更新到节点的连接桩上
+                                                nodeCanvas.setPortProp(port.id, result);
+                                                return result;
+                                              } else {
+                                                return port;
+                                              }
+                                            })
+                                          }
+                                        }
+                                      })
+                                    }
+                                  };
+                                  dispatch(setCanvasData(result));
+                                  message.destroy();
+                                  message.success(`所有节点的数据推送已全部 ${checked ? '开启' : '关闭'}`, 5);
+                                }} />
                               </Form.Item>
                             </div>
                           </Form>
@@ -720,53 +768,25 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                         </Button>
                         : null
                     }
-                    <Button type="primary" block disabled={canvasStart} onClick={() => {
-                      onSave().then(() => {
-                        dispatch(setSelectedNode(''));
-                        message.success('保存成功');
-                      })
-                    }}>保存</Button>
+                    <Button
+                      type="primary" block
+                      disabled={canvasStart || (!selectedNode && saveBtnDisabled)}
+                      onClick={() => {
+                        onSave().then(() => {
+                          setSaveBtnDisabled(true);
+                          dispatch(setSelectedNode(''));
+                          message.success('保存成功');
+                        })
+                      }}
+                    >保存</Button>
                   </div>
                 </Fragment>
-              }, [canvasData, nodeConfig, canvasStart, selectedTab, portList])
+              }, [canvasData, nodeConfig, canvasStart, selectedTab, portList, saveBtnDisabled])
             }
           </div>
         </Splitter.Panel>
         <Splitter.Panel>
-          <div className="config-panel-right">
-            <Splitter layout="vertical">
-              <Splitter.Panel>
-                <div className="config-panel-right-title boxShadow">
-                  {`数据查看器`}
-                </div>
-                <div className="config-panel-right-body">
-
-                </div>
-              </Splitter.Panel>
-              <Splitter.Panel defaultSize="20%" min="5%" max="50%">
-                <div className="flex-box config-panel-right-footer-toolbar">
-                  {
-                    buttonList?.map((item: any) => {
-                      const { key, title, icon, hover } = item;
-                      return <div
-                        className={`flex-box config-panel-right-footer-toolbar-item ${dataViewType === key ? 'primaryBackgroundColor' : ''}`}
-                        key={`config-panel-right-footer-toolbar-item-${key}`}
-                        onClick={() => {
-                          setDataViewType(key);
-                        }}
-                      >
-                        {dataViewType === key ? hover : icon}
-                        <span className="item-title">{title}</span>
-                      </div>
-                    })
-                  }
-                </div>
-                <div className="config-panel-right-footer-body">
-
-                </div>
-              </Splitter.Panel>
-            </Splitter>
-          </div>
+          <ShowDataPanel />
         </Splitter.Panel>
       </Splitter>
     </div >
@@ -774,25 +794,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
 };
 
 export default memo(ConfigPanel);
-
-const buttonList = [
-  {
-    title: '输入数据',
-    key: 'input',
-  },
-  {
-    title: '输出结果',
-    key: 'output',
-  },
-  {
-    title: '历史结果',
-    key: 'history',
-  },
-  {
-    title: '帮助',
-    key: 'help',
-  }
-];
 
 const FormatWidgetToDom = (props: any) => {
   const {

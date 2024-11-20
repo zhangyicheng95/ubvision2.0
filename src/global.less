@@ -117,6 +117,30 @@
     }
 }
 
+.modal-table-btn {
+    .ant-modal-body {
+        height: calc(100vh - 180px) !important;
+        max-height: calc(100vh - 180px) !important;
+    }
+}
+
+.modal-no-btn {
+    .ant-modal-body {
+        height: calc(100vh - 144px);
+        max-height: calc(100vh - 144px);
+
+        .ant-table {
+            height: 100% !important;
+
+            .ant-table-container {
+                .ant-table-body {
+                    height: calc(100% - 55px) !important;
+                }
+            }
+        }
+    }
+}
+
 .operation-style {
     color: @primaryColor;
     cursor: pointer;
@@ -217,11 +241,4 @@
 
 .info-font {
     color: @primaryColor  !important;
-}
-
-.modal-table-btn {
-    .ant-modal-body {
-        height: calc(100vh - 180px) !important;
-        max-height: calc(100vh - 180px) !important;
-    }
 }

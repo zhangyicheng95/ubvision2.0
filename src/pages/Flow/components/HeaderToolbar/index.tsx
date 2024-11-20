@@ -27,9 +27,9 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   const navigate = useNavigate();
 
   // 格式化方案数据
-  const formatGraphData = useCallback(() => {
+  const formatGraphData = useCallback((param: any) => {
     const { cells } = graphData.toJSON({ deep: true });
-    const { groups, nodes } = canvasData?.flowData;
+    const { groups, nodes } = param?.flowData;
     const { groupList, nodeList, edgeList } = (cells || [])
       ?.reduce(
         (prev: any, cent: any) => {
@@ -80,7 +80,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   const saveGraph = useCallback((param?: any) => {
     dispatch(setLoading(true));
     return new Promise((resolve, reject) => {
-      const { groupList, nodeList, edgeList } = formatGraphData();
+      const { groupList, nodeList, edgeList } = formatGraphData(param || canvasData);
       const params = {
         ...param || canvasData,
         flowData: { groups: groupList, nodes: nodeList, edges: edgeList }
