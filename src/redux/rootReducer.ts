@@ -1,4 +1,5 @@
 import { IRootActions, rootActionTypes } from "./actions";
+import * as _ from 'lodash-es';
 
 const initalState: IRootActions = {
 	token: "",
@@ -44,6 +45,9 @@ const initalState: IRootActions = {
 	selectedNode: '',
 	saveGraph: (param?: any) => null,
 	getCanvasPlugins: () => null, // 获取侧边插件列表
+	logList: [], // 日志列表
+	errorList: [], // 告警列表
+	flowRunningData: {}, // 流程运行数据
 };
 
 const rootReducer = (state = initalState, actions: any) => {
@@ -132,11 +136,36 @@ const rootReducer = (state = initalState, actions: any) => {
 				...state,
 				saveGraph: actions.saveGraph,
 			};
-		// // 流程图-获取插件列表
+		// 流程图-获取插件列表
 		case rootActionTypes.SET_GET_CANVAS_PLUGINS:
 			return {
 				...state,
 				getCanvasPlugins: actions.getCanvasPlugins,
+			};
+		// 流程图-日志列表
+		case rootActionTypes.SET_LOG_LIST:
+			return {
+				...state,
+				logList: (!actions.logList || (_.isArray(actions.logList) && actions.logList?.length === 0))
+					? [] :
+					state.logList?.concat?.(actions.logList)?.slice(-50),
+			};
+		// 流程图-告警列表
+		case rootActionTypes.SET_ERROR_LIST:
+			return {
+				...state,
+				errorList: (!actions.errorList || (_.isArray(actions.errorList) && actions.errorList?.length === 0))
+					? [] :
+					state.errorList?.concat?.(actions.errorList)?.slice(-50),
+			};
+		// 流程图-运行数据
+		case rootActionTypes.SET_FLOW_RUNNING_DATA:
+			return {
+				...state,
+				flowRunningData: !actions.flowRunningData ? {} : {
+					...state.flowRunningData,
+					...actions.flowRunningData
+				},
 			};
 		// 清理所有数据
 		case rootActionTypes.CLEAR_ALL_DATA:

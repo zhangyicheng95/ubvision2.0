@@ -1,3 +1,4 @@
+import { notification } from 'antd';
 import { Group } from './config/shape';
 
 // 创建分组
@@ -66,4 +67,22 @@ export const formatPorts = (list: any) => {
             }
         })?.sort((a: any, b: any) => a?.sort - b?.sort);
     return { topPorts, bottomPorts };
+};
+// 告警提示框
+notification.config({
+    placement: 'topRight',
+    // @ts-ignore
+    stack: false,
+    rtl: true, // 是否开启 RTL 模式
+    top: 60,  // 消息从顶部弹出时，距离顶部的位置，单位像素
+    maxCount: 3, // 最大显示数，超过限制时，最早的消息会被自动关闭
+});
+export const openNotificationWithIcon = (item: any, onClose?: any) => {
+    const { key, type = '', title = '', content = '' } = item;
+    return notification[type === 'WARNING' ? 'warning' : 'error']({
+        key,
+        message: title,
+        description: content,
+        duration: type === 'CRITICAL' ? null : type === 'WARNING' ? 5 : 10, // 自动关闭时间，null表示不关闭
+    });
 };

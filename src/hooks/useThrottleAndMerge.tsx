@@ -1,14 +1,3 @@
-/**********************************************************************
- *
- * @模块名称: throttle
- *
- * @模块用途: throttle  节流
- *
- * @date: 2021/8/31 10:11
- *
- * @版权所有: pgli
- *
- **********************************************************************/
 import { useCallback, useRef, useEffect, useState, useLayoutEffect } from 'react';
 import { isFunction } from 'lodash-es';
 

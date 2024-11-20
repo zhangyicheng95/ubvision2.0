@@ -2,7 +2,7 @@ import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useStat
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasData, setErrorList, setFlowRunningData, setLogList, setSelectedNode } from '@/redux/actions';
 import { Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select, Splitter, Switch, Tabs, TabsProps, Upload } from 'antd';
 import {
   CaretDownOutlined, CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, ExclamationCircleOutlined,
@@ -16,12 +16,15 @@ import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
 import { formatJson, getuid, guid, sortList } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
+import socketData from '@/socket/socketData';
+import socketLog from '@/socket/socketLog';
+import socketError from '@/socket/socketError';
 
 const { confirm } = Modal;
 interface Props { }
 
 const ShowDataPanel: React.FC<Props> = (props: any) => {
-  const { graphData, selectedNode, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
+  const { graphData, selectedNode, canvasData, canvasStart, flowRunningData } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [dataViewType, setDataViewType] = useState('output');
@@ -32,6 +35,21 @@ const ShowDataPanel: React.FC<Props> = (props: any) => {
     const nodeId = selectedNode?.split('$%$')?.[1];
     return graphData.getCellById(nodeId)
   }, [graphData, selectedNode]);
+  // 任务启动后，建立socket链接
+  useEffect(() => {
+    if (canvasStart) {
+      socketError.listen((error: string) => dispatch(setErrorList(error)));
+      socketLog.listen((log: string) => dispatch(setLogList(log)));
+      socketData.listen((data: any) => dispatch(setFlowRunningData(data)));
+    }
+
+    return ()=>{
+      socketError.close();
+      socketLog.close();
+      socketData.close();
+    }
+  }, [canvasStart]);
+
   return (
     <div className={styles.showDataPanel}>
       <div className="config-panel-right">

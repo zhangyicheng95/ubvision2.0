@@ -24,6 +24,9 @@ export enum rootActionTypes {
 	"SET_SELECTED_NODE" = "SET_SELECTED_NODE",
 	"SET_SAVE_GRAPH" = "SET_SAVE_GRAPH",
 	"SET_GET_CANVAS_PLUGINS" = "SET_GET_CANVAS_PLUGINS",
+	"SET_LOG_LIST" = "SET_LOG_LIST",
+	"SET_ERROR_LIST" = "SET_ERROR_LIST",
+	"SET_FLOW_RUNNING_DATA" = "SET_FLOW_RUNNING_DATA",
 	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
 }
 
@@ -74,6 +77,9 @@ export interface IRootActions {
 	selectedNode: string, // 双击选中节点
 	saveGraph: (param?: any) => null, // 方案保存函数
 	getCanvasPlugins: () => null, // 获取侧边插件列表
+	logList: string[], // 日志列表
+	errorList: string[], // 告警列表
+	flowRunningData: {}, // 流程运行数据
 }
 
 // 缓存用户token
@@ -179,6 +185,27 @@ export const setGetCanvasPlugins = (getCanvasPlugins: any) => {
 	return {
 		type: rootActionTypes.SET_GET_CANVAS_PLUGINS,
 		getCanvasPlugins
+	};
+};
+// 流程图-日志列表
+export const setLogList = (logList: any) => {
+	return {
+		type: rootActionTypes.SET_LOG_LIST,
+		logList
+	};
+};
+// 流程图-告警列表
+export const setErrorList = (errorList: any) => {
+	return {
+		type: rootActionTypes.SET_ERROR_LIST,
+		errorList
+	};
+};
+// 流程图-运行数据
+export const setFlowRunningData = (flowRunningData: any) => {
+	return {
+		type: rootActionTypes.SET_FLOW_RUNNING_DATA,
+		flowRunningData
 	};
 };
 // 重置所有的init
