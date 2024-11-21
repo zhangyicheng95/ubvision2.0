@@ -1,32 +1,21 @@
-import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setErrorList, setFlowRunningData, setLogList, setSelectedNode } from '@/redux/actions';
-import { Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select, Splitter, Switch, Tabs, TabsProps, Upload } from 'antd';
-import {
-  CaretDownOutlined, CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, ExclamationCircleOutlined,
-  MinusSquareOutlined, ArrowUpOutlined, MinusOutlined,
-} from '@ant-design/icons';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import TooltipDiv from '@/components/TooltipDiv';
-import { chooseFile, chooseFolder, openFolder } from '@/api/native-path';
-import moment from 'moment';
-import IpInput from '@/components/IpInputGroup';
-import SliderGroup from '@/components/SliderGroup';
-import { formatJson, getuid, guid, sortList } from '@/utils/utils';
-import Measurement from '@/components/Measurement';
-import socketData from '@/socket/socketData';
-import socketLog from '@/socket/socketLog';
-import socketError from '@/socket/socketError';
+import { IRootActions } from '@/redux/actions';
+import { Form, Modal, Splitter } from 'antd';
+
+
+import { errorColor } from '../../common/constants';
 
 const { confirm } = Modal;
 interface Props { }
 
 const ShowDataPanel: React.FC<Props> = (props: any) => {
-  const { graphData, selectedNode, canvasData, canvasStart, flowRunningData } = useSelector((state: IRootActions) => state);
+  const { graphData, selectedNode, canvasData, canvasStart, errorList, flowRunningData } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+
   const [dataViewType, setDataViewType] = useState('output');
 
   // 选中的节点实例
@@ -35,20 +24,23 @@ const ShowDataPanel: React.FC<Props> = (props: any) => {
     const nodeId = selectedNode?.split('$%$')?.[1];
     return graphData.getCellById(nodeId)
   }, [graphData, selectedNode]);
-  // 任务启动后，建立socket链接
+  // 监听errorList
   useEffect(() => {
-    if (canvasStart) {
-      socketError.listen((error: string) => dispatch(setErrorList(error)));
-      socketLog.listen((log: string) => dispatch(setLogList(log)));
-      socketData.listen((data: any) => dispatch(setFlowRunningData(data)));
-    }
+    (errorList || [])?.forEach((error: any) => {
+      const { level, uid } = error;
+      if (errorColor.includes(_.toUpper(level)) && !!uid) {
+        const node = graphData.getCellById(uid);
+        node.updateData({ status: level })
+      }
+    })
+  }, [graphData, errorList]);
+  // 当前监听的节点
+  const runningSource = useMemo(() => {
+    console.log(flowRunningData, selectedNode);
 
-    return ()=>{
-      socketError.close();
-      socketLog.close();
-      socketData.close();
-    }
-  }, [canvasStart]);
+    // const { customId, running, graphLock, alias, guid, description, ...rest } = flowRunningData || {};
+    // return rest;
+  }, [flowRunningData, selectedNode]);
 
   return (
     <div className={styles.showDataPanel}>
@@ -81,7 +73,18 @@ const ShowDataPanel: React.FC<Props> = (props: any) => {
               }
             </div>
             <div className="config-panel-right-footer-body">
+              {
+                dataViewType === 'output' ?
+                  (Object.entries(flowRunningData) || [])?.map((res: any) => {
+                    return <div
+                      className="config-panel-right-footer-body-item"
+                      key={`config-panel-right-footer-body-item-${res[0]}`}
+                    >
 
+                    </div>
+                  })
+                  : null
+              }
             </div>
           </Splitter.Panel>
         </Splitter>

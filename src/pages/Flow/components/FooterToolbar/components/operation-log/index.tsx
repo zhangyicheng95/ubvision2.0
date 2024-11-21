@@ -73,9 +73,6 @@ const OperationLog: React.FC<Props> = (props) => {
         component: (
           <AlgoNode
             data={node}
-            graph={graphData}
-            dispatch={dispatch}
-            {...rest}
           />
         ),
       });

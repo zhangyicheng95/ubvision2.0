@@ -120,7 +120,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
             : null
         }
       </PrimaryTitle>
-      <div className="alert-page-body scrollbar-style">
+      <div className="alert-page-body">
         {
           useMemo(() => {
             if (!userAuthList.includes('software.list')) {

@@ -403,7 +403,7 @@ export function sortList(source: number, target: number, list: any) {
  * @param name 
  * @returns []
  */
-export function intersectionABList(arrayA: any, arrayB: any, name: string) {
+export function intersectionABList(arrayA: any, arrayB: any, name?: string) {
     // 提取对象数组中的id或其他属性
     const idsA = _.map(arrayA, name);
     const idsB = _.map(arrayB, name);

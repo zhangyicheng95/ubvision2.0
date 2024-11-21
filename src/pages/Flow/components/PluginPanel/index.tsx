@@ -18,13 +18,17 @@ import BasicTable from '@/components/BasicTable';
 import BasicConfirm from '@/components/BasicConfirm';
 import { addPlugin, deletePlugin } from '@/services/flowPlugin';
 
-interface Props { }
+interface Props {
+  setSyncNode?: any;
+  setRunningNode?: any;
+}
 
 const { confirm } = Modal;
 customRegister(X6);
 const { Graph, Markup, Path, Shape, Cell, NodeView, Vector } = X6;
 
 const PluginPanel: React.FC<Props> = (props: any) => {
+  const { setSyncNode, setRunningNode } = props;
   const {
     graphData, canvasPlugins, canvasStart, loading, canvasDirPlugins,
     getCanvasPlugins,
@@ -99,7 +103,12 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         register({
           shape: `dag-node-${customId}`,
           // @ts-ignore
-          component: <AlgoNode key={id} data={realData} />,
+          component: <AlgoNode
+            key={id}
+            data={realData}
+            setSyncNode={setSyncNode}
+            setRunningNode={setRunningNode}
+          />,
           ports: {
             groups: {
               top: {
@@ -398,6 +407,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                   : {
                     type: 'any',
                   }),
+                direction: 'input'
               },
             };
           },
@@ -419,6 +429,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                   : {
                     type: 'any',
                   }),
+                direction: 'output'
               },
             };
           },

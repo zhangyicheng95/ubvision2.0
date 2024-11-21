@@ -82,7 +82,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
         title="监控列表  Monitor"
         onSearch={onSearch}
       ></PrimaryTitle>
-      <div className="alert-page-body scrollbar-style">
+      <div className="alert-page-body">
         {
           !userAuthList.includes('monitor.add') ? null :
             <Popover

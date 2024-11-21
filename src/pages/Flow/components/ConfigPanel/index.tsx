@@ -120,9 +120,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
       },
       sort: portList[sourceInx]?.sort,
     };
-    const sourceEdges = graphData?.getIncomingEdges(node);
-    const targetEdges = graphData?.getOutgoingEdges(node);
-    const edges = (sourceEdges || [])?.concat(targetEdges || []);
+    const edges = graphData?.getConnectedEdges(node);
     edges?.forEach((edge: any) => {
       graphData.removeEdge(edge);
     });
@@ -205,12 +203,12 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                   return result;
                 });
               // 把别名和描述传给node
-              node.setData({
-                ...node?.getData?.(),
+              node.updateData({
                 alias: values['info$%$alias'],
                 description: values['info$%$description'],
                 input_check: values['params$%$input_check'],
-                initParams_check: true
+                initParams_check: true,
+                status: 'STOPPED'
               });
               const result = {
                 ...nodeConfig,
@@ -340,7 +338,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
   return (
     <div className={`flex-box-column ${styles.configPanel}`}>
       <Splitter>
-        <Splitter.Panel defaultSize="40%" min="20%" max="50%">
+        <Splitter.Panel defaultSize="50%" min="20%" max="80%">
           <div className="config-panel-left">
             {
               useMemo(() => {
@@ -354,9 +352,13 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                         // 选中节点
                         <Form form={form} layout="vertical" scrollToFirstError>
                           <Tabs className='boxShadow' items={items} activeKey={selectedTab} onChange={(e) => {
-                            onSave().then((res) => {
+                            if (canvasStart) {
                               setSelectedTab(e);
-                            })
+                            } else {
+                              onSave().then((res) => {
+                                setSelectedTab(e);
+                              })
+                            };
                           }} />
                           <div className="config-panel-left-body-panel">
                             <div style={selectedTab === 'params' ? {} : { display: 'none' }}>
@@ -491,7 +493,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                                     autoSize={{ minRows: 1, maxRows: 3 }}
                                                     placeholder="描述"
                                                     disabled={canvasStart}
-                                                    className="scrollbar-style"
                                                   />
                                                 </Form.Item>
                                                 {

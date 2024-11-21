@@ -27,7 +27,8 @@ export enum rootActionTypes {
 	"SET_LOG_LIST" = "SET_LOG_LIST",
 	"SET_ERROR_LIST" = "SET_ERROR_LIST",
 	"SET_FLOW_RUNNING_DATA" = "SET_FLOW_RUNNING_DATA",
-	"CLEAR_ALL_DATA" = "CLEAR_ALL_DATA",
+	"SET_FLOW_RUNNING_STATUS" = "SET_FLOW_RUNNING_STATUS",
+	"CLEAR_FLOW_DATA" = "CLEAR_FLOW_DATA",
 }
 
 export interface IRootActions {
@@ -57,6 +58,7 @@ export interface IRootActions {
 			groups: []
 		},
 		graphLock: boolean, // 画布锁
+		lineType: '', // 连线类型
 	}; // 画布数据
 	canvasDataBase: {
 		id: '',
@@ -72,6 +74,7 @@ export interface IRootActions {
 			groups: []
 		},
 		graphLock: boolean, // 画布锁
+		lineType: '', // 连线类型
 	}; // 画布数据备份
 	canvasStart: false; // 方案启动
 	selectedNode: string, // 双击选中节点
@@ -80,6 +83,7 @@ export interface IRootActions {
 	logList: string[], // 日志列表
 	errorList: string[], // 告警列表
 	flowRunningData: {}, // 流程运行数据
+	flowRunningStatus: {}, // 流程运行状态
 }
 
 // 缓存用户token
@@ -208,9 +212,16 @@ export const setFlowRunningData = (flowRunningData: any) => {
 		flowRunningData
 	};
 };
-// 重置所有的init
-export const clearAllData = () => {
+// 流程图-节点状态
+export const setFlowRunningStatus = (flowRunningStatus: any) => {
 	return {
-		type: rootActionTypes.CLEAR_ALL_DATA,
+		type: rootActionTypes.SET_FLOW_RUNNING_STATUS,
+		flowRunningStatus
+	};
+};
+// 重置所有的init
+export const clearFlowData = () => {
+	return {
+		type: rootActionTypes.CLEAR_FLOW_DATA,
 	};
 };

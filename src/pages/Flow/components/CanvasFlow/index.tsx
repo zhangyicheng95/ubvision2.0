@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, memo, useState } from 'react';
+import React, { useEffect, useCallback, useRef, memo, useState, useMemo } from 'react';
 import { Button, Input, message, Modal } from 'antd';
 import { CloseOutlined, ScissorOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
@@ -13,9 +13,9 @@ import { createRoot } from 'react-dom/client';
 import SimpleNodeView from '../../config/miniMapNodeView';
 import MiniMapPanel from '../MinimapPanel';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setGraphData, setLoading, setSelectedNode } from '@/redux/actions';
+import { clearFlowData, IRootActions, setCanvasData, setErrorList, setFlowRunningData, setFlowRunningStatus, setGraphData, setLoading, setLogList, setSelectedNode } from '@/redux/actions';
 import { Transform } from '@antv/x6-plugin-transform';
-import { archSize, generalConfigList } from '../../common/constants';
+import { archSize, edgeType, generalConfigList, portTypeObj } from '../../common/constants';
 import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
 import { copyUrlToClipBoard, getActualWidthOfChars, getuid, guid } from '@/utils/utils';
@@ -24,12 +24,16 @@ import Toolbar from './Toolbar';
 import { Export } from '@antv/x6-plugin-export';
 
 const { confirm } = Modal;
-interface Props { }
+interface Props {
+  setSyncNode?: any;
+  setRunningNode?: any;
+}
 
 const CanvasFlow: React.FC<Props> = (props: any) => {
+  const { setSyncNode, setRunningNode } = props;
   const { canvasData, canvasStart, selectedNode, saveGraph } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
-  const dom = useRef<any>(null);
+  const flowDomRef = useRef<any>(null);
   const graphRef = useRef<any>(null);
   const updateTimerRef = useRef<any>(null);
   const ctrlRef = useRef<any>(null);
@@ -39,8 +43,11 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   const nodeSearchRef = useRef<any>();
   // 搜索框-记录个数
   const nodeSearchNumRef = useRef<any>(0);
-  // 搜索框
+  // 连线类型
+  const lineTypeRef = useRef<any>('');
+  // 搜索框关闭
   const [nodeSelectVisible, setNodeSelectVisible] = useState(false);
+
   // 节点和线的删除按钮
   const removeBtnOption = {
     name: 'button',
@@ -109,9 +116,10 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       },
     },
   };
+
   // 初始化画布
   useEffect(() => {
-    const container = dom.current;
+    const container = flowDomRef.current;
     if (!!container && !graphRef.current) {
       graphRef.current = new Graph({
         container,
@@ -316,16 +324,17 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           createEdge(args: any) {
             const { sourceCell, sourceMagnet = {} } = args;
             const id = sourceMagnet.getAttribute('port');
-            const color =
-              sourceMagnet.getElementsByClassName(`port_${id}`)[0]?.style
-                ?.background || '#1c5050';
+            const color = portTypeObj[sourceCell?.port?.ports?.filter((i: any) => i.id === id)?.[0]?.type]?.color || '#1c5050';
+            const lineType = edgeType[lineTypeRef.current];
             return graphRef.current?.createEdge({
-              shape: `dag-edge`,
+              // shape: `dag-edge`,
+              ...lineType || {},
               attrs: {
+                ...lineType.attrs || {},
                 line: {
-                  strokeWidth: 4,
+                  ...lineType.attrs.line,
                   stroke: color,
-                },
+                }
               },
             });
           },
@@ -406,12 +415,13 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
 
     return () => {
       console.log('清理画布');
-      // graphRef.current?.dispose?.();
-      // graphRef.current = null;
-      const cells = graphRef.current.getCells();
+      dispatch(clearFlowData());
+      const cells = graphRef?.current.getCells();
       (cells || []).forEach((cell: any) => {
         graphRef.current.removeCell(cell);
       });
+      // graphRef.current?.dispose?.();
+      graphRef.current = null;
     }
   }, []);
   // 绑定事件
@@ -602,7 +612,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           shape: `dag-node-${cent.customId}`,
           // @ts-ignore
           component: (
-            <AlgoNode data={config} />
+            <AlgoNode data={config} setSyncNode={setSyncNode} setRunningNode={setRunningNode} />
           ),
         });
         const node = graphRef?.current.createNode({
@@ -623,25 +633,29 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         });
         return node;
       });
-      const edgeList = (edges || []).map((cent: any) => {
-        const { attrs, source } = cent;
-        const stroke = portTypeList[source?.port];
-        const edge = graphRef?.current.createEdge(
-          Object.assign({}, _.omit(_.omit(cent, 'parent'), 'connector'), {
-            attrs: {
-              line: Object.assign(
-                {},
-                attrs?.line,
-                { strokeWidth: 6, strokeDasharray: '' },
-                stroke ? { stroke } : {}
-              ),
-            },
-          })
-        );
-        return edge;
-      });
+      graphRef.current.addNodes(nodeList);
       setTimeout(() => {
-        graphRef.current.addNodes(nodeList);
+        const edgeList = (edges || []).map((cent: any) => {
+          const { attrs, source } = cent;
+          const node = graphRef.current.getCellById(source.cell);
+          const port = node.getPort(source?.port)?.type;
+          const stroke = portTypeObj[port].color || '#165b5c'
+          const lineType = edgeType[canvasData.lineType];
+          const edge = graphRef?.current.createEdge({
+            ..._.omit(_.omit(_.omit(cent, 'shape'), 'parent'), 'connector'),
+            ...!!lineType ? {
+              ...lineType,
+              attrs: {
+                ...lineType.attrs,
+                line: {
+                  ...lineType.attrs.line,
+                  stroke
+                }
+              },
+            } : {}
+          });
+          return edge;
+        });
         Object.entries(groupList || {}).forEach((group: any) => {
           const {
             id,
@@ -691,7 +705,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       const node = graphRef.current?.getCellById(item.id);
       try {
         Object.entries(initParams || {})?.forEach((init: any) => {
-          if (init?.[1]?.require && (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value))) {
+          if (
+            init?.[1]?.require &&
+            !_.isBoolean(init?.[1]?.value) &&
+            !_.isNumber(init?.[1]?.value) &&
+            (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value) || _.isEmpty(init[1]?.value))
+          ) {
             // 有必填项没填
             ifHasRequireNotWrite = true;
             throw new Error();
@@ -700,7 +719,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       } catch (err) {
 
       };
-      node.setData({
+      node.updateData({
         ...node?.getData() || {},
         input_check: !!generalConfig?.input_check?.value,
         initParams_check: !ifHasRequireNotWrite,
@@ -737,9 +756,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             (seletedGroups || []).forEach((group: any) => {
               (group?._children || [])?.forEach((node: any) => {
                 if (!!node) {
-                  const sourceEdges = graphRef.current?.getIncomingEdges(node);
-                  const targetEdges = graphRef.current?.getOutgoingEdges(node);
-                  const edges = (sourceEdges || [])?.concat(targetEdges || []);
+                  const edges = graphRef.current?.getConnectedEdges(node);
                   edges?.forEach((edge: any) => {
                     graphRef.current.removeCell(edge);
                   });
@@ -759,9 +776,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           onOk() {
             (seletedNodes || [])?.forEach((node: any) => {
               if (!!node) {
-                const sourceEdges = graphRef.current?.getIncomingEdges(node);
-                const targetEdges = graphRef.current?.getOutgoingEdges(node);
-                const edges = (sourceEdges || [])?.concat(targetEdges || []);
+                const edges = graphRef.current?.getConnectedEdges(node);
                 edges?.forEach((edge: any) => {
                   graphRef.current.removeCell(edge);
                 });
@@ -782,9 +797,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             return node?.store?.data?.config
           })?.filter(Boolean),
           edges: (group._children || [])?.reduce((pre: any, node: any) => {
-            const inputs = graphRef.current?.getIncomingEdges(node);
-            const outputs = graphRef.current?.getOutgoingEdges(node);
-            return pre.concat(inputs).concat(outputs);
+            return graphRef.current?.getConnectedEdges(node);
           }, [])?.filter(Boolean)
         };
         copyUrlToClipBoard(
@@ -845,6 +858,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   component: (
                     <AlgoNode
                       data={node}
+                      setSyncNode={setSyncNode}
+                      setRunningNode={setRunningNode}
                     />
                   ),
                 });
@@ -917,6 +932,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   component: (
                     <AlgoNode
                       data={node}
+                      setSyncNode={setSyncNode}
+                      setRunningNode={setRunningNode}
                     />
                   ),
                 });
@@ -1064,11 +1081,10 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   const nodeRightClick = useCallback((flow: any) => {
 
   }, []);
+  // 连线高亮
   const edgeHighLightFun = useCallback((node: any, ifLight: boolean) => {
     try {
-      const inputs = graphRef.current?.getIncomingEdges(node);
-      const outputs = graphRef.current?.getOutgoingEdges(node);
-      const lineList = [].concat(inputs)?.concat(outputs)?.filter(Boolean);
+      const lineList = graphRef.current?.getConnectedEdges(node);
       if (!!lineList?.length) {
         lineList.forEach((line: any) => {
           if (!!line) {
@@ -1176,12 +1192,11 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       return;
     }
     (nodes || []).forEach((node: any) => {
-      const nodeData = node?.getData() || {};
       const customId = node?.store?.data?.config?.customId;
       const realNode: any = canvasData.flowData?.nodes?.filter((i: any) => i.customId === customId)?.[0];
       const input_check = realNode?.config?.generalConfig?.input_check?.value;
       // 取消搜索高亮 STOPPED
-      node?.updateData({ ...nodeData, input_check, status: !!val ? 'SEARCH' : 'STOPPED' }, { overwrite: true });
+      node?.updateData({ input_check, status: !!val ? 'SEARCH' : 'STOPPED' });
     });
     if (nodeSearchNumRef.current === 0) {
       nodeSearchNumRef.current = 1;
@@ -1219,11 +1234,40 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     nodeSearchRef.current = null;
     graphRef.current.zoomToFit({ absolute: true, maxScale: 1 });
   };
+  // 切换连线类型
+  useEffect(() => {
+    if (!!canvasData.lineType && !!graphRef.current && !!canvasData.lineType && lineTypeRef.current !== canvasData.lineType) {
+      const edges = graphRef.current.getEdges();
+      const result = (edges || [])?.map((item: any) => {
+        const lineType = edgeType[canvasData.lineType];
+        const stroke = item?.store?.data?.attrs?.line?.stroke;
+        graphRef.current.removeEdge(item);
+        const edge = graphRef?.current.createEdge({
+          ...item?.store?.data || {},
+          ...!!lineType ? {
+            ...lineType,
+            attrs: {
+              ...lineType.attrs,
+              line: {
+                ...lineType.attrs.line,
+                stroke
+              }
+            },
+          } : {}
+        });
+        return edge;
+      }).filter(Boolean);
+      graphRef.current.addEdges(result);
+      lineTypeRef.current = canvasData.lineType;
+    }
+  }, [canvasData.lineType]);
 
   return (
     <div className={`flex-box-column ${styles.canvasPage}`}>
       <Toolbar />
-      <div ref={dom} />
+      <div ref={(element: any) => {
+        return (flowDomRef.current = element);
+      }} />
       <MiniMapPanel />
       {nodeSelectVisible ? (
         <div className="flex-box canvas-search-box">

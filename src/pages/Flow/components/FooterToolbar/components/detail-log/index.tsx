@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Input, message, Tooltip } from 'antd';
 import { StopOutlined } from '@ant-design/icons';
 import { openFolder } from '@/api/native-path';
@@ -30,20 +30,11 @@ const DetailLog: React.FC<Props> = (props) => {
       : {};
   const id = params?.['id'];
 
-  const domRef = React.useRef<any>(null);
+  const domRef = useRef<any>(null);
+  const pauseRenderRef = useRef(false);
   const [searchData, setSearchData] = useState('');
   const [logSavePath, setLogSavePath] = useState('');
-  // 日志信息变化时，动态改变信息数量
-  useEffect(() => {
-    const box = domRef.current?.getElementsByClassName?.('log-content')?.[0];
-    if (box) {
-      if (type === 'log') {
-        box.innerHTML = logList
-          .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
-          .join(`<br/>`);
-      }
-    }
-  }, [type, logList, searchData]);
+
   // 清空控制台
   const clearLogContent = () => {
     if (type === 'log') {
@@ -73,12 +64,58 @@ const DetailLog: React.FC<Props> = (props) => {
       return;
     }
   }, [localStorage.getItem('general_setting')]);
+  // 日志信息变化时，动态改变信息数量
+  // useEffect(() => {
+  //   const box = domRef.current?.getElementsByClassName?.('log-content')?.[0];
+  //   console.log(pauseRenderRef.current);
+    
+  //   if (box) {
+  //     if (type === 'log') {
+  //       box.innerHTML = logList
+  //         .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
+  //         .join(`<br/>`);
+  //     } else if (type === 'error') {
+  //       box.innerHTML = errorList
+  //         .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
+  //         .map((item: any) => {
+  //           const { level, node_name, nid, message, time } = item;
+  //           return <div className="content-item" key={`problem_${nid}`}>
+  //             <span>
+  //               {moment(time).format('YYYY-MM-DD HH:mm:ss')}&nbsp;
+  //             </span>
+  //             &nbsp;
+  //             <div
+  //               className="content-item-span"
+  //               style={{
+  //                 color:
+  //                   level === 'warning'
+  //                     ? logColors.warning
+  //                     : level === 'error'
+  //                       ? logColors.error
+  //                       : logColors.critical,
+  //               }}
+  //               dangerouslySetInnerHTML={{
+  //                 __html: `节点${node_name || ''}（${nid || ''
+  //                   }）${message}`,
+  //               }}
+  //             />
+  //           </div>
+  //         })?.join('<br/>');
+  //     };
+  //   };
+  // }, [type, logList, searchData]);
 
   return (
     <div
       ref={domRef}
       className={`${styles.detailPanel} flex-box-column`}
       id={'detail-log'}
+      // onMouseOver={() => {
+      //   pauseRenderRef.current = true;
+      // }}
+      // onMouseOut={() => {
+      //   pauseRenderRef.current = false;
+      // }}
     >
       <div className="header-search-box flex-box">
         <Tooltip placement="bottom" title="清空控制台">
@@ -113,28 +150,38 @@ const DetailLog: React.FC<Props> = (props) => {
       <div className="detail-panel-content ">
         <div className="log-content" style={type === 'error' ? { color: '#d70000' } : {}}>
           {
-            errorList
-              .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
-              .map((item: any) => {
-                const { level, node_name, nid, message, time } = item;
-                return <div className="content-item" key={`problem_${nid}`}>
-                  <span>
-                    {moment(time).format('YYYY-MM-DD HH:mm:ss')}&nbsp;
-                  </span>
-                  &nbsp;
-                  <div
-                    className="content-item-span"
-                    style={{
-                      color: logColors[_.toUpper(level)]
-                        ? logColors[_.toUpper(level)]
-                        : logColors.CRITICAL,
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: `节点${node_name || ''} (${nid || ''}) ${message}`,
-                    }}
-                  />
-                </div>
-              })
+            type === 'log' ?
+              <div
+                className="content-item-span"
+                dangerouslySetInnerHTML={{
+                  // 此处需要处理
+                  __html: (logList || [])?.filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
+                    .join(`<br/>`)
+                }}
+              />
+              :
+              errorList
+                .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
+                .map((item: any, index: number) => {
+                  const { level, node_name, nid, message, time } = item;
+                  return <div className="content-item" key={`problem_${index}`}>
+                    <span>
+                      {moment(time).format('YYYY-MM-DD HH:mm:ss')}&nbsp;
+                    </span>
+                    &nbsp;
+                    <div
+                      className="content-item-span"
+                      style={{
+                        color: logColors[_.toUpper(level)]
+                          ? logColors[_.toUpper(level)]
+                          : logColors.CRITICAL,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: `节点${node_name || ''} (${nid || ''}) ${message}`,
+                      }}
+                    />
+                  </div>
+                })
           }
         </div>
       </div>

@@ -1,3 +1,61 @@
+import * as _ from 'lodash-es';
+
+// 连线类型
+const commonLine = {
+    attrs: {
+        line: {
+            stroke: '#1c5050',
+            strokeWidth: 3,
+            sourceMarker: 'block',
+            targetMarker: {
+                name: 'classic',
+            },
+        },
+    },
+    connector: {
+        name: 'normal',  // normal:简单连接器; smooth:平滑连接器; rounded:圆角连接器; jumpover:跳线连接器
+        args: {
+            type: 'cubic',
+            size: 10,
+        },
+    },
+}
+export const edgeType: any = {
+    er: {
+        router: {
+            name: 'er', // 90度折角
+            args: {
+                offset: 'center',
+                direction: 'B'
+            },
+        },
+        ...commonLine
+    },
+    metro: {
+        router: {
+            name: 'metro', // 类似电路图
+            args: {
+                startDirections: ['bottom'],
+                endDirections: ['top'],
+                padding: 80
+            },
+        },
+        ...commonLine
+    },
+    straight: { // 直线
+        ...commonLine,
+        router: {}
+    },
+    curve: {
+        ..._.omit(commonLine, 'connector'),
+        router: undefined,
+        connector: undefined,
+    }
+}
+// 节点状态变化-动画
+export const normalColor = ['STARTING', 'RUNNING', 'STOPPING'];
+export const errorColor = ['EXITED', 'FATAL', 'ERROR', 'ERRORED', 'CREATED', 'CRITICAL'];
+export const warningColor = ['UNKNOWN'];
 export const portTypeObj: any = {
     string: {
         color: '#165b5c',

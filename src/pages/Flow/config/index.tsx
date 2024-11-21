@@ -6,7 +6,7 @@ import edgeConnector from './edgeConnector';
 
 export default (X6: any) => {
   customNode(X6);
-  customEdge(X6);
+  // customEdge(X6);
   customDndNode(X6);
   edgeConnector(X6);
   customGroup(X6);

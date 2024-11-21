@@ -13,6 +13,7 @@
         font-size: 16px;
         font-weight: bolder;
         padding: 0 8px;
+        white-space: nowrap;
       }
 
       &-body {
@@ -37,30 +38,13 @@
             line-height: 1;
             font-size: 12px;
             margin-left: 4px;
+            white-space: nowrap;
           }
         }
 
         &-item:hover {
           background-color: #e6f4ff;
           color: rgb(114, 114, 114);
-        }
-      }
-    }
-
-    @media (prefers-color-scheme: light) {
-      .config-panel-left {
-        &-footer {
-          // box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.1);
-          border-top: 2px solid rgba(144, 144, 144, 0.1);
-        }
-      }
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .config-panel-left {
-        &-footer {
-          // box-shadow: 0 -1px 4px 1px rgba(255, 255, 255, 0.2);
-          border-top: 2px solid rgba(144, 144, 144, 0.2);
         }
       }
     }

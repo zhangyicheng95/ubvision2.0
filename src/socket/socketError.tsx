@@ -6,7 +6,7 @@ import { guid } from '@/utils/utils';
 let socket: any = null;
 const type = 'error';
 
-const listen = (action: any, ip?: string, id?: string) => {
+const listen = (action: any, api: any, ip?: string, id?: string) => {
   if (!socket) {
     try {
       const path = `${ip || website.socket}task-${type}/${id || website.id}`;
@@ -25,6 +25,7 @@ const listen = (action: any, ip?: string, id?: string) => {
             message: _.isArray(result?.message) ? result.message.join(',') : result.message,
           };
           openNotificationWithIcon(
+            api,
             {
               key: guid(),
               type: result?.level,
@@ -56,19 +57,19 @@ const listen = (action: any, ip?: string, id?: string) => {
         console.log(`${type} ws:close`);
         socket = undefined;
       };
-      socket.onerror = () => reconnect(action);
+      socket.onerror = () => reconnect(action, api, ip, id);
     } catch (e) {
     }
   }
 };
 
 let timeConnect = 0;
-function reconnect(action: any) {
+function reconnect(action: any, api: any, ip?: string, id?: string) {
   timeConnect++;
   console.log(`第${timeConnect}次重连`);
   // 进行重连
   setTimeout(() => {
-    listen(action);
+    listen(action, api, ip, id);
   }, 2000);
 }
 

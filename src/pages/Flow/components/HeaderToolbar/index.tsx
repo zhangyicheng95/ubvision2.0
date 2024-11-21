@@ -1,14 +1,18 @@
 import React, { memo, useCallback, useEffect } from 'react';
-import { Button, message, Modal, Dropdown } from 'antd';
+import { Button, message, Modal, Dropdown, notification } from 'antd';
 import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined, SaveOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasStart, setLoading, setSaveGraph } from '@/redux/actions';
+import { IRootActions, setCanvasStart, setErrorList, setFlowRunningData, setLoading, setLogList, setSaveGraph } from '@/redux/actions';
 import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
 import { defaultConfig } from 'antd/es/theme/context';
 import { useNavigate } from 'react-router';
 import { GetQueryObj } from '@/utils/utils';
+import socketData from '@/socket/socketData';
+import socketLog from '@/socket/socketLog';
+import socketError from '@/socket/socketError';
+import { notificationSetting } from '@/common/globalConstants';
 
 const { confirm } = Modal;
 interface Props {
@@ -25,6 +29,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   const { graphData, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [api, contextHolder] = notification.useNotification(notificationSetting);
 
   // 格式化方案数据
   const formatGraphData = useCallback((param: any) => {
@@ -56,7 +61,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
                 size
               }),
             };
-          } else if (shape === "dag-edge") {
+          } else if (shape?.indexOf("edge") > -1) {
             const source = graphData.getCellById(cent.source.cell);
             const target = graphData.getCellById(cent.target.cell);
             if (!!source && !!target) {
@@ -85,8 +90,6 @@ const HeaderToolbar: React.FC<Props> = (props) => {
         ...param || canvasData,
         flowData: { groups: groupList, nodes: nodeList, edges: edgeList }
       };
-      console.log(params);
-
       if (canvasData?.id) {
         // 有id，代表修改
         updateParams(canvasData?.id, params).then((res) => {
@@ -112,7 +115,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           }
           dispatch(setLoading(false));
         });
-      }
+      };
     });
   }, [graphData, canvasData]);
   useEffect(() => {
@@ -121,6 +124,10 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   // 启动业务
   const startFlow = useCallback((type?: string) => {
     if (canvasData?.id) {
+      // 启动之前，清理上一次的日志记录
+      dispatch(setLogList([]));
+      dispatch(setErrorList([]));
+      // 方案启动函数
       saveGraph().then((res) => {
         dispatch(setLoading(true));
         startFlowService({
@@ -131,10 +138,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           if (['success', 'SUCCESS'].includes(res?.code)) {
             dispatch(setCanvasStart(true));
             (graphData?.getNodes?.() || [])?.forEach((node: any) => {
-              node.setData?.({
-                ...node?.getData?.() || {},
-                canvasStart: true
-              });
+              node.updateData?.({ canvasStart: true });
             });
           } else {
             message.error(
@@ -172,10 +176,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
         if (['success', 'SUCCESS'].includes(res?.code)) {
           dispatch(setCanvasStart(false));
           (graphData?.getNodes?.() || [])?.forEach((node: any) => {
-            node.setData?.({
-              ...node?.getData?.() || {},
-              canvasStart: false
-            });
+            node.updateData?.({ canvasStart: false });
           });
         } else {
           message.error(res?.message || '停止服务失败，请检查网络设置');
@@ -218,9 +219,28 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       </Button>
     }
   ];
+  // 任务启动后，建立socket链接
+  useEffect(() => {
+    if (canvasStart) {
+      socketError.listen((error: string) => dispatch(setErrorList(error)), api);
+      socketLog.listen((log: string) => dispatch(setLogList(log)));
+      setTimeout(() => {
+        socketData.listen((data: any) => dispatch(setFlowRunningData(data)));
+        // socketState.listen((data: any) => dispatch(setFlowRunningStatus(data)));
+      }, 200);
+    };
+
+    return () => {
+      socketError.close();
+      socketLog.close();
+      socketData.close();
+      // socketState.close();
+    };
+  }, [canvasStart]);
 
   return (
     <div className={`flex-box-justify-between ${styles.headerToolbar} boxShadow`}>
+      {contextHolder}
       <div className="flex-box header-toolbar-title-box">
         <DatabaseOutlined style={{ fontSize: 22 }} />{canvasData?.name || '默认方案'}
       </div>

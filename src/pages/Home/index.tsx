@@ -3,6 +3,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Badge,
   Button,
   message,
   Modal,
@@ -191,19 +192,18 @@ const Home: React.FC<Props> = (props: any) => {
                       }
                     }}
                   >
-                    <div className="home-body-bottom-left-list-item-name">{name}</div>
+                    <div className="flex-box home-body-bottom-left-list-item-name">
+                      {running ? <Badge color="green" /> : null}
+                      {name}
+                    </div>
                     <div className="flex-box home-body-bottom-left-list-item-time">
                       <FieldTimeOutlined />
                       {moment(new Date(updatedAt)).format('YYYY-MM-DD HH:mm:ss')}
                     </div>
-                    {
-                      !!plugin_dir ?
-                        <div className="flex-box home-body-bottom-left-list-item-time">
-                          <FolderOutlined />
-                          {plugin_dir}
-                        </div>
-                        : null
-                    }
+                    <div className="flex-box home-body-bottom-left-list-item-time">
+                      <FolderOutlined />
+                      {plugin_dir || '-'}
+                    </div>
                   </div>
                 })
               }

@@ -52,7 +52,7 @@ const listen = (action: any) => {
                 [key]: value,
               };
             }, {});
-            action(newData);
+            action({ [uid]: newData });
           }
         } catch (err) { }
       };

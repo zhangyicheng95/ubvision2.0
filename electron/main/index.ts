@@ -173,6 +173,16 @@ ipcMain.on('alert-delete-startUp', async (event: IpcMainEvent, arg: string) => {
     });
   }
 });
+// 监听readFile，接收渲染进程发送的消息
+ipcMain.on('resource-file-read', async (event: IpcMainEvent, arg: string) => {
+  fs.readFile(arg, 'utf-8', (err, data) => {
+    if (err) {
+      event.sender.send('resource-file-read-reply', 'error');
+    } else {
+      event.sender.send('resource-file-read-reply', data);
+    }
+  });
+});
 // 打开第三方软件窗口
 ipcMain.on(`startup-software`, (event: any, arg: any) => {
   console.log(`startup-software: ${arg}`);

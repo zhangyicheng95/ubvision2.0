@@ -1,23 +1,22 @@
-import React, { Fragment, memo, useMemo, useRef, useState } from 'react';
-import { Dropdown, Modal } from 'antd';
+import React, { Fragment, memo, useRef, useState } from 'react';
+import { Dropdown } from 'antd';
 import {
-  AlignLeftOutlined, CloudDownloadOutlined, CloudSyncOutlined,
-  CopyOutlined, DeleteOutlined, PlusOutlined, SyncOutlined, CaretRightOutlined, BugOutlined
+  AlignLeftOutlined, CloudSyncOutlined, CopyOutlined, DeleteOutlined, SyncOutlined,
+  CaretRightOutlined, BugOutlined, UserOutlined
 } from '@ant-design/icons';
-import * as X6 from '@antv/x6';
 import TooltipDiv from '@/components/TooltipDiv';
 import { copyUrlToClipBoard } from '@/utils/utils';
 import styles from './index.module.less';
 import _ from 'lodash';
-import { nodeStatusColor } from '@/pages/Flow/common/constants';
+import { errorColor } from '@/pages/Flow/common/constants';
 
-const { Graph, Markup, Path, Shape, Cell, NodeView, Vector } = X6;
-const { confirm } = Modal;
 interface Props {
   graph?: any;
   node?: any;
   data: any;
   noBtn?: boolean;
+  setSyncNode?: any;
+  setRunningNode?: any;
 }
 
 const AlgoNode: React.FC<Props> = (props) => {
@@ -26,6 +25,8 @@ const AlgoNode: React.FC<Props> = (props) => {
     graph,
     node,
     noBtn = false,
+    setSyncNode = null,
+    setRunningNode = null,
   } = props;
   const { alias, name, id, customId } = data;
   const timer = useRef<any>(null);
@@ -36,7 +37,6 @@ const AlgoNode: React.FC<Props> = (props) => {
     initParams_check: true, // false有必填项没填-红色
     canvasStart: false, // 方案启动
   });
-  const [borderColor, setBorderColor] = useState(nodeStatusColor.STOPPED);
 
   // 监听节点信息变化
   node?.on?.('change:data', (args: any) => {
@@ -51,8 +51,12 @@ const AlgoNode: React.FC<Props> = (props) => {
   const settingList: any = [
     {
       key: '1',
+      disabled: !currentNode?.canvasStart,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-
+        if (currentNode?.canvasStart) {
+          const nodesId = (graph.getPredecessors(node) || [])?.map((item: any) => item.store?.data?.config.id);
+          setRunningNode(nodesId.concat(id));
+        };
       }}>
         <CaretRightOutlined className="contextMenu-icon" />
         运行流程到此处
@@ -61,8 +65,11 @@ const AlgoNode: React.FC<Props> = (props) => {
     },
     {
       key: '2',
+      disabled: !currentNode?.canvasStart,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-
+        if (currentNode?.canvasStart) {
+          setRunningNode([id]);
+        };
       }}>
         <BugOutlined className="contextMenu-icon" />
         单元测试
@@ -72,6 +79,7 @@ const AlgoNode: React.FC<Props> = (props) => {
     { type: 'divider' },
     {
       key: '4',
+      disabled: currentNode?.canvasStart,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
         graph.removeNode(id);
       }}>
@@ -81,17 +89,8 @@ const AlgoNode: React.FC<Props> = (props) => {
       </div>
     },
     {
-      key: '5',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-
-      }}>
-        <CopyOutlined className="contextMenu-icon" />
-        复制节点
-        <span className="contextMenu-text">Copy Node</span>
-      </div>
-    },
-    {
       key: '6',
+      disabled: currentNode?.canvasStart,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
         copyUrlToClipBoard(id);
       }}>
@@ -103,32 +102,74 @@ const AlgoNode: React.FC<Props> = (props) => {
     { type: 'divider' },
     {
       key: '7',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-
-      }}>
+      disabled: currentNode?.canvasStart,
+      label: <div className='flex-box-justify-between dropdown-box'>
         <SyncOutlined className="contextMenu-icon" />
         同步属性
         <span className="contextMenu-text">Sync Node</span>
-      </div>
+      </div>,
+      children: [
+        {
+          key: '7-1',
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            setSyncNode({ type: 'params', data, cover: false });
+          }}>
+            <UserOutlined className="contextMenu-icon" />
+            保留用户配置
+            <span className="contextMenu-text">Sync Node</span>
+          </div>,
+        },
+        {
+          key: '7-2',
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            setSyncNode({ type: 'params', data, cover: true });
+          }}>
+            <SyncOutlined className="contextMenu-icon" />
+            覆盖配置
+            <span className="contextMenu-text">Sync Node</span>
+          </div>,
+        },
+      ],
     },
     {
       key: '8',
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-
-      }}>
+      disabled: currentNode?.canvasStart,
+      label: <div className='flex-box-justify-between dropdown-box'>
         <CloudSyncOutlined className="contextMenu-icon" />
-        同步链接桩
+        同步连接桩
         <span className="contextMenu-text">Sync Ports</span>
-      </div>
+      </div>,
+      children: [
+        {
+          key: '8-1',
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            setSyncNode({ type: 'port', data, cover: false });
+          }}>
+            <UserOutlined className="contextMenu-icon" />
+            保留用户配置
+            <span className="contextMenu-text">Sync Ports</span>
+          </div>,
+        },
+        {
+          key: '8-2',
+          label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+            setSyncNode({ type: 'port', data, cover: true });
+          }}>
+            <CloudSyncOutlined className="contextMenu-icon" />
+            覆盖所有连接桩
+            <span className="contextMenu-text">Sync Ports</span>
+          </div>,
+        },
+      ],
     }
   ];
 
   return (
     <Fragment>
       <Dropdown
-        trigger={(!noBtn && !currentNode?.canvasStart) ? ['contextMenu'] : []}
+        trigger={(!noBtn) ? ['contextMenu'] : []}
         disabled={
-          !['STOPPED', 'UNKNOWN'].includes(currentNode?.status)
+          !['STOPPED', 'UNKNOWN'].includes(_.toUpper(currentNode?.status))
         }
         menu={{ items: settingList }}
       >
@@ -136,10 +177,10 @@ const AlgoNode: React.FC<Props> = (props) => {
           id={id}
           className={`${styles.node}`}
           style={Object.assign(
-            { borderColor: borderColor },
             currentNode?.input_check ? {} : { backgroundColor: 'rgba(0,200,200,.5)' }, // 蓝色
             currentNode?.initParams_check ? {} : { backgroundColor: 'rgba(200,0,0,.5)' }, // 红色
-            ['SEARCH'].includes(currentNode?.status) ? { backgroundColor: 'rgba(200,200,0,.5)' } : {} // 黄色
+            ['SEARCH'].includes(_.toUpper(currentNode?.status)) ? { backgroundColor: 'rgba(200,200,0,.5)' } : {}, // 黄色
+            errorColor.includes(_.toUpper(currentNode?.status)) ? { backgroundColor: 'rgba(200,0,0,.5)' } : {}, // 红色，节点报错
           )}
         >
           <div className="flex-box node-top">

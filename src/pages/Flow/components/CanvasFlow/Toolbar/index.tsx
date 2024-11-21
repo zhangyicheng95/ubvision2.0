@@ -2,7 +2,7 @@ import React, { memo, useCallback, useState } from 'react';
 import { Button, message, Modal, Dropdown, Upload, Radio, Input } from 'antd';
 import {
   ScissorOutlined, GatewayOutlined, GroupOutlined, UngroupOutlined, ClearOutlined,
-  UnlockOutlined, LockOutlined, CloudSyncOutlined
+  UnlockOutlined, LockOutlined, CloudSyncOutlined, NodeIndexOutlined
 } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
@@ -183,7 +183,6 @@ const Toolbar: React.FC<Props> = (props) => {
         edges = _.uniqBy(edges, 'id');
         graphData.addNodes(nodes);
         graphData.addEdges(edges);
-        selectionNode();
         graphData.cleanSelection?.();
       } else {
         message.destroy();
@@ -230,6 +229,7 @@ const Toolbar: React.FC<Props> = (props) => {
       return false;
     },
   };
+  // 导入节点配置
   const columns = [
     {
       title: '节点名称',
@@ -265,6 +265,69 @@ const Toolbar: React.FC<Props> = (props) => {
       };
     }
   };
+  // 修改连线类型
+  const lineList: any = [
+    {
+      key: `er`,
+      label: <Button
+        size='small'
+        style={{ width: '100%' }}
+        onClick={() => {
+          dispatch(setCanvasData({
+            ...canvasData,
+            lineType: 'er'
+          }));
+        }}
+      >
+        直角折线
+      </Button>
+    },
+    {
+      key: `metro`,
+      label: <Button
+        size='small'
+        style={{ width: '100%' }}
+        onClick={() => {
+          dispatch(setCanvasData({
+            ...canvasData,
+            lineType: 'metro'
+          }));
+        }}
+      >
+        电路排线
+      </Button>
+    },
+    {
+      key: `straight`,
+      label: <Button
+        size='small'
+        style={{ width: '100%' }}
+        onClick={() => {
+          dispatch(setCanvasData({
+            ...canvasData,
+            lineType: 'straight'
+          }));
+        }}
+      >
+        直线
+      </Button>
+    },
+    {
+      key: `curve`,
+      label: <Button
+        size='small'
+        style={{ width: '100%' }}
+        onClick={() => {
+          dispatch(setCanvasData({
+            ...canvasData,
+            lineType: 'curve'
+          }));
+        }}
+      >
+        曲线
+      </Button>
+    }
+  ];
 
   return (
     <div className={`flex-box ${styles.toolbar} boxShadow`}>
@@ -338,6 +401,14 @@ const Toolbar: React.FC<Props> = (props) => {
           disabled={!!canvasStart}
         />
       </Upload>
+      <Dropdown menu={{ items: lineList }}>
+        <Button
+          size='small'
+          icon={<NodeIndexOutlined />}
+          name="注册插件"
+          disabled={!!canvasStart}
+        />
+      </Dropdown>
 
       {
         // 导入节点列表

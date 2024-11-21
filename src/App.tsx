@@ -13,15 +13,16 @@ import ProjectApi from '@/api/project';
 import authWrapper from '@/components/authWrapper';
 import Login from '@/pages/Login';
 import HomePage from '@/pages/Home';
-import AlertRouter from '@/pages/Alert';
 import ProjectPage from '@/pages/Projects';
+import AlertRouter from '@/pages/Alert';
 import FlowPage from '@/pages/Flow';
+import PluginPage from '@/pages/Plugin';
+import SoftwareRouter from '@/pages/Software';
+import AuthRouter from '@/pages/Auth';
 import CCDPage from '@/pages/CCD';
 import UserPage from '@/pages/UserInfo';
 import Setting from '@/pages/Setting';
-import SoftwareRouter from '@/pages/Software';
-import AuthRouter from '@/pages/Auth';
-import { permissionRule } from '@/common/globalConstants';
+import { notificationSetting, permissionRule } from '@/common/globalConstants';
 import { getDataList, getListStatusService } from '@/services/flowEditor';
 import { useDispatch } from 'react-redux';
 import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
@@ -36,6 +37,7 @@ const App: React.FC = () => {
 
   const number = params.get('number') || 1;
 
+  const [api, contextHolder] = notification.useNotification(notificationSetting);
   const dispatch = useDispatch();
   const timeRef = useRef<any>();
   const loopTimerRef = useRef<any>();
@@ -124,9 +126,9 @@ const App: React.FC = () => {
             clearInterval(timeRef.current);
           } else {
             if ((time - new Date().getTime()) < 3 * 24 * 3600 * 1000) {
-              notification.destroy();
+              api.destroy();
               const { d, h, m, s } = timeToString(time - new Date().getTime());
-              notification.warning({
+              api.warning({
                 message: '您的授权码即将到期',
                 description: `您的授权仅剩余${d}天${h}小时${m}分钟，请尽快联系管理员续费！`,
                 duration: null,
@@ -215,6 +217,7 @@ const App: React.FC = () => {
 
   return (
     <Fragment>
+      {contextHolder}
       <ConfigProvider
         locale={zhCN}
         theme={Object.assign(
@@ -259,12 +262,12 @@ const App: React.FC = () => {
                           <Route path="/login" element={<Login />} />
                           <Route path="/home" element={<HomePage />} />
                           <Route path="/project" element={<ProjectPage />} />
-                          {/* <Route path="/resource/*" element={<ResourceRouter />} /> */}
                           <Route path="/alert/*" element={<AlertRouter />} />
-                          <Route path="/userSetting" element={<UserPage />} />
-                          <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
+                          <Route path="/resource/*" element={<PluginPage />} />
                           <Route path="/software" element={<SoftwareRouter />} />
                           <Route path="/auth/*" element={<AuthRouter />} />
+                          <Route path="/userSetting" element={<UserPage />} />
+                          <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
                           {userAuthList?.includes('projects') ? (
                             <Route path="*" element={<HomePage />} />
                           ) : (

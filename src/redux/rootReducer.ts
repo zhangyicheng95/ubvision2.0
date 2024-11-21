@@ -8,6 +8,7 @@ const initalState: IRootActions = {
 	loopProjectStatusFun: () => null,
 	projectList: [],
 	selectedRows: [],
+	// 流程图画布相关
 	graphData: null,
 	canvasPlugins: [],
 	canvasDirPlugins: [],
@@ -25,6 +26,7 @@ const initalState: IRootActions = {
 			groups: []
 		},
 		graphLock: false, // 画布锁
+		lineType: '', // 连线类型
 	},
 	canvasDataBase: {
 		id: '',
@@ -40,6 +42,7 @@ const initalState: IRootActions = {
 			groups: []
 		},
 		graphLock: false, // 画布锁
+		lineType: '', // 连线类型
 	},
 	canvasStart: false,
 	selectedNode: '',
@@ -48,6 +51,52 @@ const initalState: IRootActions = {
 	logList: [], // 日志列表
 	errorList: [], // 告警列表
 	flowRunningData: {}, // 流程运行数据
+	flowRunningStatus: {}, // 流程运行状态
+};
+const flowInitalState = {
+	graphData: null,
+	canvasPlugins: [],
+	canvasDirPlugins: [],
+	canvasData: {
+		id: '',
+		alias: '默认方案',
+		name: '默认方案',
+		description: '',
+		plugin_dir: '',
+		pushData: false,
+		zoom: 1,
+		flowData: {
+			edges: [],
+			nodes: [],
+			groups: []
+		},
+		graphLock: false, // 画布锁
+		lineType: '', // 连线类型
+	},
+	canvasDataBase: {
+		id: '',
+		alias: '',
+		name: '',
+		description: '',
+		plugin_dir: '',
+		pushData: false,
+		zoom: 1,
+		flowData: {
+			edges: [],
+			nodes: [],
+			groups: []
+		},
+		graphLock: false, // 画布锁
+		lineType: '', // 连线类型
+	},
+	canvasStart: false,
+	selectedNode: '',
+	saveGraph: (param?: any) => null,
+	getCanvasPlugins: () => null, // 获取侧边插件列表
+	logList: [], // 日志列表
+	errorList: [], // 告警列表
+	flowRunningData: {}, // 流程运行数据
+	flowRunningStatus: {}, // 流程运行状态
 };
 
 const rootReducer = (state = initalState, actions: any) => {
@@ -167,9 +216,21 @@ const rootReducer = (state = initalState, actions: any) => {
 					...actions.flowRunningData
 				},
 			};
+		// 流程图-运行状态
+		case rootActionTypes.SET_FLOW_RUNNING_STATUS:
+			return {
+				...state,
+				flowRunningStatus: !actions.flowRunningStatus ? {} : {
+					...state.flowRunningStatus,
+					...actions.flowRunningStatus
+				},
+			};
 		// 清理所有数据
-		case rootActionTypes.CLEAR_ALL_DATA:
-			return initalState;
+		case rootActionTypes.CLEAR_FLOW_DATA:
+			return {
+				...initalState,
+				...flowInitalState
+			};
 		default:
 			return state;
 	}

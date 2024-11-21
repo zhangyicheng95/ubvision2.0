@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -59,7 +60,7 @@ import JSZip from 'jszip';
 import { openFolder } from '@/api/native-path';
 import BasicTable from '@/components/BasicTable';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions } from '@/redux/actions';
+import { IRootActions, setLoading } from '@/redux/actions';
 
 const { confirm } = Modal;
 
@@ -72,7 +73,6 @@ const ProjectPage: React.FC<Props> = (props: any) => {
   const dispatch = useDispatch();
   const timerRef = useRef<any>();
   const [dataList, setDataList] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [selectedRows, setSelectedRows] = useState<any>([]);
   const [searchVal, setSearchVal] = useState('');
@@ -275,7 +275,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
           </Button>
         ) : null}
       </PrimaryTitle>
-      <div className="home-page-body scrollbar-style">
+      <div className="home-page-body">
         {userAuthList.includes('projects.list')
           ? (dataList || [])
             ?.sort((a: any, b: any) => {
@@ -291,7 +291,9 @@ const ProjectPage: React.FC<Props> = (props: any) => {
                   key={id}
                   item={item}
                   index={index}
-                  setLoading={setLoading}
+                  setLoading={(data: boolean) => {
+                    dispatch(setLoading(data));
+                  }}
                   getList={() => getProjectListFun?.()}
                   setDataList={setDataList}
                   selectedRows={selectedRows}
@@ -618,12 +620,14 @@ const ProjectItem = (props: any) => {
             <Popconfirm
               title="确定回滚?"
               onConfirm={() => {
+                setLoading(true);
                 // 读取完，返回结果
                 ipcRenderer?.once(
                   'resource-file-read-reply',
                   function (file: any) {
                     if (file === 'error') {
                       message.error('文件读取失败');
+                      setLoading(false);
                     } else {
                       try {
                         const item = JSON.parse(file);
@@ -634,7 +638,8 @@ const ProjectItem = (props: any) => {
                             message.error(
                               res?.message || res?.msg || '接口异常'
                             );
-                          }
+                          };
+                          setLoading(false);
                         });
                       } catch (err) {
                         console.log(err);
