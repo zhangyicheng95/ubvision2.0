@@ -26,6 +26,7 @@ import { notificationSetting, permissionRule } from '@/common/globalConstants';
 import { getDataList, getListStatusService } from '@/services/flowEditor';
 import { useDispatch } from 'react-redux';
 import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
+import PluginEditPage from './pages/Plugin/components/PluginEdit';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
@@ -263,7 +264,8 @@ const App: React.FC = () => {
                           <Route path="/home" element={<HomePage />} />
                           <Route path="/project" element={<ProjectPage />} />
                           <Route path="/alert/*" element={<AlertRouter />} />
-                          <Route path="/resource/*" element={<PluginPage />} />
+                          <Route path="/plugin" element={<PluginPage />} />
+                          <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
                           <Route path="/software" element={<SoftwareRouter />} />
                           <Route path="/auth/*" element={<AuthRouter />} />
                           <Route path="/userSetting" element={<UserPage />} />

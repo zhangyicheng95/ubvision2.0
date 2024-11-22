@@ -10,6 +10,8 @@ interface Props {
   onClick?: any;
   className?: string;
   id?: string;
+  onDragStart?: any;
+  draggable?: boolean;
   children: any;
 }
 

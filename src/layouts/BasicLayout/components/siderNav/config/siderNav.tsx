@@ -36,8 +36,8 @@ export const menuConfig = [
   {
     name: '插件管理',
     icon: 'plugin',
-    path: `/resource/plugin`,
-    key: `/resource/plugin`,
+    path: `/plugin`,
+    key: `/plugin`,
     id: 'plugins', // 权限id
     check: true, // 是否校验
   },

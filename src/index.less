@@ -2,10 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'iconfont';
+
+  src: url('./assets/font/阿里妈妈方圆体/AlimamaFangYuanTiVF-Thin.woff2?t=1636335591199') format('woff2'),
+    url('./assets/font/阿里妈妈方圆体/AlimamaFangYuanTiVF-Thin.woff?t=1636335591199') format('woff'),
+    url('./assets/font/阿里妈妈方圆体/AlimamaFangYuanTiVF-Thin.ttf?t=1636335591199') format('truetype');
+
+  //   src: url('./assets/font/阿里妈妈数黑体/AlimamaShuHeiTi-Bold.woff2?t=1636335591199') format('woff2'),
+  //     url('./assets/font/阿里妈妈数黑体/AlimamaShuHeiTi-Bold.woff?t=1636335591199') format('woff'),
+  //     url('./assets/font/阿里妈妈数黑体/AlimamaShuHeiTi-Bold.ttf?t=1636335591199') format('truetype');
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
   font-weight: 400;
+
+  line-height: 1.5;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -33,6 +45,10 @@ body {
   margin: 0;
   height: 100%;
   width: 100%;
+
+  * {
+    font-family: 'iconfont' !important;
+  }
 }
 
 h1 {
@@ -46,7 +62,6 @@ button {
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;

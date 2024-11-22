@@ -52,6 +52,7 @@ const initalState: IRootActions = {
 	errorList: [], // 告警列表
 	flowRunningData: {}, // 流程运行数据
 	flowRunningStatus: {}, // 流程运行状态
+	pluginList: [], // 插件管理列表
 };
 const flowInitalState = {
 	graphData: null,
@@ -230,6 +231,12 @@ const rootReducer = (state = initalState, actions: any) => {
 			return {
 				...initalState,
 				...flowInitalState
+			};
+		// 插件管理-列表
+		case rootActionTypes.SET_PLUGIN_LIST:
+			return {
+				...state,
+				pluginList: actions.pluginList,
 			};
 		default:
 			return state;

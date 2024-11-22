@@ -111,8 +111,11 @@ function getMACAddresses() {
 }
 ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
   // 同步获取机器ID
+  // 硬盘编码
   getDiskSerialNumber().then(serialNumbers => {
+    // 主板序列号
     getMotherboardSerialNumber().then(serialNumber => {
+      // MAC地址
       const macAddresses = getMACAddresses();
       event.sender.send('hostname-read-reply', `${serialNumbers}.${serialNumber}.${macAddresses}`);
     }).catch(error => {

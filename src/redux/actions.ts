@@ -28,6 +28,7 @@ export enum rootActionTypes {
 	"SET_ERROR_LIST" = "SET_ERROR_LIST",
 	"SET_FLOW_RUNNING_DATA" = "SET_FLOW_RUNNING_DATA",
 	"SET_FLOW_RUNNING_STATUS" = "SET_FLOW_RUNNING_STATUS",
+	"SET_PLUGIN_LIST" = "SET_PLUGIN_LIST",
 	"CLEAR_FLOW_DATA" = "CLEAR_FLOW_DATA",
 }
 
@@ -84,6 +85,7 @@ export interface IRootActions {
 	errorList: string[], // 告警列表
 	flowRunningData: {}, // 流程运行数据
 	flowRunningStatus: {}, // 流程运行状态
+	pluginList: [], // 插件管理列表
 }
 
 // 缓存用户token
@@ -219,9 +221,16 @@ export const setFlowRunningStatus = (flowRunningStatus: any) => {
 		flowRunningStatus
 	};
 };
-// 重置所有的init
+// 重置流程画布所有的init
 export const clearFlowData = () => {
 	return {
 		type: rootActionTypes.CLEAR_FLOW_DATA,
+	};
+};
+// 插件管理-列表
+export const setPluginList = (pluginList: any) => {
+	return {
+		type: rootActionTypes.SET_PLUGIN_LIST,
+		pluginList
 	};
 };

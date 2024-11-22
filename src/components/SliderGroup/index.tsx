@@ -44,8 +44,7 @@ const SliderGroup: React.FC<Props> = (props: any) => {
           min={min}
           precision={precision}
           value={selfValue}
-          onBlur={(e) => {
-            const value = e.target.value;
+          onChange={(value) => {
             onChange && onChange((!_.isNull(value) && !_.isNaN(value)) ? (value < max ? value : max) : undefined)
           }}
         />

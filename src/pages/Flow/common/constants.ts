@@ -214,6 +214,56 @@ export const outputTypeObj: any = {
         // },
     ],
 };
+export const pluginsNameIcon: any = {
+    '2DVision': {
+        color: '#',
+        description: '2D相机',
+    },
+    '3DVision': {
+        color: '#',
+        description: '3D相机',
+    },
+    CAPTURE: {
+        color: '#',
+        description: '图像采集类插件',
+    },
+    COMM: {
+        color: '#',
+        description: '通讯类插件',
+    },
+    CV: {
+        color: '#',
+        description: '图像处理算法类插件',
+    },
+    Convertor: {
+        color: '#',
+        description: '数据转换类插件',
+    },
+    DS: {
+        color: '#',
+        description: '数据存储类插件',
+    },
+    DETR: {
+        color: '#',
+        description: '监测类插件',
+    },
+    SERV: {
+        color: '#',
+        description: '服务类插件',
+    },
+    Trigger: {
+        color: '#',
+        description: '触发器插件',
+    },
+    TOOL: {
+        color: '#',
+        description: '一般工具类插件',
+    },
+    default: {
+        color: '#',
+        description: '默认插件',
+    },
+};
 // 输入框类型
 export const typeList = [
     'Input 普通输入框',

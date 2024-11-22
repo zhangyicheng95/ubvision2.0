@@ -42,6 +42,7 @@ import PrimaryTitle from '@/components/PrimaryTitle';
 import {
   copyUrlToClipBoard,
   downFileFun,
+  formatJson,
   getUserAuthList,
   guid,
 } from '@/utils/utils';
@@ -212,7 +213,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
             } = record;
             zip.file(
               `${record?.name}.json`,
-              JSON.stringify(rest)
+              formatJson(rest)
             );
           });
           zip
@@ -460,12 +461,6 @@ const ProjectItem = (props: any) => {
       onCancel() { },
     });
   };
-  // 导出项目
-  const onExport = (item: any) => {
-    const { createdAt, updatedAt, id, project_id, _id, running, ...rest } =
-      item;
-    downFileFun(JSON.stringify(rest), `${item?.name}.json`);
-  };
   // 更新项目
   const onUpdateProject = (params: any) => {
     setLoading(true);
@@ -517,20 +512,6 @@ const ProjectItem = (props: any) => {
         message.error(res?.msg || res?.message || '停止接口异常');
       }
       setLoading(false);
-    });
-  };
-  // 重启任务
-  const onReStart = (item: any) => {
-    const { id } = item;
-    setLoading(true);
-    stopFlowService(id || '').then((res: any) => {
-      if (res && res.code === 'SUCCESS') {
-        setTimeout(() => {
-          onStart(item);
-        }, 1000);
-      } else {
-        message.error(res?.msg || res?.message || '接口异常');
-      }
     });
   };
   // 操作列表
@@ -755,7 +736,7 @@ const ProjectItem = (props: any) => {
                   alertShow,
                   ...rest
                 } = res.data;
-                downFileFun(JSON.stringify(rest), `${item?.name}.json`);
+                downFileFun(formatJson(rest), `${item?.name}.json`);
               } else {
                 message.error(res?.message || '接口异常');
               }
@@ -773,7 +754,7 @@ const ProjectItem = (props: any) => {
               if (!!res && res.code === 'SUCCESS') {
                 const { nodes } = res?.data?.flowData || {};
                 downFileFun(
-                  JSON.stringify(nodes),
+                  formatJson(nodes),
                   `${item?.name}参数配置.json`
                 );
               } else {
@@ -791,7 +772,7 @@ const ProjectItem = (props: any) => {
           key: `export-alert-${id}`,
           label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
             downFileFun(
-              JSON.stringify(contentData),
+              formatJson(contentData),
               `${item?.name}的界面配置.json`
             );
           }}>

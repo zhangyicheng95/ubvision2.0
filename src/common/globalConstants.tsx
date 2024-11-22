@@ -1,3 +1,4 @@
+import { outputTypeObj } from '@/pages/Flow/common/constants';
 import * as _ from 'lodash-es';
 // 用户权限类型
 export const userType: any = {
@@ -17,7 +18,7 @@ export const userType: any = {
  * local.num：授权允许的总计数（计数1就是1个小时）
  * local.time：授权到期的日期（授权那一时刻+授权天数）
  * local.today：授权码生成那一时刻
- * local.empowerId：机器编码
+ * local.empowerId：机器编码（硬盘编码.主板序列号.MAC地址）
  * 
  * center：当前信息
  * center.useNum：已经累计的计数（计数1就是1个小时）
@@ -71,4 +72,98 @@ export const notificationSetting: any = {
     rtl: false, // RTL 模式,开启的话，文字会向右对齐
     top: 80,  // 消息从顶部弹出时，距离顶部的位置，单位像素
     maxCount: 3, // 最大显示数，超过限制时，最早的消息会被自动关闭
+};
+
+// 上传插件，格式化
+export const formatPlugin = (item: any) => {
+    const {
+        initParams = {},
+        input = {},
+        output = {},
+        group = [],
+    } = item?.config || {};
+    const resultData = {
+        buildIn: false,
+        ...item,
+        ...(item?.alias ? {} : { alias: `${item.name}_别名` }),
+        config: {
+            ...(item?.config || {}),
+            input: (Object.entries(input) || []).reduce(
+                (pre, cen: [any, any]) => {
+                    return {
+                        ...pre,
+                        [cen[0]]: {
+                            ...cen[1],
+                            ...(cen[1].alias
+                                ? {}
+                                : {
+                                    alias: cen[0] || undefined,
+                                }),
+                            ...(cen[1].type
+                                ? {}
+                                : {
+                                    type: 'any',
+                                }),
+                            direction: 'input'
+                        },
+                    };
+                },
+                {}
+            ),
+            output: (Object.entries(output) || []).reduce(
+                (pre, cen: [any, any]) => {
+                    return {
+                        ...pre,
+                        [cen[0]]: {
+                            ...cen[1],
+                            ...(cen[1].alias
+                                ? {}
+                                : {
+                                    alias: cen[0] || undefined,
+                                }),
+                            ...(cen[1].type
+                                ? {}
+                                : {
+                                    type: 'any',
+                                }),
+                            direction: 'output'
+                        },
+                    };
+                },
+                {}
+            ),
+            initParams: (Object.entries(initParams) || []).reduce(
+                (pre, cen: [any, any]) => {
+                    return {
+                        ...pre,
+                        [cen[0]]: Object.assign(
+                            {},
+                            cen[1],
+                            !_.isUndefined(cen[1].value) && !_.isNull(cen[1].value)
+                                ? {}
+                                : {
+                                    value: cen[1].default || '',
+                                },
+                            !!(
+                                outputTypeObj[cen[1].type] &&
+                                outputTypeObj[cen[1].type].filter(
+                                    (i: any) => i.widget === cen[1]?.widget?.type
+                                )
+                            )
+                                ? {}
+                                : {
+                                    type: 'string',
+                                    widget: Object.assign({}, cen[1].widget, {
+                                        type: 'Input',
+                                    }),
+                                }
+                        ),
+                    };
+                },
+                {}
+            ),
+        },
+        updatedAt: new Date(),
+    };
+    return resultData;
 };

@@ -416,9 +416,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     return () => {
       console.log('清理画布');
       dispatch(clearFlowData());
-      const cells = graphRef?.current.getCells();
-      (cells || []).forEach((cell: any) => {
-        graphRef.current.removeCell(cell);
+      const cells = graphRef?.current?.getCells?.();
+      (cells || [])?.forEach((cell: any) => {
+        graphRef?.current?.removeCell?.(cell);
       });
       // graphRef.current?.dispose?.();
       graphRef.current = null;
@@ -569,13 +569,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   // 初始化渲染节点
   const initGraph = useCallback(() => {
     return new Promise((resolve: any, reject: any) => {
-      console.log('画布数据', canvasData);
+      console.log('初始化数据', canvasData);
       const { groups, nodes, edges } = canvasData?.flowData || {};
-
-      let portTypeList: any = {};
-      const groupList = (groups || []).reduce((prev: any, cent: any) => {
-        return { ...prev, [cent.customId]: cent };
-      }, {});
       const nodeList = (nodes || []).map((cent: any) => {
         const { topPorts, bottomPorts } = formatPorts(cent?.ports?.items || []);
         const config = {
@@ -632,13 +627,44 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           customId: config.customId,
         });
         return node;
-      });
+      }).filter(Boolean);
       graphRef.current.addNodes(nodeList);
       setTimeout(() => {
+        groups.forEach((group: any) => {
+          const {
+            id,
+            position: { x, y },
+            size,
+            attrs,
+            children = [],
+            collapsed = false,
+          } = group;
+          let { width, height } = size;
+          const parent = createGroup(
+            id,
+            x,
+            y,
+            width,
+            height,
+            attrs,
+          );
+          graphRef.current.addNode(parent);
+          children.forEach((child: any) => {
+            const node = graphRef?.current.getCellById(child);
+            if (!!node) {
+              if (graphRef?.current?.isNode?.(node)) {
+                parent.addChild(node);
+              };
+            };
+          });
+          if (collapsed) {
+            parent.toggleCollapse();
+          }
+        });
         const edgeList = (edges || []).map((cent: any) => {
           const { attrs, source } = cent;
           const node = graphRef.current.getCellById(source.cell);
-          const port = node.getPort(source?.port)?.type;
+          const port = node?.getPort?.(source?.port)?.type;
           const stroke = portTypeObj[port].color || '#165b5c'
           const lineType = edgeType[canvasData.lineType];
           const edge = graphRef?.current.createEdge({
@@ -655,36 +681,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             } : {}
           });
           return edge;
-        });
-        Object.entries(groupList || {}).forEach((group: any) => {
-          const {
-            id,
-            position: { x, y },
-            size,
-            attrs,
-            children = [],
-            collapsed = false,
-          } = group[1];
-          let { width, height } = size;
-          const childs = children;
-          const parent = createGroup(
-            id,
-            x,
-            y,
-            width,
-            height,
-            attrs,
-            // childs,
-          );
-          graphRef.current.addNode(parent);
-          childs.forEach((child: any) => {
-            const node = graphRef?.current.getCellById(child);
-            parent.addChild(node);
-          });
-          if (collapsed) {
-            parent.toggleCollapse();
-          }
-        });
+        }).filter(Boolean);
         graphRef.current.addEdges(edgeList);
         graphRef?.current.zoomToFit({ absolute: true, maxScale: 1 });
         dispatch(setCanvasData({
@@ -709,10 +706,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             init?.[1]?.require &&
             !_.isBoolean(init?.[1]?.value) &&
             !_.isNumber(init?.[1]?.value) &&
-            (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value) || _.isEmpty(init[1]?.value))
+            (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value))
           ) {
             // 有必填项没填
             ifHasRequireNotWrite = true;
+            console.log(init[1]);
+
             throw new Error();
           }
         })

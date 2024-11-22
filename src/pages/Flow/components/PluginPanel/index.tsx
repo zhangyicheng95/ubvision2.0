@@ -17,6 +17,7 @@ import { IRootActions, setLoading } from '@/redux/actions';
 import BasicTable from '@/components/BasicTable';
 import BasicConfirm from '@/components/BasicConfirm';
 import { addPlugin, deletePlugin } from '@/services/flowPlugin';
+import { formatPlugin } from '@/common/globalConstants';
 
 interface Props {
   setSyncNode?: any;
@@ -192,8 +193,8 @@ const PluginPanel: React.FC<Props> = (props: any) => {
           const cen = {
             direction: 'input',
             name: top[0],
-            ...top[1],
             sort: index,
+            ...top[1],
           };
           return {
             customId: `port_${guid()}`,
@@ -208,8 +209,8 @@ const PluginPanel: React.FC<Props> = (props: any) => {
           const cen = {
             direction: 'output',
             name: bottom[0],
-            ...bottom[1],
             sort: Object.keys(config?.input)?.length + index,
+            ...bottom[1],
           };
           return {
             customId: `port_${guid()}`,
@@ -377,99 +378,6 @@ const PluginPanel: React.FC<Props> = (props: any) => {
       }, []);
     setNodes(result);
   }, [graphData, searchVal]);
-  // 上传插件，格式化
-  const formatPlugin = (item: any) => {
-    const {
-      initParams = {},
-      input = {},
-      output = {},
-      group = [],
-    } = item?.config || {};
-    const resultData = {
-      buildIn: false,
-      ...item,
-      ...(item?.alias ? {} : { alias: `${item.name}_别名` }),
-      config: {
-        ...(item?.config || {}),
-        input: (Object.entries(input) || []).reduce(
-          (pre, cen: [any, any]) => {
-            return {
-              ...pre,
-              [cen[0]]: {
-                ...cen[1],
-                ...(cen[1].alias
-                  ? {}
-                  : {
-                    alias: cen[0] || undefined,
-                  }),
-                ...(cen[1].type
-                  ? {}
-                  : {
-                    type: 'any',
-                  }),
-                direction: 'input'
-              },
-            };
-          },
-          {}
-        ),
-        output: (Object.entries(output) || []).reduce(
-          (pre, cen: [any, any]) => {
-            return {
-              ...pre,
-              [cen[0]]: {
-                ...cen[1],
-                ...(cen[1].alias
-                  ? {}
-                  : {
-                    alias: cen[0] || undefined,
-                  }),
-                ...(cen[1].type
-                  ? {}
-                  : {
-                    type: 'any',
-                  }),
-                direction: 'output'
-              },
-            };
-          },
-          {}
-        ),
-        initParams: (Object.entries(initParams) || []).reduce(
-          (pre, cen: [any, any]) => {
-            return {
-              ...pre,
-              [cen[0]]: Object.assign(
-                {},
-                cen[1],
-                !_.isUndefined(cen[1].value) && !_.isNull(cen[1].value)
-                  ? {}
-                  : {
-                    value: cen[1].default || '',
-                  },
-                !!(
-                  outputTypeObj[cen[1].type] &&
-                  outputTypeObj[cen[1].type].filter(
-                    (i: any) => i.widget === cen[1]?.widget?.type
-                  )
-                )
-                  ? {}
-                  : {
-                    type: 'string',
-                    widget: Object.assign({}, cen[1].widget, {
-                      type: 'Input',
-                    }),
-                  }
-              ),
-            };
-          },
-          {}
-        ),
-      },
-      updatedAt: new Date(),
-    };
-    return resultData;
-  };
   // 上传完插件
   const addPluginCancel = () => {
     // 处理完后，把该数组清空，用于下一次的上传对比

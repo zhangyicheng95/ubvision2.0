@@ -1,5 +1,3 @@
-import { IRootActions } from '@/redux/actions';
-import { useSelector } from 'react-redux';
 import { Group } from './config/shape';
 
 // 创建分组

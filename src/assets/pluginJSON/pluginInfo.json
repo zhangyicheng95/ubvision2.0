@@ -1,0 +1,56 @@
+{
+  "alias": "",
+  "author": "",
+  "name": "",
+  "description": "",
+  "version": "1.0.0",
+  "buildIn": false,
+  "category": "",
+  "config": {
+    "initParams": {
+      "name1": {
+        "alias": "输入框",
+        "name": "name1",
+        "require": false,
+        "default": false,
+        "type": "input",
+        "value": "",
+        "widget": { "type": "Input" }
+      }
+    },
+    "input": {
+      "signal": {
+        "alias": "signal",
+        "direction": "input",
+        "name": "signal",
+        "require": true,
+        "sort": 0,
+        "type": "string"
+      },
+      "signal2": {
+        "alias": "signal2",
+        "direction": "input",
+        "name": "signal2",
+        "require": false,
+        "sort": 1,
+        "type": "string"
+      }
+    },
+    "output": {
+      "signal123": {
+        "alias": "signal123",
+        "direction": "output",
+        "name": "signal123",
+        "sort": 2,
+        "type": "string"
+      },
+      "signal1234": {
+        "alias": "signal1234",
+        "direction": "output",
+        "name": "signal1234",
+        "sort": 3,
+        "type": "string"
+      }
+    }
+  }
+}
