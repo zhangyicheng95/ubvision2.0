@@ -36,9 +36,9 @@ const IpInput: React.FC<Props> = (props: any) => {
     }
     setSelfValue(result);
   }, [value, length])
-  const handleNumberChange = (e: any, type: any) => {
+  const handleNumberChange = (value: any, type: any) => {
     //确保最小值为0；
-    const number = parseInt(e.target.value || 0, 10);
+    const number = parseInt(value || 0, 10);
     if (isNaN(number)) {
       return;
     };

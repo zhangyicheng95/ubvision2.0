@@ -22,6 +22,7 @@ import { openFolder } from '@/api/native-path';
 import Measurement from '@/components/Measurement';
 import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
+import { InitParamsEdit, InitParamsObject } from '../config/initParamsConfig';
 
 interface Props { }
 
@@ -31,8 +32,10 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [form1] = Form.useForm();
   const { validateFields, setFieldsValue } = form;
   const [pluginInfo, setPluginInfo] = useState<any>({});
+  const [pluginEditItem, setPluginEditItem] = useState<any>(null);
 
   const initPlugin = (data: any) => {
     try {
@@ -186,6 +189,28 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
       }
     }));
   };
+  // 属性值排序
+  const onInitParamsDragEnd = (dragItem: any) => {
+    if (!dragItem.destination || (dragItem.source.index === dragItem.destination.index)) return;
+    const list = Object.values(pluginInfo?.config?.initParams);
+    const listRes = sortList(dragItem.source.index, dragItem.destination.index, list);
+    const result = {
+      ...pluginInfo,
+      config: {
+        ...pluginInfo?.config || {},
+        initParams: (listRes || [])
+          ?.map((i: any, index: number) => ({ ...i, sort: index }))
+          ?.reduce((pre: any, cen: any) => {
+            return {
+              ...pre,
+              [cen.name]: cen
+            }
+          }, {})
+
+      }
+    };
+    setPluginInfo(result);
+  };
   // 保存
   const onSave = useCallback(() => {
     validateFields()
@@ -211,7 +236,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
 
   return (
     <div className={styles.PluginEditPage}>
-      <PrimaryTitle title={`插件编辑 ${pluginInfo.name}`} style={{ marginBottom: 8 }}>
+      <PrimaryTitle title={`插件编辑 ${pluginInfo.name}`} style={{ marginBottom: 8, paddingRight: 32 }}>
         <Button onClick={() => navigate(-1)}>返回</Button>
         <Button type="primary" onClick={() => onSave()}>保存</Button>
       </PrimaryTitle>
@@ -240,7 +265,6 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                 form={form}
                 labelCol={{ span: 6 }}
                 wrapperCol={{ span: 16 }}
-                // layout={'vertical'}
                 scrollToFirstError
               >
                 <Form.Item
@@ -368,24 +392,70 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                 }, [pluginInfo?.config?.input, pluginInfo?.config?.output])
               }
               <Divider>插件属性</Divider>
-              <div className="plugin-edit-body-center-param">
+              <div className="flex-box-column plugin-edit-body-center-param">
                 {
                   useMemo(() => {
                     if (!pluginInfo?.config?.initParams) return null;
-                    return Object.entries(pluginInfo?.config?.initParams)?.map((res: any) => {
-                      return <div
-                        className="plugin-edit-body-center-param-item"
-                        key={`plugin-edit-body-center-param-item-${res[0]}`}
-                      >
-                        <InitParamsObject
-                          className="plugin-item-content"
-                          item={res[1]}
-                          ifCanModify
-                          onEdit={() => { }}
-                          onRemove={() => { }}
-                        />
-                      </div>
-                    });
+                    return <DragDropContext onDragEnd={onInitParamsDragEnd}>
+                      <Droppable droppableId={`droppable-initParams`}>
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef}>
+                            {
+                              Object.entries(pluginInfo?.config?.initParams)
+                                ?.sort((a: any, b: any) => a[1].sort - b[1].sort)
+                                ?.map((res: any, index: number) => {
+                                  return <Draggable
+                                    key={res[0]}
+                                    draggableId={`${res[0]}`}
+                                    index={index}
+                                  >
+                                    {(provided) => {
+                                      return <div
+                                        className="plugin-edit-body-center-param-item"
+                                        key={`plugin-edit-body-center-param-item-${res[0]}`}
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        style={{
+                                          ...provided.draggableProps.style,
+                                        }}
+                                      >
+                                        <InitParamsObject
+                                          className="plugin-item-content"
+                                          item={res[1]}
+                                          ifCanModify
+                                          onEdit={() => {
+                                            setPluginEditItem(res[1]);
+                                            setTimeout(() => {
+                                              const result = {
+                                                ...res[1],
+                                                ..._.omit(res[1]?.widget, 'type')
+                                              }
+                                              form1.setFieldsValue(result);
+                                            }, 200);
+                                          }}
+                                          onRemove={() => {
+                                            setPluginInfo((prev: any) => {
+                                              return {
+                                                ...prev,
+                                                config: {
+                                                  ...prev?.config || {},
+                                                  initParams: _.omit(prev?.config?.initParams, res[0]),
+                                                }
+                                              }
+                                            })
+                                          }}
+                                        />
+                                      </div>
+                                    }}
+                                  </Draggable>
+                                })
+                            }
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   }, [pluginInfo?.config?.initParams])
                 }
               </div>
@@ -393,7 +463,109 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
           </Splitter.Panel>
           <Splitter.Panel defaultSize="30%" min="20%" max="50%">
             <div className="plugin-edit-body-right">
-
+              <div className="plugin-edit-body-right-box">
+                <div className="plugin-edit-body-right-box-title">
+                  插件属性配置
+                </div>
+                {
+                  useMemo(() => {
+                    if (!pluginEditItem) return null;
+                    console.log(pluginEditItem);
+                    return <Fragment>
+                      <div className="plugin-edit-body-right-box-body">
+                        <Form
+                          form={form1}
+                          layout={'vertical'}
+                          scrollToFirstError
+                        >
+                          <Divider>基本属性</Divider>
+                          <Form.Item
+                            name="type"
+                            label="属性类型"
+                            rules={[{ required: true, message: '属性类型' }]}
+                          >
+                            <Select
+                              options={(Object.keys(outputTypeObj) || [])?.map?.((option: any) => {
+                                if (_.isString(option)) {
+                                  return { key: option, label: option, value: option };
+                                } else {
+                                  const { key, label, value } = option;
+                                  return { key, label, value };
+                                }
+                              })}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            name="name"
+                            label="属性name"
+                            rules={[{ required: true, message: '属性name' }]}
+                          >
+                            <Input placeholder="请输入属性name" />
+                          </Form.Item>
+                          <Form.Item
+                            name="alias"
+                            label="属性别名"
+                            rules={[{ required: true, message: '属性别名' }]}
+                          >
+                            <Input placeholder="请输入属性别名" />
+                          </Form.Item>
+                          <Form.Item
+                            name="require"
+                            label="是否必填项"
+                            valuePropName="checked"
+                            rules={[{ required: true, message: '是否必填项' }]}
+                          >
+                            <Switch />
+                          </Form.Item>
+                          <Divider>私有属性</Divider>
+                          <InitParamsEdit data={pluginEditItem} form={form1} />
+                        </Form>
+                      </div>
+                      <div className="flex-box plugin-edit-body-right-box-footer">
+                        <Button
+                          type="default" block
+                          onClick={() => {
+                            setPluginEditItem(null);
+                          }}>取消</Button>
+                        <Button
+                          type="primary" block
+                          onClick={() => {
+                            form1.validateFields()
+                              .then((values) => {
+                                const { alias, name, description, require, type, value, ...rest } = values;
+                                console.log(values);
+                                console.log(rest);
+                                setPluginInfo((prev: any) => {
+                                  return {
+                                    ...prev,
+                                    config: {
+                                      ...prev?.config || {},
+                                      initParams: {
+                                        ..._.omit(prev?.config?.initParams || {}, pluginEditItem.name) || {},
+                                        [name]: {
+                                          ..._.omit(_.omit(prev?.config?.initParams[pluginEditItem.name], 'value'), 'default'),
+                                          alias, name, description, require, type, value, default: value,
+                                          widget: {
+                                            ...prev?.config?.initParams[pluginEditItem.name]?.widget,
+                                            ...rest
+                                          }
+                                        },
+                                      }
+                                    }
+                                  }
+                                });
+                                setPluginEditItem(null);
+                              })
+                              .catch((err) => {
+                                const { errorFields } = err;
+                                errorFields?.length && message.error(`${errorFields[0]?.errors[0]} 是必填项`);
+                              });
+                          }}>保存</Button>
+                      </div>
+                    </Fragment>
+                  }, [pluginEditItem])
+                }
+              </div>
             </div>
           </Splitter.Panel>
         </Splitter>
@@ -403,1445 +575,3 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
 };
 
 export default PluginEditPage;
-
-const InitParamsObject = (props: any) => {
-  const {
-    item = {},
-    ifCanModify = false,
-    onlyShowPanel = false,
-    className = '',
-    onEdit,
-    onRemove,
-    span = 16,
-  } = props;
-  const {
-    name,
-    alias,
-    type: inputType,
-    widget = {},
-    default: defaultValue,
-    description = '',
-    value,
-    language,
-    localPath,
-    require,
-  } = item;
-  let {
-    max,
-    min,
-    options = [],
-    precision,
-    step,
-    suffix,
-    type,
-    length,
-  } = widget;
-  if (_.isArray(options) && _.isString(options[0])) {
-    options = (options || [])?.map?.((option: string) => ({
-      label: option,
-      value: option,
-    }));
-  }
-  const required = require ? '是' : '否';
-  switch (type) {
-    case 'Input':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Input
-                  disabled
-                  value={value || defaultValue}
-                  className="plugin-style"
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'IpInput':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <IpInput
-                  disabled
-                  value={value || defaultValue}
-                  className="plugin-style"
-                  length={length}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'InputNumber':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <InputNumber
-                  disabled
-                  className="plugin-style"
-                  precision={precision}
-                  step={step}
-                  max={max}
-                  min={min}
-                  value={value || value == 0 ? value : defaultValue}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      步长：{step}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      精度：{precision}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      最大值：{max}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      最小值：{min}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Slider':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <SliderGroup
-                  disabled
-                  className="plugin-style"
-                  step={step}
-                  max={max}
-                  min={min}
-                  precision={precision}
-                  value={value || value == 0 ? value : defaultValue}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      步长：{step}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      最大值：{max}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      最小值：{min}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      默认值：{value}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style"></Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Radio':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <div className="plugin-style">
-                  <Radio.Group
-                    value={
-                      _.isArray(value)
-                        ? value[0]
-                        : _.isArray(defaultValue)
-                          ? defaultValue[0]
-                          : defaultValue
-                    }
-                  >
-                    {(options || [])?.map?.((option: any) => {
-                      const { id, label, value } = option;
-                      return (
-                        <Radio key={id || value} value={value}>
-                          {label}
-                        </Radio>
-                      );
-                    })}
-                  </Radio.Group>
-                </div>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue) ? defaultValue[0] : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value[0] : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'TagRadio':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <div className="plugin-style">
-                  <Select
-                    value={value || defaultValue}
-                    className="plugin-style"
-                    options={options?.map((item: any) => item.name)}
-                  />
-                </div>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue) ? defaultValue[0] : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value[0] : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'AlgoList':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Select
-                  value={value || defaultValue}
-                  className="plugin-style"
-                  options={(options || [])?.map?.((option: any) => {
-                    const { id, label, value } = option;
-                    return {
-                      key: id,
-                      value,
-                      label
-                    }
-                  })}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue) ? defaultValue[0] : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value[0] : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Select':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Select
-                  value={value || defaultValue}
-                  className="plugin-style"
-                  options={(options || [])?.map?.((option: any) => {
-                    const { id, label, value } = option;
-                    return {
-                      key: id,
-                      value,
-                      label
-                    }
-                  })}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue) ? defaultValue[0] : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value[0] : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'MultiSelect':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Select
-                  mode="multiple"
-                  value={value || defaultValue}
-                  className="plugin-style"
-                  options={(options || [])?.map?.((option: any) => {
-                    const { id, label, value } = option;
-                    return {
-                      key: id,
-                      value,
-                      label
-                    }
-                  })}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue)
-                        ? defaultValue.join('，')
-                        : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value.join('，') : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Checkbox':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <div className="plugin-style">
-                  <Checkbox.Group
-                    options={options}
-                    value={value || defaultValue}
-                  />
-                </div>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isArray(defaultValue)
-                        ? defaultValue.join('，')
-                        : defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{_.isArray(value) ? value.join('，') : value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Switch':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <div className="plugin-style">
-                  <Switch
-                    checked={_.isBoolean(value) ? value : !!defaultValue}
-                  />
-                </div>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue ? 'true' : 'false'}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value ? 'true' : 'false'}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'File':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <a
-                  className="plugin-style"
-                  onClick={() =>
-                    value || defaultValue
-                      ? openFolder(value || defaultValue, true)
-                      : null
-                  }
-                >
-                  {value || defaultValue || '暂无默认值'}
-                </a>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      可选后缀类型：{_.isArray(suffix) && suffix.join('，')}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style"></Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Dir':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <a
-                  className="plugin-style"
-                  onClick={() =>
-                    value || defaultValue
-                      ? openFolder(value || defaultValue)
-                      : null
-                  }
-                >
-                  {value || defaultValue || '暂无默认值'}
-                </a>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'codeEditor':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Input.TextArea
-                  rows={5}
-                  value={
-                    language === 'json' && _.isObject(value)
-                      ? formatJson(value)
-                      : value
-                  }
-                  style={{ marginBottom: 8 }}
-                  disabled
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => onEdit()}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => onRemove()}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：
-                      {_.isString(defaultValue)
-                        ? defaultValue
-                        : JSON.stringify(defaultValue)}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：
-                      {_.isString(value) ? value : JSON.stringify(value)}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'ImageLabelField':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <a
-                  className="plugin-style"
-                  onClick={() =>
-                    localPath || value || defaultValue
-                      ? openFolder(value || defaultValue, true)
-                      : null
-                  }
-                >
-                  {localPath || value || defaultValue || '暂无默认值'}
-                </a>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{localPath || defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{localPath || value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'Measurement':
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Measurement
-                  className="plugin-style"
-                  disabled
-                  value={value || defaultValue}
-                  precision={precision}
-                  step={step}
-                  max={max}
-                  min={min}
-                  type={inputType}
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{JSON.stringify(defaultValue)}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{JSON.stringify(value)}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'DataMap':
-      const valueDataMap = value || defaultValue || options?.reduce((pre: any, cen: any) => {
-        const { label, value } = cen;
-        return { ...pre, [label]: value };
-      }, {});
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Input.TextArea
-                  rows={5}
-                  value={_.isObject(valueDataMap) ? formatJson(valueDataMap) : valueDataMap}
-                  style={{ marginBottom: 8 }}
-                  disabled
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{JSON.stringify(defaultValue)}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{JSON.stringify(value)}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    case 'NestMap':
-      const valueNestMap = value || defaultValue || options?.reduce((pre: any, cen: any) => {
-        const { label, value } = cen;
-        return { ...pre, [label]: value };
-      }, {});
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <Input.TextArea
-                  rows={5}
-                  value={_.isObject(valueNestMap) ? formatJson(valueNestMap) : valueNestMap}
-                  style={{ marginBottom: 8 }}
-                  disabled
-                />
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{JSON.stringify(defaultValue)}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{JSON.stringify(value)}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-    default:
-      return (
-        <Row className={`flex-box-start ${className}`}>
-          {!onlyShowPanel ? (
-            <Col span={6} className="label-style flex-box">
-              <TooltipDiv title={alias || name}>{alias || name}</TooltipDiv>:
-              {description ? (
-                <TooltipDiv title={description} style={{ marginLeft: 8 }}>
-                  <QuestionCircleOutlined />
-                </TooltipDiv>
-              ) : null}
-            </Col>
-          ) : null}
-          <Col span={span || 16} className="wrapper-style flex-box-start">
-            <div
-              className="top-content"
-              style={onlyShowPanel ? { marginBottom: 0 } : {}}
-            >
-              <div className="flex-box">
-                <a className="plugin-style">暂无面板类型，请配置</a>
-                {ifCanModify ? (
-                  <div className="flex-box">
-                    <EditOutlined
-                      className="plugin-icon"
-                      onClick={() => {
-                        return onEdit();
-                      }}
-                    />
-                    <Popconfirm
-                      title="确定删除当前属性?"
-                      onConfirm={() => {
-                        onRemove();
-                      }}
-                    >
-                      <MinusCircleOutlined className="plugin-icon" />
-                    </Popconfirm>
-                  </div>
-                ) : null}
-              </div>
-              {!onlyShowPanel ? (
-                <Fragment>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      类型：{type}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      初始值：{defaultValue}
-                    </Col>
-                  </Row>
-                  <Row className="flex-box-justify-between">
-                    <Col span={12} className="text-style">
-                      默认值：{value}
-                    </Col>
-                    <Col span={11} offset={1} className="text-style">
-                      是否必填项：{required}
-                    </Col>
-                  </Row>
-                </Fragment>
-              ) : null}
-            </div>
-          </Col>
-        </Row>
-      );
-  }
-};

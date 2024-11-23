@@ -5,7 +5,6 @@ import zhCN from 'antd/locale/zh_CN';
 // for date-picker i18n
 import 'dayjs/locale/zh-cn';
 import BasicLayout from '@/layouts/BasicLayout';
-import ErrorBoundary from '@/components/ErrorBoundary';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { copyUrlToClipBoard, cryptoDecrypt, GetQueryObj, getUserAuthList, timeToString } from '@/utils/utils';
 import * as _ from 'lodash-es';
@@ -93,7 +92,7 @@ const App: React.FC = () => {
     });
   };
   useLayoutEffect(() => {
-    if (location.href?.indexOf('#/flow') > -1) {
+    if (location.href?.indexOf('#/flow') > -1 || location.href?.indexOf('#/ccd') > -1) {
 
     } else {
       getList();
@@ -228,13 +227,16 @@ const App: React.FC = () => {
               // Seed Token，影响范围大
               // colorPrimary: '#16f4ff',
               borderRadius: 2,
-
               // 派生变量，影响范围小
               // colorBgContainer: '#f6ffed',
             }
           },
           localStorage.getItem('theme-mode') === 'dark' ? {
+            // 1. 单独使用暗色算法
             algorithm: theme.darkAlgorithm,
+
+            // 2. 组合使用暗色算法与紧凑算法
+            // algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
           } : {
 
           }

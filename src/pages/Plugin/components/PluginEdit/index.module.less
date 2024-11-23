@@ -1,5 +1,5 @@
 .PluginEditPage {
-  padding: 16px 32px 8px;
+  padding: 16px 0 8px 32px;
   height: 100%;
   width: 100%;
 
@@ -46,9 +46,104 @@
             }
           }
         }
+
+        &-param {
+          padding: 0 32px;
+
+          &-item {
+            background-color: rgba(144, 144, 144, .2);
+            margin-bottom: 8px;
+            padding: 8px;
+
+            .label-style {
+              line-height: 32px;
+              justify-content: flex-end;
+              align-items: flex-start;
+              gap: 4px;
+
+              div:first-child {
+                min-width: 14px;
+              }
+            }
+
+            .label-style::after {
+              content: '：';
+              margin-left: -4px;
+            }
+
+            .wrapper-style {
+              .top-content {
+                width: 100%;
+
+                &-plugin-operation {
+                  line-height: 32px;
+                  margin-bottom: 8px;
+                }
+
+                .plugin-style {
+                  flex: 1;
+                }
+              }
+
+              .plugin-icon {
+                margin-left: 8px;
+              }
+            }
+          }
+        }
       }
 
-      &-right {}
+      &-right {
+        height: 100%;
+        width: 100%;
+
+        &-box {
+          height: 100%;
+          width: 100%;
+
+          &-title {
+            width: 100%;
+            height: 40px;
+            line-height: 40px;
+            border-bottom: 1px solid rgba(144, 144, 144, .2);
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+          }
+
+          &-body {
+            width: 100%;
+            height: calc(100% - 80px);
+            padding: 0 8px;
+            overflow-y: auto;
+          }
+
+          &-footer {
+            width: 100%;
+            height: 40px;
+            line-height: 40px;
+            padding: 0 8px;
+            border-top: 1px solid rgba(144, 144, 144, .2);
+            gap: 8px;
+          }
+        }
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      .plugin-edit-body {
+        &-right {
+          background-color: rgb(248, 248, 248);
+        }
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .plugin-edit-body {
+        &-right {
+          background-color: #111;
+        }
+      }
     }
   }
 }

@@ -364,6 +364,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                             <div style={selectedTab === 'params' ? {} : { display: 'none' }}>
                               {
                                 Object.entries(nodeConfig?.config?.initParams || {})
+                                  ?.sort((a: any, b: any) => a.sort - b.sort)
                                   ?.map((res: any, index: number) => {
                                     return <FormatWidgetToDom
                                       key={res[0]}

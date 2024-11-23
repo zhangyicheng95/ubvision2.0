@@ -108,7 +108,7 @@ export const outputTypeObj: any = {
         },
         {
             widget: 'IpInput',
-            title: 'IpInput 输入框',
+            title: 'IpInput IP地址输入框',
         },
         {
             widget: 'codeEditor',

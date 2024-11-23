@@ -8,14 +8,14 @@ interface Props {
   value?: string,
   className?: any,
   onChange?: any,
-  step: any,
-  max: any,
-  min: any,
-  precision: any,
+  step?: any,
+  max?: any,
+  min?: any,
+  precision?: any,
 };
 
 const SliderGroup: React.FC<Props> = (props: any) => {
-  const { onChange = null, value = '', disabled, className, step, max, min, precision } = props;
+  const { onChange = null, value = '', disabled, className, step = undefined, max = undefined, min = undefined, precision = undefined } = props;
   const [selfValue, setSelfValue] = useState<any>(0);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ const SliderGroup: React.FC<Props> = (props: any) => {
           precision={precision}
           value={selfValue}
           onChange={(value) => {
-            onChange && onChange((!_.isNull(value) && !_.isNaN(value)) ? (value < max ? value : max) : undefined)
+            onChange && onChange(value)
           }}
         />
       </Col>

@@ -25,7 +25,7 @@ const { confirm } = Modal;
 interface Props { }
 
 const PluginPage: React.FC<Props> = (props: any) => {
-  const { projectList, pluginList } = useSelector((state: IRootActions) => state);
+  const { projectList, pluginList, getProjectListFun } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userAuthList = getUserAuthList();
@@ -56,6 +56,7 @@ const PluginPage: React.FC<Props> = (props: any) => {
   // 初始化列表
   useEffect(() => {
     getPluginListFun();
+    getProjectListFun?.();
   }, []);
   // 批量操作
   const settingList: any = [

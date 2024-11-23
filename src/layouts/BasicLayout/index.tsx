@@ -58,7 +58,7 @@ const BasicLayout = (props: any) => {
       <ErrorBoundary>
         <div className='flex-box ' style={{ height: `calc(100% - 30px)` }}>
           {ifShowSiderNav ? <SiderNav /> : null}
-          <div style={{ width: `calc(100% - 68px)`, height: '100%' }}>
+          <div style={{ width: ifShowSiderNav ? `calc(100% - 68px)` : '100%', height: '100%' }}>
             <Spin
               spinning={loading}
               tip={<div style={{ fontSize: 16, fontWeight: 'bold' }}>数据加载中...</div>}
