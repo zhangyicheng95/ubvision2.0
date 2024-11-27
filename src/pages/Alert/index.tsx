@@ -30,6 +30,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
   const [dataList, setDataList] = useState([]);
   const [popoverVisible, setPopoverVisible] = useState(false);
   const [editVisible, setEditVisible] = useState<any>(null);
+  const [searchVal, setSearchVal] = useState('');
 
   // 进入页面默认拉取
   useEffect(() => {
@@ -42,13 +43,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
 
   // 模糊查询
   const onSearch = (val: any) => {
-    try {
-      setDataList(
-        (dataList || []).filter(
-          (i: any) => !!i?.alertShow && i?.name?.indexOf(val) > -1
-        )
-      );
-    } catch (e) { }
+    setSearchVal(val);
   };
   // 添加监控模块
   const onAdd = (id: string) => {
@@ -130,25 +125,24 @@ const AlertRouter: React.FC<Props> = (props: any) => {
             </Popover>
         }
         {useMemo(() => {
-          if (!userAuthList.includes('monitor.list')) {
-            return null;
-          }
           return <div>
             {
-              (dataList || [])?.map?.((item: any, index: number) => {
-                const { id, alertShow } = item;
-                if (!alertShow) return null;
-                return (
-                  <AlertItem
-                    key={id}
-                    item={item}
-                    setDataList={setDataList}
-                    loopGetStatus={loopProjectStatusFun}
-                    setEditVisible={setEditVisible}
-                    form={form}
-                  />
-                );
-              })
+              (dataList || [])
+                ?.filter((i: any) => i.name?.indexOf(searchVal) > -1 || i.alias?.indexOf(searchVal) > -1)
+                ?.map?.((item: any, index: number) => {
+                  const { id, alertShow } = item;
+                  if (!alertShow) return null;
+                  return (
+                    <AlertItem
+                      key={id}
+                      item={item}
+                      setDataList={setDataList}
+                      loopGetStatus={loopProjectStatusFun}
+                      setEditVisible={setEditVisible}
+                      form={form}
+                    />
+                  );
+                })
             }
             {
               // 编辑配置
@@ -243,7 +237,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
                 : null
             }
           </div>
-        }, [dataList, JSON.stringify(editVisible?.contentData)])}
+        }, [dataList, searchVal, JSON.stringify(editVisible?.contentData)])}
       </div>
     </div>
   );
@@ -281,6 +275,9 @@ const AlertItem = (props: any) => {
   }, [id]);
   // 点击打开新窗口
   const onClick = (item: any) => {
+    message.destroy();
+    message.info('功能开发中。。。');
+    return;
     const { id } = item;
     ipcRenderer.ipcCommTest(
       'alert-open-browser',

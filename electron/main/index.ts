@@ -1,20 +1,21 @@
-import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification, dialog } from 'electron'
-import { createRequire } from 'node:module'
-import { fileURLToPath } from 'node:url'
-import path from 'node:path'
-import os from 'node:os'
+import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification, dialog } from 'electron';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import os from 'node:os';
 import fs from 'node:fs';
-import { update } from './update'
+import { update } from './update';
 import modules from '../DB/modules/index';
 import { exec } from 'child_process';
 import { networkInterfaces } from 'os';
-import { resolveHtmlPath } from './util'
+import { resolveHtmlPath } from './util';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, '../..');
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
-export const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL;
+export const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL; //process.env.VITE_DEV_SERVER_URL;  resolveHtmlPath('index.html');
+console.log(`VITE_DEV_SERVER_URL: ${VITE_DEV_SERVER_URL}`);
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
@@ -72,12 +73,9 @@ function getMotherboardSerialNumber() {
     // windows
     return new Promise((resolve, reject) => {
       exec('wmic baseboard get product,serialnumber', (error: any, stdout: any, stderr: any) => {
-        if (error) {
-          return reject(error);
-        }
         const lines = stdout.trim().split('\n');
-        const [_, product, serialNumber] = lines[1].split(/\s{2,}/);
-        resolve({ product, serialNumber });
+        const [product, serialNumber] = lines[1].split(/\s{2,}/);
+        resolve(serialNumber);
       });
     });
   } else {
@@ -359,15 +357,18 @@ const createWindow = async (arg?: any) => {
   //   // Open devTool if the app is not packaged
   //   mainWindow.webContents.openDevTools()
   // }
-  mainWindow.loadURL(
-    VITE_DEV_SERVER_URL +
-    (res?.type === 'child'
-      ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
-      : !!params
-        ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
-        : `?number=${mainWindow.id}`)
-  );
-
+  if (VITE_DEV_SERVER_URL) {
+    // 开发环境
+    mainWindow.loadURL(VITE_DEV_SERVER_URL +
+      (res?.type === 'child'
+        ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
+        : !!params
+          ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
+          : `?number=${mainWindow.id}`));
+  } else {
+    // 生产环境
+    mainWindow.loadFile('dist/index.html');
+  }
 
   // Test actively push message to the Electron-Renderer
   mainWindow.webContents.on('did-finish-load', () => {

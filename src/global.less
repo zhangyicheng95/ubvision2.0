@@ -118,9 +118,32 @@
 }
 
 .modal-table-btn {
-    .ant-modal-body {
-        height: calc(100vh - 180px) !important;
-        max-height: calc(100vh - 180px) !important;
+    max-height: 100vh;
+
+    .ant-modal-content {
+        height: 100%;
+        max-height: calc(100vh - 48px);
+        padding: 24px;
+
+        .ant-modal-header {
+            height: 24px;
+            margin-bottom: 24px;
+        }
+
+        .ant-modal-body {
+            height: calc(100vh - 180px) !important;
+            max-height: calc(100vh - 180px) !important;
+
+            .ant-table {
+                height: 100% !important;
+
+                .ant-table-container {
+                    .ant-table-body {
+                        height: calc(100% - 55px) !important;
+                    }
+                }
+            }
+        }
     }
 }
 

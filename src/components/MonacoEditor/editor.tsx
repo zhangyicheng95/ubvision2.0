@@ -57,7 +57,7 @@ const Editor: React.FC<Props> = (props) => {
       }}
       editorDidMount={(editor: any, monaco: any) => {
         editorRef.current.editor = editor;
-        editor.getAction('editor.action.formatDocument').run()  //格式化
+        editor.getAction?.('editor.action.formatDocument')?.run?.();  //格式化
       }}
     />
   );

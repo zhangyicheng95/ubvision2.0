@@ -6,9 +6,8 @@ import {
   Button,
   message,
 } from 'antd';
-import Monaco from 'react-monaco-editor';
 import { CloudDownloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { downFileFun } from '@/utils/utils';
+import { downFileFun, formatJson } from '@/utils/utils';
 import Editor from './editor';
 
 const { Option } = Select;
@@ -57,7 +56,7 @@ const MonacoEditor: React.FC<Props> = (props) => {
         } = res;
         try {
           setEditorLanguage('json');
-          setEditorValue(result);
+          setEditorValue(formatJson(result));
         } catch (err) {
           message.error('json文件格式错误，请修改后上传。');
           console.error(err);
@@ -77,19 +76,14 @@ const MonacoEditor: React.FC<Props> = (props) => {
             onChange={(val) => {
               return setEditorLanguage(val);
             }}
+            options={[
+              { value: 'javascript', label: 'javascript' },
+              { value: 'python', label: 'python' },
+              { value: 'json', label: 'json' },
+              { value: 'sql', label: 'sql' },
+            ]}
             value={editorLanguage}
-          >
-            <Option value="javascript">javascript</Option>
-            {/* <Option value="typescript">typescript</Option>
-            <Option value="scss">scss</Option>
-            <Option value="html">html</Option> */}
-            <Option value="python">python</Option>
-            <Option value="json">json</Option>
-            <Option value="sql">sql</Option>
-            {/* <Option value="redis">redis</Option>
-            <Option value="shell">shell</Option>
-            <Option value="java">java</Option> */}
-          </Select>
+          />
           {
             editorLanguage === 'json' ?
               <div className="flex-box" style={{ gap: 8 }}>
@@ -104,7 +98,7 @@ const MonacoEditor: React.FC<Props> = (props) => {
                 <Button
                   icon={<CloudDownloadOutlined />}
                   onClick={() => {
-                    downFileFun(editorValue, `json编辑器.json`);
+                    downFileFun(formatJson(editorValue), `json编辑器.json`);
                   }}
                 >
                   导出json文件
@@ -115,7 +109,7 @@ const MonacoEditor: React.FC<Props> = (props) => {
         </div>
       }
       width="calc(100vw - 48px)"
-      wrapClassName="monaco-editor-modal"
+      wrapClassName="modal-table-btn"
       centered
       open={visible}
       onOk={() => {

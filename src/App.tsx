@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import '@/App.css';
 import { Button, ConfigProvider, Form, Input, message, Modal, notification, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
@@ -92,6 +92,9 @@ const App: React.FC = () => {
     });
   };
   useLayoutEffect(() => {
+    if (!localStorage.getItem('theme-mode')) {
+      localStorage.setItem('theme-mode', 'dark');
+    }
     if (location.href?.indexOf('#/flow') > -1 || location.href?.indexOf('#/ccd') > -1) {
 
     } else {
@@ -106,13 +109,14 @@ const App: React.FC = () => {
     };
   }, []);
   // 鉴权
-  useLayoutEffect(() => {
+  useEffect(() => {
     const getUseTimeFun = (hostName: string) => {
       ProjectApi.getStorage('softwareUseTime').then((res) => {
         const { num } = res?.data || {};
         const useNum = (num || 0) + 1;
         ProjectApi.getStorage('softwareEmpowerTime').then((empowerRes) => {
           const { time = new Date().getTime() } = empowerRes?.data || {};
+          alert(`res.data: ${JSON.stringify(res.data)}; empowerRes?.data: ${JSON.stringify(empowerRes?.data)}`)
           if (
             permissionRule(
               {
@@ -231,14 +235,14 @@ const App: React.FC = () => {
               // colorBgContainer: '#f6ffed',
             }
           },
-          localStorage.getItem('theme-mode') === 'dark' ? {
+          localStorage.getItem('theme-mode') === 'light' ? {
+
+          } : {
             // 1. 单独使用暗色算法
             algorithm: theme.darkAlgorithm,
 
             // 2. 组合使用暗色算法与紧凑算法
             // algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
-          } : {
-
           }
         )}
       >

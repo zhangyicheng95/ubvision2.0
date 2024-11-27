@@ -81,6 +81,10 @@ export default defineConfig(({ command }) => {
         }
       }
     },
+    node: {
+      __dirname: false,
+      __filename: false
+    },
     define: {
       'process.env': {
         APP_VERSION: pkg.version

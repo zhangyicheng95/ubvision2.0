@@ -23,7 +23,7 @@ export const menuConfig = [
     path: `/alert`,
     key: `/alert`,
     id: 'monitor', // 权限id
-    check: true, // 是否校验
+    check: false, // 是否校验
   },
   // {
   //   name: '采集器',

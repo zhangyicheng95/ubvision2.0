@@ -112,7 +112,7 @@ export const outputTypeObj: any = {
         },
         {
             widget: 'codeEditor',
-            title: 'Code 代码编辑器',
+            title: 'codeEditor 代码编辑器',
         },
     ],
     int: [
@@ -141,11 +141,7 @@ export const outputTypeObj: any = {
         {
             widget: 'Slider',
             title: 'Slider 滑块输入框',
-        },
-        {
-            widget: 'Measurement',
-            title: 'Measurement 标定参数',
-        },
+        }
     ],
     bool: [
         {
@@ -173,11 +169,7 @@ export const outputTypeObj: any = {
         {
             widget: 'Checkbox',
             title: 'Checkbox 多项选择框',
-        },
-        {
-            widget: 'AlgoList',
-            title: 'AlgoList 属性组合框',
-        },
+        }
     ],
     map: [
         {
@@ -185,8 +177,8 @@ export const outputTypeObj: any = {
             title: 'DataMap 数据对象',
         },
         {
-            widget: 'NestMap',
-            title: 'NestMap 嵌套对象',
+            widget: 'Measurement',
+            title: 'Measurement 标定参数',
         },
     ],
     File: [
@@ -197,21 +189,13 @@ export const outputTypeObj: any = {
         {
             widget: 'ImageLabelField',
             title: 'ImageLabelField 图片标注',
-        },
-        // {
-        //   widget: 'Input',
-        //   title: 'Input 普通输入框',
-        // },
+        }
     ],
     Dir: [
         {
             widget: 'Dir',
             title: 'Dir 文件夹选择器',
-        },
-        // {
-        //   widget: 'Input',
-        //   title: 'Input 普通输入框',
-        // },
+        }
     ],
 };
 export const pluginsNameIcon: any = {

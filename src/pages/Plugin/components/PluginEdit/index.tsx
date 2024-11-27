@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { login } from '@/services/auth';
-import { cryptoEncryption, downFileFun, formatJson, getUserAuthList, sortList } from '@/utils/utils';
+import { cryptoEncryption, downFileFun, formatJson, getUserAuthList, guid, sortList } from '@/utils/utils';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,7 +22,7 @@ import { openFolder } from '@/api/native-path';
 import Measurement from '@/components/Measurement';
 import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
-import { InitParamsEdit, InitParamsObject } from '../config/initParamsConfig';
+import { InitParamsEdit, initParamsKeys, InitParamsShow } from '../config/initParamsConfig';
 
 interface Props { }
 
@@ -36,6 +36,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
   const { validateFields, setFieldsValue } = form;
   const [pluginInfo, setPluginInfo] = useState<any>({});
   const [pluginEditItem, setPluginEditItem] = useState<any>(null);
+  const [portEditItem, setPortEditItem] = useState<any>(null);
 
   const initPlugin = (data: any) => {
     try {
@@ -46,10 +47,13 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
         config: {
           ...config,
           input: (Object.entries(input) || []).reduce(
-            (pre, cen: [any, any]) => {
+            (pre, cen: [any, any], index: number) => {
               return {
                 ...pre,
                 [cen[0]]: {
+                  direction: 'input',
+                  sort: index,
+                  require: false,
                   ...cen[1],
                   ...(cen[1].alias
                     ? {}
@@ -62,10 +66,13 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
             {}
           ),
           output: (Object.entries(output) || []).reduce(
-            (pre, cen: [any, any]) => {
+            (pre, cen: [any, any], index: number) => {
               return {
                 ...pre,
                 [cen[0]]: {
+                  direction: 'output',
+                  sort: index + (Object.keys(input)?.length || 0),
+                  pushData: false,
                   ...cen[1],
                   ...(cen[1].alias
                     ? {}
@@ -127,7 +134,28 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
       return;
     }
     console.log(item);
-
+    const name = `new-${guid()}`
+    setPluginInfo((prev: any) => {
+      return {
+        ...prev,
+        config: {
+          ...prev?.config || {},
+          initParams: {
+            ...prev?.config?.initParams || {},
+            [name]: {
+              ...initParamsKeys[item[1]],
+              name,
+              type: item[0],
+              sort: Object.keys(prev?.config?.initParams)?.length + 1
+            }
+          }
+        }
+      }
+    });
+    setTimeout(() => {
+      const bottom: any = document.getElementById('params-bottom');
+      bottom.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
   // 插件列表
   const items: any = useMemo(() => {
@@ -147,6 +175,8 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
   // 连接桩排序
   const onDragEnd = (dragItem: any) => {
     if (!dragItem.destination || (dragItem.source.index === dragItem.destination.index)) return;
+    console.log(dragItem);
+
     const list = Object.entries(pluginInfo.config?.input)
       ?.map((res: any) => {
         return {
@@ -238,7 +268,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
     <div className={styles.PluginEditPage}>
       <PrimaryTitle title={`插件编辑 ${pluginInfo.name}`} style={{ marginBottom: 8, paddingRight: 32 }}>
         <Button onClick={() => navigate(-1)}>返回</Button>
-        <Button type="primary" onClick={() => onSave()}>保存</Button>
+        <Button type="primary" disabled={!!pluginEditItem || !!portEditItem} onClick={() => onSave()}>保存</Button>
       </PrimaryTitle>
       <div className="flex-box plugin-edit-body">
         <Splitter>
@@ -364,13 +394,26 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                             <div className="flex-box plugin-edit-body-center-port-body-item-operation">
                                               <EditOutlined
                                                 onClick={() => {
-
+                                                  const file = { description: '', name: res[0], ...res[1] };
+                                                  setPortEditItem(file);
+                                                  setTimeout(() => {
+                                                    form1.setFieldsValue(file);
+                                                  }, 200);
                                                 }}
                                               />
                                               <Popconfirm
                                                 title="确定删除当前链接桩?"
                                                 onConfirm={() => {
-
+                                                  setPluginInfo((prev: any) => {
+                                                    return {
+                                                      ...prev,
+                                                      config: {
+                                                        ...prev.config || {},
+                                                        [type]: _.omit(pluginInfo?.config?.[type], res[0])
+                                                      }
+                                                    }
+                                                  });
+                                                  setPortEditItem(null);
                                                 }}
                                               >
                                                 <MinusCircleOutlined />
@@ -420,7 +463,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                           ...provided.draggableProps.style,
                                         }}
                                       >
-                                        <InitParamsObject
+                                        <InitParamsShow
                                           className="plugin-item-content"
                                           item={res[1]}
                                           ifCanModify
@@ -428,9 +471,15 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                             setPluginEditItem(res[1]);
                                             setTimeout(() => {
                                               const result = {
+                                                description: '',
                                                 ...res[1],
-                                                ..._.omit(res[1]?.widget, 'type')
-                                              }
+                                                value: res[1]?.widget?.type === "DatePicker" ?
+                                                  (!!res[1].value ? moment(new Date(res[1].value)) : undefined) :
+                                                  res[1]?.widget?.type === "DataMap" ?
+                                                    (!!res[1].value ? formatJson(res[1].value) : undefined) :
+                                                    res[1].value,
+                                                ..._.omit(_.omit(res[1]?.widget, 'language'), 'type'),
+                                              };
                                               form1.setFieldsValue(result);
                                             }, 200);
                                           }}
@@ -442,8 +491,9 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                                   ...prev?.config || {},
                                                   initParams: _.omit(prev?.config?.initParams, res[0]),
                                                 }
-                                              }
-                                            })
+                                              };
+                                            });
+                                            setPluginEditItem(null);
                                           }}
                                         />
                                       </div>
@@ -459,6 +509,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                   }, [pluginInfo?.config?.initParams])
                 }
               </div>
+              <div id="params-bottom" />
             </div>
           </Splitter.Panel>
           <Splitter.Panel defaultSize="30%" min="20%" max="50%">
@@ -469,92 +520,216 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                 </div>
                 {
                   useMemo(() => {
-                    if (!pluginEditItem) return null;
-                    console.log(pluginEditItem);
+                    if (!pluginEditItem && !portEditItem) return null;
+                    console.log(pluginEditItem || portEditItem);
                     return <Fragment>
                       <div className="plugin-edit-body-right-box-body">
-                        <Form
-                          form={form1}
-                          layout={'vertical'}
-                          scrollToFirstError
-                        >
-                          <Divider>基本属性</Divider>
-                          <Form.Item
-                            name="type"
-                            label="属性类型"
-                            rules={[{ required: true, message: '属性类型' }]}
+                        {!!pluginEditItem ?
+                          <Form
+                            form={form1}
+                            layout={'vertical'}
+                            scrollToFirstError
                           >
-                            <Select
-                              options={(Object.keys(outputTypeObj) || [])?.map?.((option: any) => {
-                                if (_.isString(option)) {
-                                  return { key: option, label: option, value: option };
-                                } else {
-                                  const { key, label, value } = option;
-                                  return { key, label, value };
-                                }
-                              })}
-                            />
-                          </Form.Item>
-                          <Form.Item
-                            name="name"
-                            label="属性name"
-                            rules={[{ required: true, message: '属性name' }]}
+                            <Divider>基本属性</Divider>
+                            <Form.Item
+                              name="type"
+                              label="属性类型"
+                              rules={[{ required: true, message: '属性类型' }]}
+                            >
+                              <Select
+                                options={(Object.keys(outputTypeObj) || [])?.map?.((option: any) => {
+                                  if (_.isString(option)) {
+                                    return { key: option, label: option, value: option };
+                                  } else {
+                                    const { key, label, value } = option;
+                                    return { key, label, value };
+                                  }
+                                })}
+                              />
+                            </Form.Item>
+                            <Form.Item
+                              name="name"
+                              label="属性name"
+                              rules={[{ required: true, message: '属性name' }]}
+                            >
+                              <Input placeholder="请输入属性name" />
+                            </Form.Item>
+                            <Form.Item
+                              name="alias"
+                              label="属性别名"
+                              rules={[{ required: true, message: '属性别名' }]}
+                            >
+                              <Input placeholder="请输入属性别名" />
+                            </Form.Item>
+                            <Form.Item
+                              name="description"
+                              label="属性描述"
+                              rules={[{ required: false, message: '属性描述' }]}
+                            >
+                              <Input.TextArea placeholder="请输入属性描述" />
+                            </Form.Item>
+                            <Form.Item
+                              name="require"
+                              label="是否必填项"
+                              valuePropName="checked"
+                              rules={[{ required: true, message: '是否必填项' }]}
+                            >
+                              <Switch />
+                            </Form.Item>
+                            <Divider>私有属性</Divider>
+                            <InitParamsEdit data={pluginEditItem} form={form1} />
+                          </Form>
+                          :
+                          <Form
+                            form={form1}
+                            layout={'vertical'}
+                            scrollToFirstError
                           >
-                            <Input placeholder="请输入属性name" />
-                          </Form.Item>
-                          <Form.Item
-                            name="alias"
-                            label="属性别名"
-                            rules={[{ required: true, message: '属性别名' }]}
-                          >
-                            <Input placeholder="请输入属性别名" />
-                          </Form.Item>
-                          <Form.Item
-                            name="require"
-                            label="是否必填项"
-                            valuePropName="checked"
-                            rules={[{ required: true, message: '是否必填项' }]}
-                          >
-                            <Switch />
-                          </Form.Item>
-                          <Divider>私有属性</Divider>
-                          <InitParamsEdit data={pluginEditItem} form={form1} />
-                        </Form>
+                            <Divider>{portEditItem.direction === 'input' ? '入度' : '出度'}</Divider>
+                            <Form.Item
+                              name="type"
+                              label="连接桩类型"
+                              rules={[{ required: true, message: '连接桩类型' }]}
+                            >
+                              <Select
+                                options={Object.keys(portTypeObj)?.map?.((type) => ({ key: type, label: type, value: type }))}
+                              />
+                            </Form.Item>
+                            <Form.Item
+                              name="name"
+                              label="连接桩name"
+                              rules={[{ required: true, message: '连接桩name' }]}
+                            >
+                              <Input placeholder="请输入连接桩name" />
+                            </Form.Item>
+                            <Form.Item
+                              name="alias"
+                              label="连接桩别名"
+                              rules={[{ required: true, message: '连接桩别名' }]}
+                            >
+                              <Input placeholder="请输入连接桩别名" />
+                            </Form.Item>
+                            <Form.Item
+                              name="description"
+                              label="连接桩描述"
+                              rules={[{ required: false, message: '连接桩描述' }]}
+                            >
+                              <Input.TextArea placeholder="请输入连接桩描述" />
+                            </Form.Item>
+                            {
+                              portEditItem.direction === 'input' ?
+                                <Form.Item
+                                  name="require"
+                                  label="是否必要"
+                                  valuePropName="checked"
+                                  rules={[{ required: true, message: '是否必要' }]}
+                                >
+                                  <Switch />
+                                </Form.Item>
+                                :
+                                <Form.Item
+                                  name="pushData"
+                                  label="是否开启数据推送"
+                                  valuePropName="checked"
+                                  rules={[{ required: true, message: '是否开启数据推送' }]}
+                                >
+                                  <Switch />
+                                </Form.Item>
+                            }
+                          </Form>
+                        }
                       </div>
                       <div className="flex-box plugin-edit-body-right-box-footer">
                         <Button
                           type="default" block
                           onClick={() => {
                             setPluginEditItem(null);
+                            setPortEditItem(null);
                           }}>取消</Button>
                         <Button
                           type="primary" block
                           onClick={() => {
                             form1.validateFields()
                               .then((values) => {
-                                const { alias, name, description, require, type, value, ...rest } = values;
+                                const {
+                                  alias, name, description, require, pushData, type, value,
+                                  language, localPath, suffix, ...rest
+                                } = values;
                                 console.log(values);
-                                console.log(rest);
-                                setPluginInfo((prev: any) => {
-                                  return {
-                                    ...prev,
-                                    config: {
-                                      ...prev?.config || {},
-                                      initParams: {
-                                        ..._.omit(prev?.config?.initParams || {}, pluginEditItem.name) || {},
-                                        [name]: {
-                                          ..._.omit(_.omit(prev?.config?.initParams[pluginEditItem.name], 'value'), 'default'),
-                                          alias, name, description, require, type, value, default: value,
-                                          widget: {
-                                            ...prev?.config?.initParams[pluginEditItem.name]?.widget,
-                                            ...rest
-                                          }
-                                        },
+
+                                if (!!portEditItem) {
+                                  // 编辑连接桩
+                                  setPluginInfo((prev: any) => {
+                                    return {
+                                      ...prev,
+                                      config: {
+                                        ...prev?.config || {},
+                                        [portEditItem.direction]: {
+                                          ..._.omit(prev?.config?.[portEditItem.direction] || {}, portEditItem.name) || {},
+                                          [name]: {
+                                            ...prev?.config?.[portEditItem.direction][portEditItem.name],
+                                            alias, name, description, type,
+                                            ...portEditItem.direction === 'input' ? { require, } : { pushData, }
+                                          },
+                                        }
                                       }
                                     }
-                                  }
-                                });
-                                setPluginEditItem(null);
+                                  });
+                                  setPortEditItem(null);
+                                } else {
+                                  // 编辑属性
+                                  let optionsObj: any = {};
+                                  Object.keys(rest || {}).forEach((key: string) => {
+                                    const name = key.split('$%$');
+                                    if (name.length === 3 && name[0] === 'options') {
+                                      if (optionsObj[name[1]]) {
+                                        optionsObj[name[1]] = {
+                                          ...optionsObj[name[1]],
+                                          [name[2]]: values[key]
+                                        };
+                                      } else {
+                                        optionsObj[name[1]] = { [name[2]]: values[key] };
+                                      }
+                                    }
+                                  });
+                                  const options = Object.entries(optionsObj || {})?.map((item: any) => {
+                                    return {
+                                      id: item[0],
+                                      ...item[1]
+                                    }
+                                  });
+                                  const realValue = pluginEditItem?.widget?.type === "DatePicker" ?
+                                    (!!values.value.$d ? moment(values.value.$d).format("YYYY-MM-DD HH:mm:ss") : undefined) :
+                                    pluginEditItem?.widget?.type === "DataMap" ?
+                                      options?.reduce((pre: any, cen: any) => {
+                                        const { label, value } = cen;
+                                        return { ...pre, [label]: value };
+                                      }, {}) :
+                                      value;
+                                  setPluginInfo((prev: any) => {
+                                    return {
+                                      ...prev,
+                                      config: {
+                                        ...prev?.config || {},
+                                        initParams: {
+                                          ..._.omit(prev?.config?.initParams || {}, pluginEditItem.name) || {},
+                                          [name]: {
+                                            ..._.omit(_.omit(prev?.config?.initParams[pluginEditItem.name], 'value'), 'default'),
+                                            alias, name, description, require, type, language, localPath,
+                                            value: realValue,
+                                            default: realValue,
+                                            widget: {
+                                              ...prev?.config?.initParams[pluginEditItem.name]?.widget,
+                                              ...(options?.length > 0) ? { options } : {},
+                                              ...!!suffix ? { suffix } : {},
+                                            }
+                                          },
+                                        }
+                                      }
+                                    }
+                                  });
+                                  setPluginEditItem(null);
+                                }
                               })
                               .catch((err) => {
                                 const { errorFields } = err;
@@ -562,8 +737,8 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                               });
                           }}>保存</Button>
                       </div>
-                    </Fragment>
-                  }, [pluginEditItem])
+                    </Fragment>;
+                  }, [pluginEditItem, portEditItem])
                 }
               </div>
             </div>

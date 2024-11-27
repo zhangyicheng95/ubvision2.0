@@ -41,7 +41,7 @@
     "e2e": "playwright test",
     "electron": "NODE_ENV=development electron .",
     "build": "tsc && vite build && electron-builder",
-    "win": "npm run build && electron-builder --windows"
+    "win": "tsc && vite build && electron-builder --windows"
   },
   "dependencies": {
     "@antv/layout": "^1.2.14-beta.8",
@@ -53,9 +53,7 @@
     "@antv/x6-plugin-selection": "^2.2.2",
     "@antv/x6-plugin-snapline": "^2.1.7",
     "@antv/x6-plugin-transform": "^2.1.8",
-    "@antv/x6-react-components": "^2.0.8",
     "@antv/x6-react-shape": "^2.2.3",
-    "@antv/xflow": "^2.1.13",
     "@reduxjs/toolkit": "^2.3.0",
     "antd": "^5.21.6",
     "axios": "^1.7.7",

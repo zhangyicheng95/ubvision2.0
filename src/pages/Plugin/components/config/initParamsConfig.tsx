@@ -1,17 +1,210 @@
 import { Fragment, useEffect, useState } from 'react';
 import TooltipDiv from '@/components/TooltipDiv';
-import { Button, Checkbox, Col, Form, Input, InputNumber, Popconfirm, Radio, Row, Select, Switch } from 'antd';
 import {
-  EditOutlined, MinusCircleOutlined, QuestionCircleOutlined
+  Button, Checkbox, Col, DatePicker, Form, Input, InputNumber, Popconfirm, Radio, Row, Select, Switch,
+} from 'antd';
+import {
+  EditOutlined, MinusCircleOutlined, QuestionCircleOutlined, PlusOutlined, MinusOutlined
 } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import IpInput from '@/components/IpInputGroup';
 import SliderGroup from '@/components/SliderGroup';
-import { chooseFolder, openFolder } from '@/api/native-path';
-import { formatJson } from '@/utils/utils';
+import { chooseFile, chooseFolder, openFolder } from '@/api/native-path';
+import { formatJson, guid } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
+import MonacoEditor from '@/components/MonacoEditor';
+import moment from 'moment';
 
-export const InitParamsObject = (props: any) => {
+export const initParamsKeys: any = {
+  'Input': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Input' }
+  },
+  'IpInput': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'IpInput' }
+  },
+  'codeEditor': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'codeEditor' }
+  },
+  'InputNumber': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'InputNumber', max: undefined, min: undefined, step: undefined, precision: undefined }
+  },
+  'Slider': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Slider', max: undefined, min: undefined, step: undefined, precision: undefined }
+  },
+  'DatePicker': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'DatePicker', }
+  },
+  'Measurement': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Measurement', options: [] }
+  },
+  'Switch': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Switch', }
+  },
+  'Radio': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Radio', options: [] }
+  },
+  'Select': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Select', options: [] }
+  },
+  'TagRadio': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'TagRadio', options: [] }
+  },
+  'MultiSelect': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'MultiSelect', options: [] }
+  },
+  'Checkbox': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Checkbox', options: [] }
+  },
+  'DataMap': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'DataMap', options: [] }
+  },
+  'File': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'File', suffix: [], }
+  },
+  'ImageLabelField': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'ImageLabelField', suffix: [], }
+  },
+  'Dir': {
+    alias: '',
+    default: undefined,
+    description: undefined,
+    name: '',
+    require: true,
+    sort: 0,
+    type: '',
+    value: undefined,
+    widget: { type: 'Dir' }
+  }
+};
+export const InitParamsShow = (props: any) => {
   const {
     item = {},
     ifCanModify = false,
@@ -351,6 +544,71 @@ export const InitParamsObject = (props: any) => {
                       <TooltipDiv>是否必填项：{required}</TooltipDiv>
                     </Col>
                     <Col span={11} offset={1} className="text-style"></Col>
+                  </Row>
+                </Fragment>
+              ) : null}
+            </div>
+          </Col>
+        </Row>
+      );
+    case 'DatePicker':
+      return (
+        <Row className={`flex-box-start ${className}`}>
+          {!onlyShowPanel ? (
+            <Col span={6} className="label-style flex-box">
+              {alias || name}
+              {description ? (
+                <TooltipDiv title={description} >
+                  <QuestionCircleOutlined />
+                </TooltipDiv>
+              ) : null}
+            </Col>
+          ) : null}
+          <Col span={span || 18} className="wrapper-style flex-box-start">
+            <div
+              className="top-content"
+              style={onlyShowPanel ? { marginBottom: 0 } : {}}
+            >
+              <div className="flex-box top-content-plugin-operation">
+                <TooltipDiv className="plugin-style">
+                  <DatePicker showTime value={!!value ? moment(new Date(value)) : undefined} disabled style={{ width: '100%' }} />
+                </TooltipDiv>
+                {ifCanModify ? (
+                  <div className="flex-box">
+                    <EditOutlined
+                      className="plugin-icon"
+                      onClick={() => {
+                        return onEdit();
+                      }}
+                    />
+                    <Popconfirm
+                      title="确定删除当前属性?"
+                      onConfirm={() => {
+                        onRemove();
+                      }}
+                    >
+                      <MinusCircleOutlined className="plugin-icon" />
+                    </Popconfirm>
+                  </div>
+                ) : null}
+              </div>
+              {!onlyShowPanel ? (
+                <Fragment>
+                  <Row className="flex-box-justify-between">
+                    <Col span={12} className="text-style">
+                      <TooltipDiv>类型：{type}</TooltipDiv>
+                    </Col>
+                    <Col span={11} offset={1} className="text-style">
+                      <TooltipDiv>初始值：{!!defaultValue ? moment(new Date(defaultValue)).format("YYYY-MM-DD HH:mm:ss") : undefined}</TooltipDiv>
+                    </Col>
+                  </Row>
+                  <Row className="flex-box-justify-between">
+                    <Col span={12} className="text-style">
+                      <TooltipDiv>默认值：{!!value ? moment(new Date(value)).format("YYYY-MM-DD HH:mm:ss") : undefined}</TooltipDiv>
+                    </Col>
+                    <Col span={11} offset={1} className="text-style">
+                      <TooltipDiv>是否必填项：{required}</TooltipDiv>
+                    </Col>
                   </Row>
                 </Fragment>
               ) : null}
@@ -1046,7 +1304,7 @@ export const InitParamsObject = (props: any) => {
           </Col>
         </Row>
       );
-    case ('CodeEditor' || 'codeEditor'):
+    case 'codeEditor':
       return (
         <Row className={`flex-box-start ${className}`}>
           {!onlyShowPanel ? (
@@ -1293,7 +1551,7 @@ export const InitParamsObject = (props: any) => {
             >
               <div className="flex-box top-content-plugin-operation">
                 <Input.TextArea
-                  rows={5}
+                  autoSize={{ minRows: 5, maxRows: 5 }}
                   value={_.isObject(valueDataMap) ? formatJson(valueDataMap) : valueDataMap}
                   style={{ marginBottom: 8 }}
                   disabled
@@ -1409,19 +1667,40 @@ export const InitParamsObject = (props: any) => {
 
 export const InitParamsEdit = (props: any) => {
   const { data, form } = props;
-  const { widget } = data || {};
+  const { widget, language } = data || {};
   const {
-    type, max, min, step, precision
+    type, suffix, max, min, step, precision
   } = widget || {};
-  const [options, setOptions] = useState([]);
-  const [uploadValue, setUploadValue] = useState('');
+  const [options, setOptions] = useState<any>([]);
+  const [uploadValue, setUploadValue] = useState<any>(undefined);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    setOptions(widget?.options || []);
-  }, [widget?.options]);
+    if (_.isArray(suffix)) {
+      setOptions(suffix);
+    } else {
+      setOptions(_.isArray(widget?.options) ? widget?.options?.map((i: any) => ({ id: guid(), ...i })) : []);
+    }
+  }, [widget?.options, suffix]);
   useEffect(() => {
-    setUploadValue(data.value);
-  }, [data.value]);
+    if (type === 'codeEditor') {
+      try {
+        setUploadValue({
+          value: formatJson(data.value),
+          language
+        });
+      } catch (err) {
+        setUploadValue({
+          value: data.value,
+          language
+        });
+      };
+    } else if (type === 'ImageLabelField') {
+      setUploadValue(data.localPath);
+    } else {
+      setUploadValue(data.value);
+    }
+  }, [data.value, data.localPath]);
 
   switch (type) {
     case 'Input':
@@ -1432,6 +1711,18 @@ export const InitParamsEdit = (props: any) => {
           rules={[{ required: false, message: 'value' }]}
         >
           <Input placeholder="请输入默认值" />
+        </Form.Item>
+      </Fragment>;
+    case 'DatePicker':
+      return <Fragment>
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          {
+            <DatePicker showTime style={{ width: '100%' }} />
+          }
         </Form.Item>
       </Fragment>;
     case 'IpInput':
@@ -1527,35 +1818,388 @@ export const InitParamsEdit = (props: any) => {
           label="默认值"
           rules={[{ required: false, message: '默认值' }]}
         >
-          <Radio.Group block options={options} defaultValue="Apple" />
+          <Radio.Group block options={options} />
         </Form.Item>
-        <Form.Item
-          name="options"
-          label="默认值"
-          rules={[{ required: false, message: '默认值' }]}
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
         >
-          <Radio.Group block options={options} defaultValue="Apple" />
-        </Form.Item>
+          添加
+        </Button>
       </Fragment>;
     case 'TagRadio':
       return <Fragment>
-
-      </Fragment>;
-    case 'AlgoList':
-      return <Fragment>
-
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Select options={options} />
+        </Form.Item>
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     case 'Select':
       return <Fragment>
-
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Select options={options} />
+        </Form.Item>
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     case 'MultiSelect':
       return <Fragment>
-
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Select mode="multiple" options={options} />
+        </Form.Item>
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     case 'Checkbox':
       return <Fragment>
-
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Checkbox.Group options={options} />
+        </Form.Item>
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     case 'Switch':
       return <Fragment>
@@ -1570,7 +2214,92 @@ export const InitParamsEdit = (props: any) => {
       </Fragment>;
     case 'File':
       return <Fragment>
-
+        <Form.Item
+          name="suffix"
+          label="允许类型"
+          rules={[{ required: true, message: '允许选择的类型' }]}
+        >
+          <Checkbox.Group
+            options={[
+              { label: 'jpg', value: 'jpg' },
+              { label: 'jpeg', value: 'jpeg' },
+              { label: 'png', value: 'png' },
+              { label: 'svg', value: 'svg' },
+              { label: 'pdf', value: 'pdf' },
+              { label: 'pt', value: 'pt' },
+              { label: 'py', value: 'py' },
+              { label: 'doc', value: 'doc' },
+              { label: 'docx', value: 'docx' },
+              { label: 'csv', value: 'csv' },
+              { label: 'bmp', value: 'bmp' },
+              { label: 'json', value: 'json' },
+              { label: '不限类型', value: 'all' },
+            ]}
+            onChange={(val: any) => {
+              if (val?.includes('all') || val.length === 13) {
+                const result = ['jpg', 'jpeg', 'png', 'svg', 'pdf', 'pt', 'py', 'doc', 'docx', 'csv', 'bmp', 'json', 'all',];
+                form.setFieldsValue({
+                  suffix: result
+                });
+                setOptions(result);
+              } else if (val.length === 12 && !val.includes('all')) {
+                form.setFieldsValue({
+                  suffix: []
+                });
+                setOptions([]);
+              } else {
+                setOptions(val);
+              }
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          name="value"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <code className="flex-box-justify-between">
+            <div className="flex-box" style={{ width: `calc(100% - 88px)` }}>
+              {
+                uploadValue ?
+                  <TooltipDiv title={uploadValue} style={{ flex: 1 }}>
+                    <TooltipDiv onClick={() => openFolder(`${uploadValue}\\`)}>{uploadValue}</TooltipDiv>
+                  </TooltipDiv>
+                  : null
+              }
+              <a
+                style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
+                onClick={() => {
+                  setUploadValue('');
+                  form.setFieldsValue({ value: undefined });
+                }}
+              >
+                移除
+              </a>
+            </div>
+            <Button
+              size='small'
+              onClick={() => {
+                chooseFile(
+                  (res: any) => {
+                    const result = _.isArray(res) && res.length === 1 ? res[0] : res;
+                    setUploadValue(result);
+                    form.setFieldsValue({ value: result });
+                  },
+                  false,
+                  (options?.includes('all') || options?.length === 0)
+                    ? { name: 'All Files', extensions: ['*'] }
+                    : {
+                      name: 'File',
+                      extensions: options,
+                    }
+                );
+              }}
+            >
+              选择文件
+            </Button>
+          </code>
+        </Form.Item>
       </Fragment>;
     case 'Dir':
       return <Fragment>
@@ -1614,21 +2343,249 @@ export const InitParamsEdit = (props: any) => {
           </code>
         </Form.Item>
       </Fragment>;
-    case 'CodeEditor':
+    case 'codeEditor':
       return <Fragment>
-
+        <Form.Item
+          name="language"
+          label="编码语言"
+          rules={[{ required: false, message: '编码语言' }]}
+        >
+          <Select
+            options={[
+              { value: 'javascript', label: 'javascript' },
+              { value: 'python', label: 'python' },
+              { value: 'json', label: 'json' },
+              { value: 'sql', label: 'sql' },
+            ]}
+            onChange={(val) => {
+              setUploadValue((prev: any) => ({ ...prev, language: val }));
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          name="value"
+          label="默认值"
+          style={{ marginBottom: 8 }}
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Input.TextArea
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            disabled
+          />
+        </Form.Item>
+        <Button
+          style={{ marginBottom: 24 }}
+          onClick={() => {
+            setModalVisible(true);
+          }}
+        >
+          编辑
+        </Button>
+        {modalVisible ?
+          <MonacoEditor
+            defaultValue={uploadValue.value}
+            language={uploadValue.language}
+            visible={modalVisible}
+            onOk={(val: any) => {
+              setUploadValue(val);
+              form.setFieldsValue({ value: val?.value || '', language: val?.language });
+              setModalVisible(false);
+            }}
+            onCancel={() => {
+              setModalVisible(false);
+            }}
+          />
+          : null}
       </Fragment>;
     case 'ImageLabelField':
       return <Fragment>
-
+        <Form.Item
+          name="localPath"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <code className="flex-box-justify-between">
+            <div className="flex-box" style={{ width: `calc(100% - 104px)` }}>
+              {
+                uploadValue ?
+                  <TooltipDiv title={uploadValue} style={{ flex: 1 }}>
+                    <TooltipDiv onClick={() => openFolder(`${uploadValue}\\`)}>{uploadValue}</TooltipDiv>
+                  </TooltipDiv>
+                  : null
+              }
+              <a
+                style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
+                onClick={() => {
+                  setUploadValue('');
+                  form.setFieldsValue({ localPath: undefined });
+                }}
+              >
+                移除
+              </a>
+            </div>
+            <Button
+              size='small'
+              onClick={() => {
+                chooseFile(
+                  (res: any) => {
+                    const result = _.isArray(res) && res.length === 1 ? res[0] : res;
+                    setUploadValue(result);
+                    form.setFieldsValue({ localPath: result });
+                  },
+                  false,
+                  {
+                    name: 'File',
+                    extensions: ['jpg', 'jpeg', 'png', 'svg'],
+                  }
+                );
+              }}
+            >
+              选择图片文件
+            </Button>
+          </code>
+        </Form.Item>
       </Fragment>;
     case 'Measurement':
       return <Fragment>
-
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="label"
+                  initialValue={label}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  <Input placeholder='value' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     case 'DataMap':
       return <Fragment>
-
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="原始值"
+                  initialValue={label}
+                  rules={[{ required: false, message: '原始值' }]}
+                >
+                  <Input placeholder='原始值' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="映射值"
+                  initialValue={value}
+                  rules={[{ required: false, message: '映射值' }]}
+                >
+                  <Input placeholder='映射值' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
       </Fragment>;
     default:
       return null;

@@ -23,8 +23,8 @@ export const chooseFolder = (callback: (directoryPath: string | undefined, err: 
 
 /**
  * 调用本地文件浏览器，选择一个或多个文件，获得路径列表
- * @param multi 是否可以多选
  * @param callback 选取结束的callback
+ * @param multi 是否可以多选
  * @param filters
  */
 export const chooseFile = (
