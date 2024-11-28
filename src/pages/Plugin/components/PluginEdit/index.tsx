@@ -37,6 +37,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
   const [pluginInfo, setPluginInfo] = useState<any>({});
   const [pluginEditItem, setPluginEditItem] = useState<any>(null);
   const [portEditItem, setPortEditItem] = useState<any>(null);
+  const [pluginUpdate, setPluginUpdate] = useState<any>(false);
 
   const initPlugin = (data: any) => {
     try {
@@ -85,10 +86,11 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
             {}
           ),
           initParams: (Object.entries(initParams) || []).reduce(
-            (pre, cen: [any, any]) => {
+            (pre, cen: [any, any], index: number) => {
               return {
                 ...pre,
                 [cen[0]]: {
+                  sort: index,
                   ...cen[1],
                   ...(!_.isUndefined(cen[1].value) && !_.isNull(cen[1].value)
                     ? {}
@@ -545,6 +547,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                     return { key, label, value };
                                   }
                                 })}
+                                onChange={() => setPluginUpdate((pre: boolean) => !pre)}
                               />
                             </Form.Item>
                             <Form.Item
@@ -656,7 +659,6 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                   language, localPath, suffix, ...rest
                                 } = values;
                                 console.log(values);
-
                                 if (!!portEditItem) {
                                   // 编辑连接桩
                                   setPluginInfo((prev: any) => {
@@ -692,10 +694,15 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                       }
                                     }
                                   });
-                                  const options = Object.entries(optionsObj || {})?.map((item: any) => {
+                                  const options = Object.entries(optionsObj || {})?.map((i: any) => {
                                     return {
-                                      id: item[0],
-                                      ...item[1]
+                                      id: i[0],
+                                      ...i[1],
+                                      value: type === 'int' ?
+                                        parseInt(Number(i[1].value).toFixed(0)) :
+                                        type === 'float' ?
+                                          (!!rest.precision ? parseFloat(Number(i[1].value).toFixed(rest.precision)) : parseFloat(i[1].value)) :
+                                          ('' + i[1].value)
                                     }
                                   });
                                   const realValue = pluginEditItem?.widget?.type === "DatePicker" ?
@@ -705,7 +712,9 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                         const { label, value } = cen;
                                         return { ...pre, [label]: value };
                                       }, {}) :
-                                      value;
+                                      pluginEditItem?.widget?.type === "Measurement" ?
+                                        options :
+                                        value;
                                   setPluginInfo((prev: any) => {
                                     return {
                                       ...prev,
@@ -720,7 +729,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                             default: realValue,
                                             widget: {
                                               ...prev?.config?.initParams[pluginEditItem.name]?.widget,
-                                              ...(options?.length > 0) ? { options } : {},
+                                              ...(options?.length > 0) ? { options, ...(!!rest.precision && type === 'float') ? { precision: rest.precision } : {} } : { ...rest },
                                               ...!!suffix ? { suffix } : {},
                                             }
                                           },
@@ -738,7 +747,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                           }}>保存</Button>
                       </div>
                     </Fragment>;
-                  }, [pluginEditItem, portEditItem])
+                  }, [pluginEditItem, portEditItem, pluginUpdate])
                 }
               </div>
             </div>

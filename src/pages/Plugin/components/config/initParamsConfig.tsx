@@ -2448,14 +2448,25 @@ export const InitParamsEdit = (props: any) => {
     case 'Measurement':
       return <Fragment>
         {
+          ['float'].includes(form.getFieldValue('type') || data.type) ?
+            <Form.Item
+              name={`precision`}
+              label="保留小数点后几位数"
+              rules={[{ required: false, message: 'value' }]}
+            >
+              <InputNumber min={0} precision={0} step={1} />
+            </Form.Item>
+            : null
+        }
+        {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
-              const { id, label, value } = item;
+              const { id, alias, value } = item;
               return <div className="flex-box" style={{ gap: 8 }}>
                 <Form.Item
-                  name={`options$%$${id}$%$label`}
+                  name={`options$%$${id}$%$alias`}
                   label="label"
-                  initialValue={label}
+                  initialValue={alias}
                   rules={[{ required: false, message: 'label' }]}
                 >
                   <Input placeholder='label' onChange={(e) => {
@@ -2465,7 +2476,7 @@ export const InitParamsEdit = (props: any) => {
                         if (pre.id === id) {
                           return {
                             ...pre,
-                            label: value
+                            alias: value
                           };
                         } else {
                           return pre;
@@ -2480,21 +2491,39 @@ export const InitParamsEdit = (props: any) => {
                   initialValue={value}
                   rules={[{ required: false, message: 'value' }]}
                 >
-                  <Input placeholder='value' onChange={(e) => {
-                    const { value } = e.target;
-                    setOptions((prev: any) => {
-                      return prev?.map((pre: any) => {
-                        if (pre.id === id) {
-                          return {
-                            ...pre,
-                            value
-                          };
-                        } else {
-                          return pre;
-                        };
-                      });
-                    });
-                  }} />
+                  {
+                    ['int', 'float'].includes(form.getFieldValue('type')) ?
+                      <InputNumber onChange={(value) => {
+                        setOptions((prev: any) => {
+                          return prev?.map((pre: any) => {
+                            if (pre.id === id) {
+                              return {
+                                ...pre,
+                                value
+                              };
+                            } else {
+                              return pre;
+                            };
+                          });
+                        });
+                      }} />
+                      :
+                      <Input placeholder='value' onChange={(e) => {
+                        const { value } = e.target;
+                        setOptions((prev: any) => {
+                          return prev?.map((pre: any) => {
+                            if (pre.id === id) {
+                              return {
+                                ...pre,
+                                value
+                              };
+                            } else {
+                              return pre;
+                            };
+                          });
+                        });
+                      }} />
+                  }
                 </Form.Item>
                 <Button
                   icon={<MinusOutlined />}
@@ -2511,7 +2540,7 @@ export const InitParamsEdit = (props: any) => {
           block
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), alias: '', value: '' }))}
         >
           添加
         </Button>

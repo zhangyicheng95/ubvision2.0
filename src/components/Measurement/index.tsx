@@ -103,7 +103,7 @@ const Measurement: React.FC<Props> = (props: any) => {
   };
 
   return (
-    <div className={`flex-box ${styles.roiMark}`}>
+    <div className={`flex-box ${styles.measurement}`}>
       {Object.entries(selfValue)?.map?.((item: any, index: number) => {
         const { alias, value } = item[1];
         return (
@@ -126,7 +126,7 @@ const Measurement: React.FC<Props> = (props: any) => {
                     Object.assign({}, prev, { [`refnum_${index}`]: true })
                   )
                 }
-                onBlur={(e) => {
+                onChange={(e) => {
                   const val = e?.target?.value;
                   setFocus((prev: any) =>
                     Object.assign({}, prev, {
@@ -171,13 +171,12 @@ const Measurement: React.FC<Props> = (props: any) => {
                     Object.assign({}, prev, { [`refnum_${index}`]: true })
                   )
                 }
-                onBlur={(e: any) => {
-                  const valu = Number(e?.target?.value);
+                onChange={(valu: any) => {
                   if (!_.isNaN(valu)) {
                     const val =
                       type === 'float'
-                        ? parseFloat(e?.target?.value)
-                        : parseInt(e?.target?.value);
+                        ? parseFloat(valu)
+                        : parseInt(valu);
                     setFocus((prev: any) =>
                       Object.assign({}, prev, {
                         [`refnum_${index}`]: !(
