@@ -349,7 +349,7 @@ const AlertItem = (props: any) => {
   // 复制访问链接
   const copyUrlLink = (item: any) => {
     const { id } = item;
-    const ip = process?.env?.IPAddress;
+    const ip = ipcRenderer?.process?.env?.IPAddress;
     const url = `http://${ip}:5001/index.html#/home?ipUrl=${ip}:8866&id=${id}&timestamp=${+new Date()}`;
     copyUrlToClipBoard(url);
   };

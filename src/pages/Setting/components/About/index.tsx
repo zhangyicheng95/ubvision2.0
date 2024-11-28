@@ -43,7 +43,7 @@ const AboutPage: React.FC<Props> = (props: any) => {
           检查更新
           <div className="flex-box">
             <span style={{ marginRight: 8, color: '#a0a3a7', fontSize: 12 }}>
-              {process.env.APP_VERSION}
+              {ipcRenderer?.process.env.APP_VERSION}
             </span>
             {!!localStorage.getItem('needUpdate') ? (
               <Badge status="success" />

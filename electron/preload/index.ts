@@ -1,5 +1,7 @@
 import { ipcRenderer, contextBridge } from 'electron'
+import pkg from '../../package.json';
 
+const processRender = process.env;
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -31,6 +33,16 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
       return listener(...args);
     });
   },
+  // 把process暴露出去
+  process: {
+    env: {
+      ...processRender || {},
+      APP_VERSION: pkg.version
+    }
+  },
+  getSearchParams: () => {
+    return new URLSearchParams(window.location.search);
+  }
 })
 
 // --------- Preload scripts loading ---------

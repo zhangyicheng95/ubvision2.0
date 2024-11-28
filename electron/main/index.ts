@@ -115,7 +115,7 @@ ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
     getMotherboardSerialNumber().then(serialNumber => {
       // MAC地址
       const macAddresses = getMACAddresses();
-      event.sender.send('hostname-read-reply', `${serialNumbers}.${serialNumber}.${macAddresses}`);
+      event.sender.send('hostname-read-reply', `${serialNumbers}${serialNumber}.${macAddresses}`);
     }).catch(error => {
       console.error(error);
     });
@@ -311,7 +311,7 @@ const createWindow = async (arg?: any) => {
     kiosk: false,
     // icon: getAssetPath('icon.png'),
     webPreferences: {
-      preload,
+      preload: preload,
       webSecurity: false, //网络安全，false允许访问本地文件
       nodeIntegration: true, // 是否集成Node
     },
@@ -353,21 +353,18 @@ const createWindow = async (arg?: any) => {
     return nativeTheme.themeSource;
   });
 
-  // if (VITE_DEV_SERVER_URL) { // #298
-  //   // Open devTool if the app is not packaged
-  //   mainWindow.webContents.openDevTools()
-  // }
+  const urlParams = res?.type === 'child'
+    ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
+    : !!params
+      ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
+      : `?number=${mainWindow.id}`;
   if (VITE_DEV_SERVER_URL) {
     // 开发环境
-    mainWindow.loadURL(VITE_DEV_SERVER_URL +
-      (res?.type === 'child'
-        ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
-        : !!params
-          ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
-          : `?number=${mainWindow.id}`));
+    mainWindow.loadURL(`${VITE_DEV_SERVER_URL}${urlParams}`);
   } else {
-    // 生产环境
-    mainWindow.loadFile('dist/index.html');
+    const url = `file://${indexHtml}${urlParams}`;
+    console.log(`加载的页面url:${url}`);
+    mainWindow.loadURL(url);
   }
 
   // Test actively push message to the Electron-Renderer

@@ -27,22 +27,6 @@ const Login: React.FC<Props> = (props: any) => {
   }, []);
 
   const onFinish = (values: any) => {
-    // if (process.env.NODE_ENV === 'development') {
-    //   localStorage.setItem(
-    //     'userInfo',
-    //     JSON.stringify(
-    //       Object.assign(
-    //         {},
-    //         values,
-    //         JSON.parse(localStorage.getItem('userInfo') || '{}'),
-    //         { authList: Object.keys(authorToChinese) },
-    //         { loginTime: new Date().getTime() }
-    //       )
-    //     )
-    //   );
-    //   navigate('/home');
-    //   window.location.reload();
-    // } else {
     const { userName, password } = values;
     setLoading(true);
     login({
@@ -86,7 +70,6 @@ const Login: React.FC<Props> = (props: any) => {
         const { errorFields } = err;
         message.error(`${errorFields[0].errors[0]} 是必填项`);
       });
-    // }
   };
   console.log('login');
 

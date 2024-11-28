@@ -2,7 +2,7 @@ import { App } from 'electron'
 
 import DB from '../../database/DB';
 import { Exists, NotFound, Success } from '../../types/ipc.response';
-import { md5sum } from '../../util';
+import { md5sum } from '../../../main/util';
 
 class ProjectService {
   //  默认设置

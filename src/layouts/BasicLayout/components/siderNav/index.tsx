@@ -80,12 +80,13 @@ interface Props {
 }
 
 const SiderNav: React.FC<Props> = (props: any) => {
+  const { ipcRenderer }: any = window || {};
   const userAuthList = getUserAuthList();
   const userInfo = getUserData();
   const navigate = useNavigate();
-  const { pathname = userAuthList?.includes('project') ? '/home' : '/alert' } = useLocation();
+  const { pathname } = useLocation();
   const selectedKeys = useMemo(() => {
-    return pathname;
+    return pathname === '/' ? (userAuthList?.includes('projects.list') ? '/home' : '/alert') : pathname;
   }, [pathname]);
   const sliderList = menuConfig?.map?.(menu => {
     const { name, path, id, icon = '', check } = menu;
@@ -114,10 +115,10 @@ const SiderNav: React.FC<Props> = (props: any) => {
         }}
         items={sliderList}
       />
-      <Tooltip title={process?.env?.APP_VERSION || 'V0.1.0.Alpha'} placement="left">
+      <Tooltip title={ipcRenderer?.process?.env?.APP_VERSION || 'V0.1.0.Alpha'} placement="left">
         <div className="sider-bottom flex-box-column">
           <div className="sider-bottom-title">UBVISION</div>
-          <span className="sider-bottom-label">V{process?.env?.APP_VERSION || '0.1.0.Alpha'}</span>
+          <span className="sider-bottom-label">V{ipcRenderer?.process?.env?.APP_VERSION || '0.1.0.Alpha'}</span>
         </div>
       </Tooltip>
       <div

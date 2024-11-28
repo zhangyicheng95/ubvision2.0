@@ -113,10 +113,9 @@ const App: React.FC = () => {
     const getUseTimeFun = (hostName: string) => {
       ProjectApi.getStorage('softwareUseTime').then((res) => {
         const { num } = res?.data || {};
-        const useNum = (num || 0) + 1;
+        const useNum = num || 0;
         ProjectApi.getStorage('softwareEmpowerTime').then((empowerRes) => {
           const { time = new Date().getTime() } = empowerRes?.data || {};
-          alert(`res.data: ${JSON.stringify(res.data)}; empowerRes?.data: ${JSON.stringify(empowerRes?.data)}`)
           if (
             permissionRule(
               {
@@ -126,6 +125,7 @@ const App: React.FC = () => {
               },
               { useNum, time: res?.data?.time, today: new Date().getTime(), hostName })
           ) {
+            setHasInit(false);
             setEmpowerVisible(true);
             clearInterval(timeRef.current);
           } else {
@@ -276,7 +276,7 @@ const App: React.FC = () => {
                           <Route path="/auth/*" element={<AuthRouter />} />
                           <Route path="/userSetting" element={<UserPage />} />
                           <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
-                          {userAuthList?.includes('projects') ? (
+                          {userAuthList?.includes('projects.list') ? (
                             <Route path="*" element={<HomePage />} />
                           ) : (
                             <Route path="*" element={<AlertRouter />} />

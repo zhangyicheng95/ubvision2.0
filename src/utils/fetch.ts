@@ -90,9 +90,6 @@ function axiosRequest(config: any) {
       return response;
     })
     .catch((error) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('requestError:', error);
-      }
       if (error.response) {
         const { status } = error.response;
         if (
