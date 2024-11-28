@@ -1,28 +1,22 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete, Dropdown, Menu, Popconfirm, Badge, Splitter, Select, Divider, Col, Row, InputNumber, Radio, Checkbox, Switch } from 'antd';
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Form, message, Input, Menu, Popconfirm, Splitter, Select, Divider, Switch } from 'antd';
 import {
-  EditOutlined, MinusCircleOutlined, QuestionCircleOutlined, FolderAddOutlined, FolderOpenOutlined, FolderOutlined, LaptopOutlined, PlusOutlined, ProjectOutlined
+  EditOutlined, MinusCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
-import { login } from '@/services/auth';
-import { cryptoEncryption, downFileFun, formatJson, getUserAuthList, guid, sortList } from '@/utils/utils';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { formatJson, guid, sortList } from '@/utils/utils';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
-import { deletePlugin, getPlugin, getPluginList, updatePlugin } from '@/services/flowPlugin';
-import BasicTable from '@/components/BasicTable';
+import { IRootActions } from '@/redux/actions';
+import { getPlugin, updatePlugin } from '@/services/flowPlugin';
 import moment from 'moment';
 import TooltipDiv from '@/components/TooltipDiv';
 import { outputTypeObj, pluginsNameIcon, portTypeObj } from '@/pages/Flow/common/constants';
-import { openFolder } from '@/api/native-path';
-import Measurement from '@/components/Measurement';
-import IpInput from '@/components/IpInputGroup';
-import SliderGroup from '@/components/SliderGroup';
 import { InitParamsEdit, initParamsKeys, InitParamsShow } from '../config/initParamsConfig';
+import dayjs from 'dayjs';
 
 interface Props { }
 
@@ -470,13 +464,14 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                           item={res[1]}
                                           ifCanModify
                                           onEdit={() => {
+                                            form1.resetFields();
                                             setPluginEditItem(res[1]);
                                             setTimeout(() => {
                                               const result = {
                                                 description: '',
                                                 ...res[1],
                                                 value: res[1]?.widget?.type === "DatePicker" ?
-                                                  (!!res[1].value ? moment(new Date(res[1].value)) : undefined) :
+                                                  (!!res[1].value ? dayjs(res[1].value, 'YYYY-MM-DD HH:mm:ss') : undefined) :
                                                   res[1]?.widget?.type === "DataMap" ?
                                                     (!!res[1].value ? formatJson(res[1].value) : undefined) :
                                                     res[1].value,
@@ -729,7 +724,12 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
                                             default: realValue,
                                             widget: {
                                               ...prev?.config?.initParams[pluginEditItem.name]?.widget,
-                                              ...(options?.length > 0) ? { options, ...(!!rest.precision && type === 'float') ? { precision: rest.precision } : {} } : { ...rest },
+                                              ...(options?.length > 0) ?
+                                                pluginEditItem?.widget?.type !== "DataMap" ? {
+                                                  options,
+                                                  ...(!!rest.precision && type === 'float') ? { precision: rest.precision } : {}
+                                                } : {} :
+                                                { ...rest },
                                               ...!!suffix ? { suffix } : {},
                                             }
                                           },

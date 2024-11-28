@@ -26,7 +26,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       : {};
   const id = params?.['id'];
   const number = params?.['number'];
-  const { graphData, canvasData, canvasStart } = useSelector((state: IRootActions) => state);
+  const { graphData, canvasData, canvasStart, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [api, contextHolder] = notification.useNotification(notificationSetting);
@@ -252,12 +252,13 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           size='small'
           icon={<SaveOutlined />}
           className={!!canvasStart ? '' : 'info-font'}
-          disabled={!!canvasStart}
+          disabled={!!canvasStart || !!selectedNode}
           onClick={() => {
             saveGraph();
           }}
         >保存</Button>
         <Dropdown
+          trigger={!!selectedNode ? [] : ['click']}
           getPopupContainer={(triggerNode: any) => {
             return triggerNode.parentNode || document.body;
           }}
@@ -267,7 +268,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
             size='small'
             icon={<CaretRightOutlined />}
             className={!!canvasStart ? '' : 'success-font'}
-            disabled={!!canvasStart}
+            disabled={!!canvasStart || !!selectedNode}
           >启动</Button>
         </Dropdown>
         <Button

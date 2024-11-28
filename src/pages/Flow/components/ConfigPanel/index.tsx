@@ -4,7 +4,7 @@ import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
 import {
-  Button, Checkbox, Divider, Form, Input, InputNumber, message, Modal, Radio, Select,
+  Button, Checkbox, DatePicker, Divider, Form, Input, InputNumber, message, Modal, Radio, Select,
   Splitter, Switch, Tabs, TabsProps,
 } from 'antd';
 import {
@@ -20,6 +20,8 @@ import { formatJson, getuid, guid, sortList } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
 import { portTypeObj } from '../../common/constants';
 import ShowDataPanel from '../ShowDataPanel';
+import dayjs from 'dayjs';
+import MonacoEditor from '@/components/MonacoEditor';
 
 const { confirm } = Modal;
 interface Props { }
@@ -142,6 +144,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
     return new Promise((resolve, reject) => {
       validateFields()
         .then((values) => {
+          console.log(values);
           try {
             if (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) {
               // 节点编辑-保存
@@ -230,7 +233,26 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                       ...pre,
                       [cen[0]]: {
                         ...cen[1],
-                        value: values[`params$%$${cen[0]}`]
+                        ...cen[1]?.widget?.type === 'ImageLabelField' ?
+                          {
+                            value: cen[1]?.value || undefined,
+                            localPath: values[`params$%$${cen[0]}`],
+                            widget: {
+                              ..._.omit(cen[1]?.widget || {}, 'localPath'),
+                            }
+                          } :
+                          cen[1]?.widget?.type === 'DatePicker' ?
+                            {
+                              value: !!values[`params$%$${cen[0]}`].$d ? moment(values[`params$%$${cen[0]}`].$d).format("YYYY-MM-DD HH:mm:ss") : undefined
+                            }
+                            :
+                            cen[1]?.widget?.type === "codeEditor" ?
+                              {
+                                value: values[`params$%$${cen[0]}`],
+                                language: values[`params$%$${cen[0]}-language`]
+                              }
+                              :
+                              { value: values[`params$%$${cen[0]}`] }
                       }
                     }
                   }, {}),
@@ -328,6 +350,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           }
         })
         .catch((err) => {
+          console.log(err);
           const { errorFields } = err;
           errorFields?.length && message.error(`${errorFields[0]?.errors[0]} 是必填项`);
           reject()
@@ -342,6 +365,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
+                console.log(nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}
@@ -364,7 +388,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                             <div style={selectedTab === 'params' ? {} : { display: 'none' }}>
                               {
                                 Object.entries(nodeConfig?.config?.initParams || {})
-                                  ?.sort((a: any, b: any) => a.sort - b.sort)
+                                  ?.sort((a: any, b: any) => a[1].sort - b[1].sort)
                                   ?.map((res: any, index: number) => {
                                     return <FormatWidgetToDom
                                       key={res[0]}
@@ -663,6 +687,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                       : null
                                   }
                                   <Button
+                                    size="small"
                                     icon={<CloudUploadOutlined />}
                                     disabled={canvasStart}
                                     onClick={() => {
@@ -801,15 +826,7 @@ const FormatWidgetToDom = (props: any) => {
   const {
     config = [],
     form,
-    setEditorVisible,
     disabled,
-    widgetChange,
-    selectedOption,
-    setSelectedOption,
-    setPlatFormVisible,
-    setPlatFormValue,
-    setEditorValue,
-    setMultiInput,
   } = props;
   const {
     name: aliasDefault,
@@ -837,14 +854,38 @@ const FormatWidgetToDom = (props: any) => {
   } = widget;
   const name = config[0];
   const [uploadValues, setUploadValues] = useState<any>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [optionsList, setOptionsList] = useState<any>([]);
 
   useEffect(() => {
-    if (['File', 'Dir', 'ImageLabelField'].includes(type1)) {
+    if (type1 === 'codeEditor') {
+      try {
+        setUploadValues({
+          value: formatJson(value),
+          language
+        });
+      } catch (err) {
+        setUploadValues({
+          value: value,
+          language
+        });
+      };
+    } else if (['File', 'Dir', 'ImageLabelField'].includes(type1)) {
       setUploadValues({
         [name]: value
       })
+    } else if (type1 === 'DataMap') {
+      setOptionsList(Object.entries(_.isString(value) ? JSON.parse(value || "{}") : value)
+        ?.map((i: any, index: number) => {
+          return {
+            id: guid(),
+            label: i[0],
+            value: i[1]
+          }
+        }));
     };
   }, [value]);
+
   switch (type1) {
     case 'Input':
       return (
@@ -858,9 +899,6 @@ const FormatWidgetToDom = (props: any) => {
           <Input
             placeholder={`请输入${alias}`}
             disabled={disabled}
-            onBlur={(e) => {
-              widgetChange(e.target.id, e.target.value?.trim(), parentName);
-            }}
           />
         </Form.Item>
       );
@@ -870,21 +908,15 @@ const FormatWidgetToDom = (props: any) => {
           name={name}
           label={alias || name}
           tooltip={description || aliasDefault}
-          initialValue={moment(value || undefined)}
+          initialValue={dayjs(value, 'YYYY-MM-DD HH:mm:ss')}
           rules={[{ required: require, message: `${alias}` }]}
         >
-          {// @ts-ignore
+          {
             <DatePicker
               placeholder={`请输入${alias}`}
               disabled={disabled}
-              onBlur={(e: any) => {
-                widgetChange(
-                  e.target.id,
-                  new Date(e.target.value).getTime(),
-                  parentName
-                );
-              }}
               showTime
+              format="YYYY-MM-DD HH:mm:ss"
               style={{ width: '100%' }}
             />
           }
@@ -981,9 +1013,6 @@ const FormatWidgetToDom = (props: any) => {
                 return { key, label, value };
               }
             })}
-            onChange={(e) => {
-              widgetChange(name, e, parentName);
-            }}
           />
         </Form.Item>
       );
@@ -1114,7 +1143,7 @@ const FormatWidgetToDom = (props: any) => {
         >
           <code className="flex-box-justify-between">
             {title1 ? (
-              <div className="flex-box" style={{ width: `calc(100% - 88px)` }}>
+              <div className="flex-box" style={{ width: `calc(100% - 74px)` }}>
                 <TooltipDiv title={title1} style={{ flex: 1 }}>
                   <a onClick={() => openFolder(`${title1}\\`)}>{title1}</a>
                 </TooltipDiv>
@@ -1216,115 +1245,127 @@ const FormatWidgetToDom = (props: any) => {
       );
     case 'codeEditor':
       return (
-        <Form.Item
-          name={name}
-          label={alias || name}
-          tooltip={description || aliasDefault}
-          rules={[{ required: require, message: `${alias}` }]}
-        >
-          <div>
-            {!!value ? (
-              <Input.TextArea
-                autoSize={{ minRows: 3, maxRows: 6 }}
-                value={
-                  language === 'json' && _.isObject(value)
-                    ? formatJson(value)
-                    : value
-                }
-                style={{ marginBottom: 8 }}
-                disabled
-              />
-            ) : null}
-            <Button
-              onClick={() => {
-                setEditorValue({
-                  name,
-                  value:
-                    language === 'json' && _.isObject(value)
-                      ? formatJson(value)
-                      : value,
-                  language,
-                });
-                return setEditorVisible(true);
+        <Fragment>
+          <Form.Item
+            name={`${name}-language`}
+            label="编码语言"
+            initialValue={language || undefined}
+            style={{ display: 'none' }}
+            rules={[{ required: require, message: '编码语言' }]}
+          >
+            <Select
+              options={[
+                { value: 'javascript', label: 'javascript' },
+                { value: 'python', label: 'python' },
+                { value: 'json', label: 'json' },
+                { value: 'sql', label: 'sql' },
+              ]}
+              onChange={(val) => {
+                setUploadValues((prev: any) => ({ ...prev, language: val }));
               }}
-              disabled={disabled}
-            >
-              编辑
-            </Button>
-          </div>
-        </Form.Item>
-        // <Monaco
-        //   width="100%"
-        //   height="300"
-        //   language="sql"
-        //   theme="vs-dark"
-        //   value={value}
-        //   onChange={(value) => {
-        //     return console.log(value);
-        //   }}
-        // />
+            />
+          </Form.Item>
+          <Form.Item
+            name={name}
+            label={alias || name}
+            tooltip={description || aliasDefault}
+            initialValue={value || defaultValue || undefined}
+            style={{ marginBottom: 8 }}
+            rules={[{ required: require, message: `${alias}` }]}
+          >
+            <Input.TextArea
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              value={
+                language === 'json' && _.isObject(value)
+                  ? formatJson(value)
+                  : value
+              }
+              style={{ marginBottom: 8 }}
+              disabled
+            />
+          </Form.Item>
+          <Button
+            style={{ marginBottom: 24 }}
+            onClick={() => {
+              setModalVisible(true);
+            }}
+            disabled={disabled}
+          >
+            编辑
+          </Button>
+          {modalVisible ?
+            <MonacoEditor
+              defaultValue={uploadValues.value}
+              language={uploadValues.language}
+              visible={modalVisible}
+              onOk={(val: any) => {
+                setUploadValues(val);
+                form.setFieldsValue({ [name]: val?.value || '', [`${name}-language`]: val?.language });
+                setModalVisible(false);
+              }}
+              onCancel={() => {
+                setModalVisible(false);
+              }}
+            />
+            : null}
+        </Fragment>
       );
     case 'ImageLabelField':
       const title2 = uploadValues[name] || localPath;
       return (
-        <>
-          <Form.Item
-            shouldUpdate
-            name={name}
-            label={alias || name}
-            tooltip={description || aliasDefault}
-            initialValue={localPath || undefined}
-            valuePropName="file"
-            rules={[{ required: require, message: `${alias}` }]}
-            style={{ marginBottom: 8 }}
-          >
-            <code className="flex-box-justify-between">
-              {title2 ? (
-                <div className="flex-box" style={{ width: `calc(100% - 88px)` }}>
-                  <TooltipDiv title={title2} style={{ marginBottom: 8 }}>
-                    <a onClick={() => openFolder(title2, true)}>{title2}</a>
-                  </TooltipDiv>
-                  <a
-                    style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
-                    onClick={() => {
-                      if (disabled) return;
-                      setUploadValues((prev: {}) => {
-                        return { ...prev, [name]: undefined };
-                      });
-                      form.setFieldsValue({ [name]: undefined });
-                    }}
-                  >
-                    移除
-                  </a>
-                </div>
-              ) : null}
-              <Button
-                onClick={() => {
-                  chooseFile(
-                    (res: any) => {
-                      const result = _.isArray(res) && res.length === 1 ? res[0] : res;
-                      setUploadValues((prev: {}) => {
-                        return { ...prev, [name]: result };
-                      });
-                      form.setFieldsValue({ [name]: result });
-                    },
-                    false,
-                    suffix?.includes('all')
-                      ? { name: 'All Files', extensions: ['*'] }
-                      : {
-                        name: 'File',
-                        extensions: ['jpg', 'jpeg', 'png', 'svg'],
-                      }
-                  );
-                }}
-                disabled={disabled}
-                style={{ marginRight: 8 }}
-              >
-                选择文件
-              </Button>
-            </code>
-          </Form.Item>
-        </>
+        <Form.Item
+          shouldUpdate
+          name={name}
+          label={alias || name}
+          tooltip={description || aliasDefault}
+          initialValue={localPath || undefined}
+          valuePropName="file"
+          rules={[{ required: require, message: `${alias}` }]}
+        >
+          <code className="flex-box-justify-between">
+            {title2 ? (
+              <div className="flex-box" style={{ width: `calc(100% - 74px)` }}>
+                <TooltipDiv title={title2}>
+                  <a onClick={() => openFolder(title2, true)}>{title2}</a>
+                </TooltipDiv>
+                <a
+                  style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
+                  onClick={() => {
+                    if (disabled) return;
+                    setUploadValues((prev: {}) => {
+                      return { ...prev, [name]: undefined };
+                    });
+                    form.setFieldsValue({ [name]: undefined });
+                  }}
+                >
+                  移除
+                </a>
+              </div>
+            ) : null}
+            <Button
+              size='small'
+              onClick={() => {
+                chooseFile(
+                  (res: any) => {
+                    const result = _.isArray(res) && res.length === 1 ? res[0] : res;
+                    setUploadValues((prev: {}) => {
+                      return { ...prev, [name]: result };
+                    });
+                    form.setFieldsValue({ [name]: result });
+                  },
+                  false,
+                  {
+                    name: 'File',
+                    extensions: ['jpg', 'jpeg', 'png', 'svg'],
+                  }
+                );
+              }}
+              disabled={disabled}
+            >
+              选择图片
+            </Button>
+          </code>
+        </Form.Item>
       );
     case 'Measurement':
       return (
@@ -1348,64 +1389,125 @@ const FormatWidgetToDom = (props: any) => {
       );
     case 'DataMap':
       return (
-        <Form.Item
-          name={name}
-          label={alias || name}
-          tooltip={description || aliasDefault}
-          rules={[{ required: require, message: `${alias}` }]}
-        >
-          <div>
-            {Object.entries(value || {})?.map?.((item: any, index: number) => {
-
-              return (
-                <div
-                  className="flex-box"
-                  key={item[0] || index}
-                  style={{
-                    marginBottom: index + 1 !== options.length ? 24 : 0,
-                    gap: 4
-                  }}
+        <Fragment>
+          <Form.Item
+            name={name}
+            label={alias || name}
+            tooltip={description || aliasDefault}
+            initialValue={_.isString(value) ? value : formatJson(value) || ""}
+            style={{ marginBottom: 8 }}
+            rules={[{ required: require, message: `${alias}` }]}
+          >
+            <Input.TextArea
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              disabled
+            />
+          </Form.Item>
+          {(optionsList || [])
+            ?.map?.((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{
+                gap: 8,
+                marginBottom: index + 1 === optionsList.length ? 8 : 8
+              }} key={id}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="原始值"
+                  initialValue={label}
+                  style={{ marginBottom: 0 }}
+                  rules={[{ required: false, message: '原始值' }]}
                 >
-                  <div style={{ whiteSpace: 'nowrap' }}>
-                    原始值:
-                  </div>
-                  <Input
-                    style={{ width: '50%' }}
-                    defaultValue={item[0]}
-                  />
-                  <div style={{ whiteSpace: 'nowrap' }}>
-                    映射值:
-                  </div>
-                  <Input
-                    style={{ width: '50%' }}
-                    defaultValue={item[1]}
-                  />
-                  <MinusCircleOutlined
-                    onClick={() => {
-
-                    }}
-                  />
-                </div>
-              );
+                  <Input placeholder='原始值' onChange={(e) => {
+                    const { value } = e.target;
+                    const result = optionsList?.map((pre: any) => {
+                      if (pre.id === id) {
+                        return {
+                          ...pre,
+                          label: value
+                        };
+                      } else {
+                        return pre;
+                      };
+                    });
+                    const formValue = result.reduce((pre: any, cen: any) => {
+                      return {
+                        ...pre,
+                        [cen.label]: cen.value
+                      };
+                    }, {});
+                    form.setFieldsValue({
+                      [name]: formatJson(formValue)
+                    });
+                    setOptionsList(result);
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="映射值"
+                  initialValue={value}
+                  style={{ marginBottom: 0 }}
+                  rules={[{ required: false, message: '映射值' }]}
+                >
+                  <Input placeholder='映射值' onChange={(e) => {
+                    const { value } = e.target;
+                    const result = optionsList?.map((pre: any) => {
+                      if (pre.id === id) {
+                        return {
+                          ...pre,
+                          value
+                        };
+                      } else {
+                        return pre;
+                      };
+                    });
+                    const formValue = result.reduce((pre: any, cen: any) => {
+                      return {
+                        ...pre,
+                        [cen.label]: cen.value
+                      };
+                    }, {});
+                    form.setFieldsValue({
+                      [name]: formatJson(formValue)
+                    });
+                    setOptionsList(result);
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 30 }}
+                  onClick={() => {
+                    const result = optionsList?.filter((pre: any) => pre.id !== id);
+                    const formValue = result.reduce((pre: any, cen: any) => {
+                      return {
+                        ...pre,
+                        [cen.label]: cen.value
+                      };
+                    }, {});
+                    form.setFieldsValue({
+                      [name]: formatJson(formValue)
+                    });
+                    setOptionsList(result);
+                  }}
+                />
+              </div>
             })}
-            <Button
-              type="dashed"
-              style={{ marginTop: 24 }}
-              onClick={() => {
-                const result = (options || []).concat({
-                  id: guid(),
-                  label: '',
-                  value: '',
-                });
-                widgetChange(name, result, parentName);
-              }}
-              block
-              icon={<PlusOutlined />}
-            >
-              添加可选项
-            </Button>
-          </div>
-        </Form.Item>
+          <Button
+            type="dashed"
+            style={{ marginBottom: 24 }}
+            onClick={() => {
+              setOptionsList((prev: any) => prev.concat({
+                id: guid(),
+                sort: prev?.length,
+                label: '',
+                value: '',
+              }));
+            }}
+            block
+            icon={<PlusOutlined />}
+          >
+            添加可选项
+          </Button>
+        </Fragment>
       );
     default:
       return null;

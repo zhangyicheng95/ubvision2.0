@@ -106,18 +106,19 @@ const FlowPage: React.FC<Props> = (props: any) => {
             ...centerNode || {},
             config: {
               ...centerNode?.config || {},
-              initParams: (Object.entries(centerNode?.config?.initParams) || [])?.reduce((pre: any, cen: any) => {
-                return {
-                  ...pre,
-                  [cen[0]]: {
-                    ...cen[1],
-                    ...leftNode?.config?.initParams?.[cen[0]] || {},
-                    ...syncNode.cover ? {} : {
-                      value: cen[1]?.value
+              initParams: (Object.entries(leftNode?.config?.initParams) || [])
+                ?.reduce((pre: any, cen: any) => {
+                  return {
+                    ...pre,
+                    [cen[0]]: {
+                      ...centerNode?.config?.initParams?.[cen[0]] || {},
+                      ...cen[1],
+                      ...syncNode.cover ? {} : {
+                        value: centerNode?.config?.initParams?.[cen[0]]?.value
+                      }
                     }
                   }
-                }
-              }, {}),
+                }, {}),
               generalConfig: (Object.entries(centerNode?.config?.generalConfig) || [])?.reduce((pre: any, cen: any) => {
                 return {
                   ...pre,

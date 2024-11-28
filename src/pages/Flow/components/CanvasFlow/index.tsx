@@ -704,14 +704,13 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         Object.entries(initParams || {})?.forEach((init: any) => {
           if (
             init?.[1]?.require &&
+            init?.[1]?.widget?.type !== 'ImageLabelField' &&
             !_.isBoolean(init?.[1]?.value) &&
             !_.isNumber(init?.[1]?.value) &&
             (_.isUndefined(init[1]?.value) || _.isNull(init[1]?.value))
           ) {
             // 有必填项没填
             ifHasRequireNotWrite = true;
-            console.log(init[1]);
-
             throw new Error();
           }
         })

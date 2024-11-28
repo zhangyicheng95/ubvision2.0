@@ -7,10 +7,8 @@ import {
   message,
 } from 'antd';
 import Monaco from 'react-monaco-editor';
-import { CloudDownloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { downFileFun } from '@/utils/utils';
+import * as monaco from 'monaco-editor';
 
-const { Option } = Select;
 interface Props {
   width?: any;
   height?: any;
@@ -52,12 +50,18 @@ const Editor: React.FC<Props> = (props) => {
         selectOnLineNumbers: true,
         roundedSelection: false,
         cursorStyle: 'line',
-        automaticLayout: false,
-        readOnly: readonly
+        automaticLayout: true,
+        readOnly: readonly,
+        formatOnType: true,
+        formatOnPaste: true,
       }}
-      editorDidMount={(editor: any, monaco: any) => {
+      editorDidMount={(editor: any) => {
         editorRef.current.editor = editor;
-        editor.getAction?.('editor.action.formatDocument')?.run?.();  //格式化
+        // JSON格式化
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: true,
+          schemas: [],
+        });
       }}
     />
   );

@@ -9,8 +9,8 @@ import {
 import { CloudDownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { downFileFun, formatJson } from '@/utils/utils';
 import Editor from './editor';
+import './monacoWorkers';
 
-const { Option } = Select;
 interface Props {
   defaultValue?: any;
   language?: any;

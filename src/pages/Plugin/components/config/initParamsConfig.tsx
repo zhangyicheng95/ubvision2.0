@@ -14,6 +14,7 @@ import { formatJson, guid } from '@/utils/utils';
 import Measurement from '@/components/Measurement';
 import MonacoEditor from '@/components/MonacoEditor';
 import moment from 'moment';
+import dayjs from 'dayjs';
 
 export const initParamsKeys: any = {
   'Input': {
@@ -168,7 +169,7 @@ export const initParamsKeys: any = {
     sort: 0,
     type: '',
     value: undefined,
-    widget: { type: 'DataMap', options: [] }
+    widget: { type: 'DataMap' }
   },
   'File': {
     alias: '',
@@ -571,7 +572,7 @@ export const InitParamsShow = (props: any) => {
             >
               <div className="flex-box top-content-plugin-operation">
                 <TooltipDiv className="plugin-style">
-                  <DatePicker showTime value={!!value ? moment(new Date(value)) : undefined} disabled style={{ width: '100%' }} />
+                  <DatePicker showTime value={dayjs(value || new Date(), 'YYYY-MM-DD HH:mm:ss')} disabled style={{ width: '100%' }} />
                 </TooltipDiv>
                 {ifCanModify ? (
                   <div className="flex-box">
@@ -1678,7 +1679,7 @@ export const InitParamsEdit = (props: any) => {
   useEffect(() => {
     if (_.isArray(suffix)) {
       setOptions(suffix);
-    } else {
+    } else if (type !== 'DataMap') {
       setOptions(_.isArray(widget?.options) ? widget?.options?.map((i: any) => ({ id: guid(), ...i })) : []);
     }
   }, [widget?.options, suffix]);
@@ -1697,9 +1698,17 @@ export const InitParamsEdit = (props: any) => {
       };
     } else if (type === 'ImageLabelField') {
       setUploadValue(data.localPath);
-    } else {
+    } else if (['File', 'Dir'].includes(type)) {
       setUploadValue(data.value);
-    }
+    } else if (type === 'DataMap') {
+      setOptions(Object.entries(_.isString(data.value) ? JSON.parse(data.value || "{}") : data.value || {})?.map((i: any) => {
+        return {
+          id: guid(),
+          label: i[0],
+          value: i[1]
+        }
+      }));
+    };
   }, [data.value, data.localPath]);
 
   switch (type) {
@@ -1824,7 +1833,7 @@ export const InitParamsEdit = (props: any) => {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
               const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
                 <Form.Item
                   name={`options$%$${id}$%$label`}
                   label="label"
@@ -1902,7 +1911,7 @@ export const InitParamsEdit = (props: any) => {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
               const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
                 <Form.Item
                   name={`options$%$${id}$%$label`}
                   label="label"
@@ -1980,7 +1989,7 @@ export const InitParamsEdit = (props: any) => {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
               const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
                 <Form.Item
                   name={`options$%$${id}$%$label`}
                   label="label"
@@ -2058,7 +2067,7 @@ export const InitParamsEdit = (props: any) => {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
               const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
                 <Form.Item
                   name={`options$%$${id}$%$label`}
                   label="label"
@@ -2136,7 +2145,7 @@ export const InitParamsEdit = (props: any) => {
           !!options ?
             (options || [])?.map((item: any, index: number) => {
               const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
                 <Form.Item
                   name={`options$%$${id}$%$label`}
                   label="label"
@@ -2210,6 +2219,279 @@ export const InitParamsEdit = (props: any) => {
           rules={[{ required: false, message: '默认值' }]}
         >
           <Switch />
+        </Form.Item>
+      </Fragment>;
+    case 'codeEditor':
+      return <Fragment>
+        <Form.Item
+          name="language"
+          label="编码语言"
+          rules={[{ required: false, message: '编码语言' }]}
+        >
+          <Select
+            options={[
+              { value: 'javascript', label: 'javascript' },
+              { value: 'python', label: 'python' },
+              { value: 'json', label: 'json' },
+              { value: 'sql', label: 'sql' },
+            ]}
+            onChange={(val) => {
+              setUploadValue((prev: any) => ({ ...prev, language: val }));
+            }}
+          />
+        </Form.Item>
+        <Form.Item
+          name="value"
+          label="默认值"
+          style={{ marginBottom: 8 }}
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <Input.TextArea
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            disabled
+          />
+        </Form.Item>
+        <Button
+          style={{ marginBottom: 24 }}
+          onClick={() => {
+            setModalVisible(true);
+          }}
+        >
+          编辑
+        </Button>
+        {modalVisible ?
+          <MonacoEditor
+            defaultValue={uploadValue.value}
+            language={uploadValue.language}
+            visible={modalVisible}
+            onOk={(val: any) => {
+              setUploadValue(val);
+              form.setFieldsValue({ value: val?.value || '', language: val?.language });
+              setModalVisible(false);
+            }}
+            onCancel={() => {
+              setModalVisible(false);
+            }}
+          />
+          : null}
+      </Fragment>;
+    case 'Measurement':
+      return <Fragment>
+        {
+          ['float'].includes(form.getFieldValue('type') || data.type) ?
+            <Form.Item
+              name={`precision`}
+              label="保留小数点后几位数"
+              rules={[{ required: false, message: 'value' }]}
+            >
+              <InputNumber min={0} precision={0} step={1} />
+            </Form.Item>
+            : null
+        }
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, alias, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
+                <Form.Item
+                  name={`options$%$${id}$%$alias`}
+                  label="label"
+                  initialValue={alias}
+                  rules={[{ required: false, message: 'label' }]}
+                >
+                  <Input placeholder='label' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            alias: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="value"
+                  initialValue={value}
+                  rules={[{ required: false, message: 'value' }]}
+                >
+                  {
+                    ['int', 'float'].includes(form.getFieldValue('type')) ?
+                      <InputNumber onChange={(value) => {
+                        setOptions((prev: any) => {
+                          return prev?.map((pre: any) => {
+                            if (pre.id === id) {
+                              return {
+                                ...pre,
+                                value
+                              };
+                            } else {
+                              return pre;
+                            };
+                          });
+                        });
+                      }} />
+                      :
+                      <Input placeholder='value' onChange={(e) => {
+                        const { value } = e.target;
+                        setOptions((prev: any) => {
+                          return prev?.map((pre: any) => {
+                            if (pre.id === id) {
+                              return {
+                                ...pre,
+                                value
+                              };
+                            } else {
+                              return pre;
+                            };
+                          });
+                        });
+                      }} />
+                  }
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), alias: '', value: '' }))}
+        >
+          添加
+        </Button>
+      </Fragment>;
+    case 'DataMap':
+      return <Fragment>
+        {
+          !!options ?
+            (options || [])?.map((item: any, index: number) => {
+              const { id, label, value } = item;
+              return <div className="flex-box" style={{ gap: 8 }} key={id}>
+                <Form.Item
+                  name={`options$%$${id}$%$label`}
+                  label="原始值"
+                  initialValue={label}
+                  rules={[{ required: false, message: '原始值' }]}
+                >
+                  <Input placeholder='原始值' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            label: value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Form.Item
+                  name={`options$%$${id}$%$value`}
+                  label="映射值"
+                  initialValue={value}
+                  rules={[{ required: false, message: '映射值' }]}
+                >
+                  <Input placeholder='映射值' onChange={(e) => {
+                    const { value } = e.target;
+                    setOptions((prev: any) => {
+                      return prev?.map((pre: any) => {
+                        if (pre.id === id) {
+                          return {
+                            ...pre,
+                            value
+                          };
+                        } else {
+                          return pre;
+                        };
+                      });
+                    });
+                  }} />
+                </Form.Item>
+                <Button
+                  icon={<MinusOutlined />}
+                  style={{ marginTop: 6 }}
+                  onClick={() => {
+                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
+                  }}
+                />
+              </div>
+            })
+            : null
+        }
+        <Button
+          block
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
+        >
+          添加
+        </Button>
+      </Fragment>;
+    case 'ImageLabelField':
+      return <Fragment>
+        <Form.Item
+          name="localPath"
+          label="默认值"
+          rules={[{ required: false, message: '默认值' }]}
+        >
+          <code className="flex-box-justify-between">
+            <div className="flex-box" style={{ width: `calc(100% - 104px)` }}>
+              {
+                uploadValue ?
+                  <TooltipDiv title={uploadValue} style={{ flex: 1 }}>
+                    <TooltipDiv onClick={() => openFolder(`${uploadValue}\\`)}>{uploadValue}</TooltipDiv>
+                  </TooltipDiv>
+                  : null
+              }
+              <a
+                style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
+                onClick={() => {
+                  setUploadValue('');
+                  form.setFieldsValue({ localPath: undefined });
+                }}
+              >
+                移除
+              </a>
+            </div>
+            <Button
+              size='small'
+              onClick={() => {
+                chooseFile(
+                  (res: any) => {
+                    const result = _.isArray(res) && res.length === 1 ? res[0] : res;
+                    setUploadValue(result);
+                    form.setFieldsValue({ localPath: result });
+                  },
+                  false,
+                  {
+                    name: 'File',
+                    extensions: ['jpg', 'jpeg', 'png', 'svg'],
+                  }
+                );
+              }}
+            >
+              选择图片文件
+            </Button>
+          </code>
         </Form.Item>
       </Fragment>;
     case 'File':
@@ -2342,279 +2624,6 @@ export const InitParamsEdit = (props: any) => {
             </Button>
           </code>
         </Form.Item>
-      </Fragment>;
-    case 'codeEditor':
-      return <Fragment>
-        <Form.Item
-          name="language"
-          label="编码语言"
-          rules={[{ required: false, message: '编码语言' }]}
-        >
-          <Select
-            options={[
-              { value: 'javascript', label: 'javascript' },
-              { value: 'python', label: 'python' },
-              { value: 'json', label: 'json' },
-              { value: 'sql', label: 'sql' },
-            ]}
-            onChange={(val) => {
-              setUploadValue((prev: any) => ({ ...prev, language: val }));
-            }}
-          />
-        </Form.Item>
-        <Form.Item
-          name="value"
-          label="默认值"
-          style={{ marginBottom: 8 }}
-          rules={[{ required: false, message: '默认值' }]}
-        >
-          <Input.TextArea
-            autoSize={{ minRows: 3, maxRows: 6 }}
-            disabled
-          />
-        </Form.Item>
-        <Button
-          style={{ marginBottom: 24 }}
-          onClick={() => {
-            setModalVisible(true);
-          }}
-        >
-          编辑
-        </Button>
-        {modalVisible ?
-          <MonacoEditor
-            defaultValue={uploadValue.value}
-            language={uploadValue.language}
-            visible={modalVisible}
-            onOk={(val: any) => {
-              setUploadValue(val);
-              form.setFieldsValue({ value: val?.value || '', language: val?.language });
-              setModalVisible(false);
-            }}
-            onCancel={() => {
-              setModalVisible(false);
-            }}
-          />
-          : null}
-      </Fragment>;
-    case 'ImageLabelField':
-      return <Fragment>
-        <Form.Item
-          name="localPath"
-          label="默认值"
-          rules={[{ required: false, message: '默认值' }]}
-        >
-          <code className="flex-box-justify-between">
-            <div className="flex-box" style={{ width: `calc(100% - 104px)` }}>
-              {
-                uploadValue ?
-                  <TooltipDiv title={uploadValue} style={{ flex: 1 }}>
-                    <TooltipDiv onClick={() => openFolder(`${uploadValue}\\`)}>{uploadValue}</TooltipDiv>
-                  </TooltipDiv>
-                  : null
-              }
-              <a
-                style={{ whiteSpace: 'nowrap', padding: '0 4px' }}
-                onClick={() => {
-                  setUploadValue('');
-                  form.setFieldsValue({ localPath: undefined });
-                }}
-              >
-                移除
-              </a>
-            </div>
-            <Button
-              size='small'
-              onClick={() => {
-                chooseFile(
-                  (res: any) => {
-                    const result = _.isArray(res) && res.length === 1 ? res[0] : res;
-                    setUploadValue(result);
-                    form.setFieldsValue({ localPath: result });
-                  },
-                  false,
-                  {
-                    name: 'File',
-                    extensions: ['jpg', 'jpeg', 'png', 'svg'],
-                  }
-                );
-              }}
-            >
-              选择图片文件
-            </Button>
-          </code>
-        </Form.Item>
-      </Fragment>;
-    case 'Measurement':
-      return <Fragment>
-        {
-          ['float'].includes(form.getFieldValue('type') || data.type) ?
-            <Form.Item
-              name={`precision`}
-              label="保留小数点后几位数"
-              rules={[{ required: false, message: 'value' }]}
-            >
-              <InputNumber min={0} precision={0} step={1} />
-            </Form.Item>
-            : null
-        }
-        {
-          !!options ?
-            (options || [])?.map((item: any, index: number) => {
-              const { id, alias, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
-                <Form.Item
-                  name={`options$%$${id}$%$alias`}
-                  label="label"
-                  initialValue={alias}
-                  rules={[{ required: false, message: 'label' }]}
-                >
-                  <Input placeholder='label' onChange={(e) => {
-                    const { value } = e.target;
-                    setOptions((prev: any) => {
-                      return prev?.map((pre: any) => {
-                        if (pre.id === id) {
-                          return {
-                            ...pre,
-                            alias: value
-                          };
-                        } else {
-                          return pre;
-                        };
-                      });
-                    });
-                  }} />
-                </Form.Item>
-                <Form.Item
-                  name={`options$%$${id}$%$value`}
-                  label="value"
-                  initialValue={value}
-                  rules={[{ required: false, message: 'value' }]}
-                >
-                  {
-                    ['int', 'float'].includes(form.getFieldValue('type')) ?
-                      <InputNumber onChange={(value) => {
-                        setOptions((prev: any) => {
-                          return prev?.map((pre: any) => {
-                            if (pre.id === id) {
-                              return {
-                                ...pre,
-                                value
-                              };
-                            } else {
-                              return pre;
-                            };
-                          });
-                        });
-                      }} />
-                      :
-                      <Input placeholder='value' onChange={(e) => {
-                        const { value } = e.target;
-                        setOptions((prev: any) => {
-                          return prev?.map((pre: any) => {
-                            if (pre.id === id) {
-                              return {
-                                ...pre,
-                                value
-                              };
-                            } else {
-                              return pre;
-                            };
-                          });
-                        });
-                      }} />
-                  }
-                </Form.Item>
-                <Button
-                  icon={<MinusOutlined />}
-                  style={{ marginTop: 6 }}
-                  onClick={() => {
-                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
-                  }}
-                />
-              </div>
-            })
-            : null
-        }
-        <Button
-          block
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), alias: '', value: '' }))}
-        >
-          添加
-        </Button>
-      </Fragment>;
-    case 'DataMap':
-      return <Fragment>
-        {
-          !!options ?
-            (options || [])?.map((item: any, index: number) => {
-              const { id, label, value } = item;
-              return <div className="flex-box" style={{ gap: 8 }}>
-                <Form.Item
-                  name={`options$%$${id}$%$label`}
-                  label="原始值"
-                  initialValue={label}
-                  rules={[{ required: false, message: '原始值' }]}
-                >
-                  <Input placeholder='原始值' onChange={(e) => {
-                    const { value } = e.target;
-                    setOptions((prev: any) => {
-                      return prev?.map((pre: any) => {
-                        if (pre.id === id) {
-                          return {
-                            ...pre,
-                            label: value
-                          };
-                        } else {
-                          return pre;
-                        };
-                      });
-                    });
-                  }} />
-                </Form.Item>
-                <Form.Item
-                  name={`options$%$${id}$%$value`}
-                  label="映射值"
-                  initialValue={value}
-                  rules={[{ required: false, message: '映射值' }]}
-                >
-                  <Input placeholder='映射值' onChange={(e) => {
-                    const { value } = e.target;
-                    setOptions((prev: any) => {
-                      return prev?.map((pre: any) => {
-                        if (pre.id === id) {
-                          return {
-                            ...pre,
-                            value
-                          };
-                        } else {
-                          return pre;
-                        };
-                      });
-                    });
-                  }} />
-                </Form.Item>
-                <Button
-                  icon={<MinusOutlined />}
-                  style={{ marginTop: 6 }}
-                  onClick={() => {
-                    setOptions((prev: any) => prev?.filter((pre: any) => pre.id !== id));
-                  }}
-                />
-              </div>
-            })
-            : null
-        }
-        <Button
-          block
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setOptions((prev: any) => prev.concat({ id: guid(), label: '', value: '' }))}
-        >
-          添加
-        </Button>
       </Fragment>;
     default:
       return null;

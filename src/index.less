@@ -94,69 +94,41 @@ code {
   text-align: center;
 }
 
-@media (prefers-color-scheme: light) {
-  #root {
-    color: #213547;
-    background-color: #ffffff;
-
-    .ant-layout-sider-children {
-      .setting-icon-box {
-        &:hover {
-          background-color: #e6f4ff;
-        }
-      }
-
-      .ant-menu {
-        .ant-menu-item {
-          &:hover {
-            background-color: #e6f4ff;
-          }
-        }
-      }
-    }
-  }
-
-  a:hover {
-    color: #177ddc;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-
-  code {
-    background-color: #fff;
-  }
+:where(.css-dev-only-do-not-override-apn68).ant-popover {
+  margin: 0;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  line-height: 1.5714285714285714;
+  list-style: none;
+  position: absolute;
+  z-index: 1030;
+  font-weight: normal;
+  white-space: normal;
+  text-align: start;
+  cursor: auto;
+  --valid-offset-x: var(--arrow-offset-horizontal, var(--arrow-x));
+  transform-origin: var(--valid-offset-x, 50%) var(--arrow-y, 50%);
+  --antd-arrow-background-color: #ffffff;
+  width: max-content;
+  max-width: 100vw;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    .ant-layout-sider-children {
-      background-color: rgba(0, 0, 0, 0.85);
+:where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-title {
+  min-width: 177px;
+  margin-bottom: 8px;
+  color: rgba(0, 0, 0, 0.88);
+  font-weight: 600;
+  border-bottom: none;
+  padding: 0;
+}
 
-      .setting-icon-box {
-        &:hover {
-          background-color: #0073ca;
-        }
-      }
-
-      .ant-menu {
-        .ant-menu-item {
-          &:hover {
-            background-color: #0073ca;
-          }
-        }
-
-        .ant-menu-item-selected {
-          background-color: #005597;
-        }
-      }
-
-      .menu-selected-self {
-        background-color: #005597;
-      }
-    }
-  }
+:where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-inner {
+  background-color: #ffffff;
+  background-clip: padding-box;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  padding: 12px;
 }
 
 .ant-app {
@@ -247,5 +219,91 @@ code {
 .ant-form {
   .ant-form-item-label {
     white-space: nowrap !important;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  #root {
+    color: #213547;
+    background-color: #ffffff;
+
+    .ant-layout-sider-children {
+      .setting-icon-box {
+        &:hover {
+          background-color: #e6f4ff;
+        }
+      }
+
+      .ant-menu {
+        .ant-menu-item {
+          &:hover {
+            background-color: #e6f4ff;
+          }
+        }
+      }
+    }
+  }
+
+  a:hover {
+    color: #177ddc;
+  }
+
+  button {
+    background-color: #f9f9f9;
+  }
+
+  code {
+    background-color: #fff;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    .ant-layout-sider-children {
+      background-color: rgba(0, 0, 0, 0.85);
+
+      .setting-icon-box {
+        &:hover {
+          background-color: #0073ca;
+        }
+      }
+
+      .ant-menu {
+        .ant-menu-item {
+          &:hover {
+            background-color: #0073ca;
+          }
+        }
+
+        .ant-menu-item-selected {
+          background-color: #005597;
+        }
+      }
+
+      .menu-selected-self {
+        background-color: #005597;
+      }
+    }
+  }
+
+  :where(.css-dev-only-do-not-override-apn68).ant-popover {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  :where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-title {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  :where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-inner {
+    background-color: #1f1f1f;
+    box-shadow: 0 6px 16px 0 rgba(235, 235, 235, 0.08), 0 3px 6px -4px rgba(226, 226, 226, 0.12), 0 9px 28px 8px rgba(245, 245, 245, 0.05);
+  }
+
+  :where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-inner-content {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  :where(.css-dev-only-do-not-override-apn68).ant-popover .ant-popover-arrow:before {
+    background-color: #1f1f1f;
   }
 }

@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Popover } from 'antd';
 import * as _ from 'lodash-es';
 import { archSize, portTypeObj } from '@/pages/Flow/common/constants';
+import TooltipDiv from '../TooltipDiv';
 
 interface Props {
   group: string;
@@ -52,12 +53,12 @@ const BasicPort: React.FC<Props> = (props) => {
           cursor: group === 'bottom' ? 'crosshair' : 'move',
         }}
       >
-        <div className="only-show-one-line" style={{ fontSize: 14, fontWeight: 'bold' }}>
+        <TooltipDiv style={{ fontSize: 14, fontWeight: 'bold' }}>
           {label?.alias}
-        </div>
-        <div className="only-show-one-line">
+        </TooltipDiv>
+        <TooltipDiv>
           {label?.name}: {label?.type}
-        </div>
+        </TooltipDiv>
       </div>
     </Popover>
   );
