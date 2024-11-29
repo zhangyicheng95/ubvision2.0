@@ -145,6 +145,32 @@ const readPathDir = (event: any) => {
     event.sender.send('alert-read-startUp-reply', { files });
   });
 };
+// 添加桌面快捷方式
+ipcMain.on('alert-make-browser', async (event: IpcMainEvent, arg: string) => {
+  // 处理传递的参数
+  let res: any = arg;
+  try {
+    res = JSON.parse(arg);
+  } catch (err) { }
+  const shortcutPath = path.join(
+    app.getPath('desktop'),
+    res?.name ? res.name : 'myubvision.lnk'
+  );
+  const targetPath = res?.id ? `myubvision:?id=${res.id}` : process.execPath;
+  // @ts-ignore
+  writeShortcutLink.create(shortcutPath, {
+    target: targetPath,
+    cwd: process.cwd(), // 工作目录
+    desc: '', // 快捷方式描述
+    icon: path.join(__dirname, '../../../public/sany.ico'), // 快捷方式图标
+  }, function (err) {
+    if (err) {
+      console.error('快捷方式创建失败:', err);
+    } else {
+      console.log('快捷方式创建成功:', shortcutPath);
+    }
+  });
+});
 // 读取快速启动列表
 ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg?: any) => readPathDir(event));
 // 添加项目到快速启动列表
@@ -163,11 +189,11 @@ ipcMain.on('alert-add-startUp', async (event: IpcMainEvent, arg: string) => {
   console.log(`添加的目标路径:${shortcutPath}`);
   const targetPath = res?.id ? `myubvision:?id=${res.id}` : process.execPath;
   // @ts-ignore
-  const result = writeShortcutLink.create(shortcutPath, {
+  writeShortcutLink.create(shortcutPath, {
     target: targetPath,
     cwd: process.cwd(), // 工作目录
-    desc: 'My App Shortcut', // 快捷方式描述
-    icon: targetPath,  // 使用目标本身作为快捷方式图标
+    desc: '', // 快捷方式描述
+    icon: path.join(__dirname, '../../../public/sany.ico'), // 快捷方式图标
   }, function (err) {
     if (err) {
       console.error('快捷方式创建失败:', err);
@@ -317,7 +343,7 @@ const createWindow = async (arg?: any) => {
       buttons: ['确定'],
     });
     return;
-  }
+  };
   const mainWindow: any = new BrowserWindow({
     width: !!res?.type ? 1440 : 1280,
     height: !!res?.type ? 900 : 810,
