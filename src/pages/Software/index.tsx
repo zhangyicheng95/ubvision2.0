@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   message,
   Modal,
@@ -34,7 +34,7 @@ const userAuthList = getUserAuthList();
 
 interface Props { }
 
-const SoftwareRouter: React.FC<Props> = (props: any) => {
+const SoftwareList: React.FC<Props> = (props: any) => {
   const { loading } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
@@ -69,29 +69,25 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
   }, []);
 
   // 添加监控模块
-  const onAdd = () => {
+  const onAdd = useCallback(() => {
     form.validateFields().then(values => {
-      console.log(values);
-      setDataList((prev: any) => {
-        ProjectApi.addStorage('softwareStorage', {
-          list: !_.isEmpty(softwareModifyData) ? prev?.map?.((item: any) => {
-            if (item.id === softwareModifyData.id) {
-              return {
-                ...values,
-                id: softwareModifyData.id
-              }
+      ProjectApi.addStorage('softwareStorage', {
+        list: !_.isEmpty(softwareModifyData) ? dataList?.map?.((item: any) => {
+          if (item.id === softwareModifyData.id) {
+            return {
+              ...item,
+              ...values,
             }
-            return item;
-          }) : prev.concat(values)
-        }).then((res: any) => {
-          getList();
-        });
-        setSoftwareVisible(false);
-        setSoftwareModifyData({});
-        return prev;
+          }
+          return item;
+        }) : dataList.concat(values)
+      }).then((res: any) => {
+        getList();
       });
+      setSoftwareVisible(false);
+      setSoftwareModifyData({});
     });
-  };
+  }, [dataList, softwareModifyData]);
 
   return (
     <div className={`${styles.softwarePage}`}>
@@ -121,28 +117,30 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
         }
       </PrimaryTitle>
       <div className="alert-page-body">
-        {
-          useMemo(() => {
-            if (!userAuthList.includes('software.list')) {
-              return null;
-            };
-            return (dataList || [])?.map?.((item: any, index: number) => {
-              return (
-                <SoftwareItem
-                  key={`software-${index}`}
-                  item={item}
-                  setDataList={setDataList}
-                  getList={getList}
-                  setSoftwareModifyData={setSoftwareModifyData}
-                  setSoftwareVisible={setSoftwareVisible}
-                  setSoftwareType={setSoftwareType}
-                  setSoftwareFile={setSoftwareFile}
-                  form={form}
-                />
-              );
-            });
-          }, [dataList])
-        }
+        <div className="flex-box alert-page-body-wrap">
+          {
+            useMemo(() => {
+              if (!userAuthList.includes('software.list')) {
+                return null;
+              };
+              return (dataList || [])?.map?.((item: any, index: number) => {
+                return (
+                  <SoftwareItem
+                    key={`software-${index}`}
+                    item={item}
+                    setDataList={setDataList}
+                    getList={getList}
+                    setSoftwareModifyData={setSoftwareModifyData}
+                    setSoftwareVisible={setSoftwareVisible}
+                    setSoftwareType={setSoftwareType}
+                    setSoftwareFile={setSoftwareFile}
+                    form={form}
+                  />
+                );
+              });
+            }, [dataList])
+          }
+        </div>
       </div>
 
       {
@@ -192,7 +190,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
                     <Form.Item
                       name={'value'}
                       label="软件链接"
-                      rules={[{ required: false, message: '软件链接' }]}
+                      rules={[{ required: true, message: '软件链接' }]}
                     >
                       <Input />
                     </Form.Item>
@@ -200,7 +198,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
                     <Form.Item
                       name={'value'}
                       label="软件链接"
-                      rules={[{ required: false, message: '软件链接' }]}
+                      rules={[{ required: true, message: '软件链接' }]}
                     >
                       <div>
                         {
@@ -304,7 +302,7 @@ const SoftwareRouter: React.FC<Props> = (props: any) => {
   );
 };
 
-export default SoftwareRouter;
+export default SoftwareList;
 
 const SoftwareItem = (props: any) => {
   const { ipcRenderer }: any = window || {};
@@ -317,12 +315,9 @@ const SoftwareItem = (props: any) => {
   const onClick = () => {
     if (type === 'web') {
       ipcRenderer.ipcCommTest('alert-open-browser', JSON.stringify({
-        type: 'child',
-        data: {
-          ipUrl: dpmDomain,
-          url: value,
-          id
-        }
+        type: 'software',
+        url: value,
+        id
       }));
     } else if (type === 'electron') {
       ipcRenderer.ipcCommTest('startup-software', value);

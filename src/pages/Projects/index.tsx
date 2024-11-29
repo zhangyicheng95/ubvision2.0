@@ -265,8 +265,8 @@ const ProjectPage: React.FC<Props> = (props: any) => {
               ipcRenderer?.ipcCommTest(
                 'alert-open-browser',
                 JSON.stringify({
-                  type: 'main',
-                  data: { id: 'new' },
+                  type: 'flow',
+                  id: 'new'
                 })
               );
             }}
@@ -398,8 +398,8 @@ const ProjectItem = (props: any) => {
     ipcRenderer?.ipcCommTest(
       'alert-open-browser',
       JSON.stringify({
-        type: 'main',
-        data: { id },
+        type: 'flow',
+        id
       })
     );
   };

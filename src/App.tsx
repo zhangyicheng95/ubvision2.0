@@ -17,6 +17,7 @@ import AlertRouter from '@/pages/Alert';
 import FlowPage from '@/pages/Flow';
 import PluginPage from '@/pages/Plugin';
 import SoftwareRouter from '@/pages/Software';
+import SoftwareOpenPage from '@/pages/SoftwareOpen';
 import AuthRouter from '@/pages/Auth';
 import CCDPage from '@/pages/CCD';
 import UserPage from '@/pages/UserInfo';
@@ -87,7 +88,11 @@ const App: React.FC = () => {
     if (!localStorage.getItem('theme-mode')) {
       localStorage.setItem('theme-mode', 'dark');
     }
-    if (location.href?.indexOf('#/flow') > -1 || location.href?.indexOf('#/ccd') > -1) {
+    if (
+      location.href?.indexOf('#/flow') > -1 ||
+      location.href?.indexOf('#/ccd') > -1 ||
+      location.href?.indexOf('#/softwareopen') > -1
+    ) {
 
     } else {
       getList();
@@ -256,25 +261,30 @@ const App: React.FC = () => {
                         <Route path="/ccd" element={<CCDPage />} />
                       </Routes>
                     ) :
-                      (
+                      location.href?.indexOf('#/softwareopen') > -1 ? (
                         <Routes>
-                          <Route path="/login" element={<Login />} />
-                          <Route path="/home" element={<HomePage />} />
-                          <Route path="/project" element={<ProjectPage />} />
-                          <Route path="/alert/*" element={<AlertRouter />} />
-                          <Route path="/plugin" element={<PluginPage />} />
-                          <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
-                          <Route path="/software" element={<SoftwareRouter />} />
-                          <Route path="/auth/*" element={<AuthRouter />} />
-                          <Route path="/userSetting" element={<UserPage />} />
-                          <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
-                          {userAuthList?.includes('projects.list') ? (
-                            <Route path="*" element={<HomePage />} />
-                          ) : (
-                            <Route path="*" element={<AlertRouter />} />
-                          )}
+                          <Route path="/softwareopen" element={<SoftwareOpenPage />} />
                         </Routes>
-                      )
+                      ) :
+                        (
+                          <Routes>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/home" element={<HomePage />} />
+                            <Route path="/project" element={<ProjectPage />} />
+                            <Route path="/alert/*" element={<AlertRouter />} />
+                            <Route path="/plugin" element={<PluginPage />} />
+                            <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
+                            <Route path="/software" element={<SoftwareRouter />} />
+                            <Route path="/auth/*" element={<AuthRouter />} />
+                            <Route path="/userSetting" element={<UserPage />} />
+                            <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
+                            {userAuthList?.includes('projects.list') ? (
+                              <Route path="*" element={<HomePage />} />
+                            ) : (
+                              <Route path="*" element={<AlertRouter />} />
+                            )}
+                          </Routes>
+                        )
                 }
               </BasicLayout>
             </HashRouter>

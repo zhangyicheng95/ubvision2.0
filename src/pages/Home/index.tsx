@@ -54,6 +54,8 @@ const Home: React.FC<Props> = (props: any) => {
     { name: '3D视觉引导钢板切割下料', icon: icon1, description: '视觉引导机器人识别并依次吸取不同品规的钢板切割件，置于传送带上，传送至下一工位。机器人识别并抓取传送带上的切割件，按品规分类，堆叠码放于料框中。' },
     { name: '3D视觉引导大小阀块抓取上料', icon: icon2, description: '视觉系统识别定位阀块，引导机器人进行抓取，运输到指定位置进行上料。' },
     { name: '3D视觉引导链轨节深框抓取上料', icon: icon3, description: '视觉系统识别定位深框中堆叠放置的链轨节，引导机器人逐一抓取并二次识别正反，搭配翻转台以固定姿态放置于指定位置。' },
+    { name: '3D视觉引导螺栓拧紧', icon: icon4, description: '3D视觉高精度定位螺栓位置，引导机器人完成拧紧。' },
+    { name: '3D视觉引导螺栓拧紧', icon: icon4, description: '3D视觉高精度定位螺栓位置，引导机器人完成拧紧。' },
     { name: '3D视觉引导螺栓拧紧', icon: icon4, description: '3D视觉高精度定位螺栓位置，引导机器人完成拧紧。' }
   ]);
 
@@ -101,10 +103,8 @@ const Home: React.FC<Props> = (props: any) => {
               ipcRenderer?.ipcCommTest(
                 'alert-open-browser',
                 JSON.stringify({
-                  type: 'main',
-                  data: {
-                    id: res.data?.id,
-                  },
+                  type: 'flow',
+                  id: res.data?.id,
                 })
               );
             } else {
@@ -147,8 +147,8 @@ const Home: React.FC<Props> = (props: any) => {
                   ipcRenderer?.ipcCommTest(
                     'alert-open-browser',
                     JSON.stringify({
-                      type: 'main',
-                      data: { id: 'new' },
+                      type: 'flow',
+                      id: 'new'
                     })
                   );
                 }}>新建方案</Button>
@@ -185,8 +185,8 @@ const Home: React.FC<Props> = (props: any) => {
                         ipcRenderer?.ipcCommTest(
                           'alert-open-browser',
                           JSON.stringify({
-                            type: 'main',
-                            data: { id },
+                            type: 'flow',
+                            id
                           })
                         );
                       }
@@ -239,8 +239,8 @@ const Home: React.FC<Props> = (props: any) => {
                             formatIcon(value + name)
                         }
                       </div>
-                      <div>{alias}</div>
-                      {name}
+                      <div>{alias || '-'}</div>
+                      {name || '-'}
                     </div>
                   })
                   :
@@ -290,7 +290,7 @@ const Home: React.FC<Props> = (props: any) => {
             footer={null}
             onCancel={() => { setCaseVisible(false) }}
           >
-            <div className="case-body">
+            <div className="flex-box case-body">
               {
                 (caseList || [])?.map((item: any, index: number) => {
                   const { icon, name, description } = item;
@@ -312,10 +312,8 @@ const Home: React.FC<Props> = (props: any) => {
                           ipcRenderer?.ipcCommTest(
                             'alert-open-browser',
                             JSON.stringify({
-                              type: 'main',
-                              data: {
-                                id: res.data?.id,
-                              },
+                              type: 'flow',
+                              id: res.data?.id,
                             })
                           );
                         } else {
@@ -330,7 +328,7 @@ const Home: React.FC<Props> = (props: any) => {
                         {description}
                       </div>
                     </div>
-                    <TooltipDiv className="case-item-box-title" title={name} placement={"center"}>
+                    <TooltipDiv className="case-item-box-title">
                       {name}
                     </TooltipDiv>
                   </div>

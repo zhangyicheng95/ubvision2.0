@@ -34,7 +34,8 @@ const BasicLayout = (props: any) => {
     return (
       pathname?.indexOf('/flow') < 0 &&
       pathname?.indexOf('/ccd') < 0 &&
-      pathname !== '/login'
+      pathname !== '/login' &&
+      pathname?.indexOf('/softwareopen') < 0
     );
   }, [pathname]);
 

@@ -125,7 +125,7 @@ ipcMain.on('hostname-read', async (event: IpcMainEvent, arg: string) => {
 });
 // 打开多窗口
 ipcMain.on('alert-open-browser', async (event: IpcMainEvent, arg: string) => {
-  const { type, data } = JSON.parse(arg);
+  const data = JSON.parse(arg);
   createWindow(JSON.stringify(data));
 });
 // 读取快速启动列表
@@ -355,11 +355,13 @@ const createWindow = async (arg?: any) => {
     return nativeTheme.themeSource;
   });
 
-  const urlParams = res?.type === 'child'
+  const urlParams = res?.type === 'ccd'
     ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
-    : !!params
+    : res?.type === 'flow'
       ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
-      : `?number=${mainWindow.id}`;
+      : res?.type === 'software'
+        ? `#/softwareopen?url=${res.url}&number=${mainWindow.id}`
+        : `?number=${mainWindow.id}`;
   if (VITE_DEV_SERVER_URL) {
     // 开发环境
     mainWindow.loadURL(`${VITE_DEV_SERVER_URL}${urlParams}`);

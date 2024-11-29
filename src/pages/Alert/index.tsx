@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { message, Dropdown, Popover, Select, Modal, Form, Switch } from 'antd';
+import React, { Fragment, useEffect, useMemo, useState } from 'react';
+import { message, Dropdown, Popover, Select, Modal, Form, Switch, Divider } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -78,166 +78,159 @@ const AlertRouter: React.FC<Props> = (props: any) => {
         onSearch={onSearch}
       ></PrimaryTitle>
       <div className="alert-page-body">
-        {
-          !userAuthList.includes('monitor.add') ? null :
-            <Popover
-              placement="bottom"
-              title={'添加监控窗口'}
-              trigger="click"
-              destroyTooltipOnHide={true}
-              arrow={{ pointAtCenter: true }}
-              open={popoverVisible}
-              content={
-                <Select
-                  style={{ width: 250 }}
-                  onChange={(value) => onAdd(value)}
-                  onBlur={() => setPopoverVisible(false)}
-                >
-                  {(dataList || [])?.map?.(
-                    (item: any, index: number) => {
-                      const { id, alias, name, alertShow } = item;
-                      return (
-                        <Select.Option
-                          disabled={!!alertShow}
-                          key={id}
-                          value={id}
-                        >
-                          {alias || name}
-                        </Select.Option>
-                      );
-                    }
-                  )}
-                </Select>
-              }
-            >
-              <div
-                className="item-box box-animation add-box"
-                onClick={(e) => {
-                  setPopoverVisible(true);
-                  e.preventDefault(); // 阻止默认的关闭行为
-                  e?.stopPropagation();
-                }}
+        <div className='flex-box alert-page-body-wrap'>
+          {
+            !userAuthList.includes('monitor.add') ? null :
+              <Popover
+                placement="bottom"
+                title={'添加监控窗口'}
+                trigger="click"
+                destroyTooltipOnHide={true}
+                arrow={{ pointAtCenter: true }}
+                open={popoverVisible}
+                content={
+                  <Select
+                    style={{ width: 250 }}
+                    options={(dataList || [])?.map?.(
+                      (item: any, index: number) => {
+                        const { id, alias, name, alertShow } = item;
+                        return { key: id, value: id, label: name, disabled: !!alertShow };
+                      }
+                    )}
+                    onChange={(value) => onAdd(value)}
+                    onBlur={() => setPopoverVisible(false)}
+                  />
+                }
               >
-                <div className="item-box-child flex-box-center">
-                  <PlusOutlined />
-                </div>
-              </div>
-            </Popover>
-        }
-        {useMemo(() => {
-          return <div>
-            {
-              (dataList || [])
-                ?.filter((i: any) => i.name?.indexOf(searchVal) > -1 || i.alias?.indexOf(searchVal) > -1)
-                ?.map?.((item: any, index: number) => {
-                  const { id, alertShow } = item;
-                  if (!alertShow) return null;
-                  return (
-                    <AlertItem
-                      key={id}
-                      item={item}
-                      setDataList={setDataList}
-                      loopGetStatus={loopProjectStatusFun}
-                      setEditVisible={setEditVisible}
-                      form={form}
-                    />
-                  );
-                })
-            }
-            {
-              // 编辑配置
-              !!editVisible ?
-                <Modal
-                  title={`编辑-${editVisible?.alias || editVisible?.name}`}
-                  wrapClassName={"plugin-manager-modal"}
-                  centered
-                  open={!!editVisible}
-                  maskClosable={false}
-                  onCancel={() => {
-                    form.resetFields();
-                    setEditVisible(null);
+                <div
+                  className="item-box box-animation add-box"
+                  onClick={(e) => {
+                    setPopoverVisible(true);
+                    e.preventDefault(); // 阻止默认的关闭行为
+                    e?.stopPropagation();
                   }}
-                  onOk={() => {
-                    form.validateFields().then(values => {
-                      getParams(editVisible.id).then((params) => {
-                        if (params && params.code === 'SUCCESS') {
-                          updateParams(editVisible.id, {
-                            ...params.data,
-                            contentData: Object.assign(
-                              params.data?.contentData,
-                              values
-                            ),
-                          }).then((res: any) => {
-                            if (res && res.code === 'SUCCESS') {
-                              setDataList((prev: any) => {
-                                const result = (prev || [])?.map?.((i: any) => {
-                                  if (i.id === res.data.id) {
-                                    return res.data;
-                                  }
-                                  return i;
-                                });
-                                loopProjectStatusFun(result);
-                                return result;
-                              });
-                            } else {
-                              message.error(res?.msg || res?.message || '接口异常');
-                            }
-                          });
-                        } else {
-                          message.error(params?.msg || params?.message || '接口异常');
-                        }
-                      });
+                >
+                  <div className="item-box-child flex-box-center">
+                    <PlusOutlined />
+                  </div>
+                </div>
+              </Popover>
+          }
+          {useMemo(() => {
+            return <Fragment>
+              {
+                (dataList || [])
+                  ?.filter((i: any) => i.name?.indexOf(searchVal) > -1 || i.alias?.indexOf(searchVal) > -1)
+                  ?.map?.((item: any, index: number) => {
+                    const { id, alertShow } = item;
+                    if (!alertShow) return null;
+                    return (
+                      <AlertItem
+                        key={id}
+                        item={item}
+                        setDataList={setDataList}
+                        loopGetStatus={loopProjectStatusFun}
+                        setEditVisible={setEditVisible}
+                        form={form}
+                      />
+                    );
+                  })
+              }
+              {
+                // 编辑配置
+                !!editVisible ?
+                  <Modal
+                    title={`编辑-${editVisible?.alias || editVisible?.name}`}
+                    wrapClassName={"plugin-manager-modal"}
+                    centered
+                    open={!!editVisible}
+                    maskClosable={false}
+                    onCancel={() => {
                       form.resetFields();
                       setEditVisible(null);
-                    });
-                  }}
-                  getContainer={false}
-                >
-                  <div className="plugin-manager-modal-body">
-                    <Form form={form} scrollToFirstError>
-                      <Form.Item
-                        name={'showLogo'}
-                        label="展示logo"
-                        valuePropName="checked"
-                        initialValue={editVisible?.contentData?.showLogo}
-                      >
-                        <Switch />
-                      </Form.Item>
-                      <Form.Item
-                        name={'showHeader'}
-                        label="展示头部"
-                        valuePropName="checked"
-                        initialValue={editVisible?.contentData?.showHeader}
-                      >
-                        <Switch />
-                      </Form.Item>
-                      <Form.Item
-                        name={'showFooter'}
-                        label="展示底部"
-                        valuePropName="checked"
-                        initialValue={editVisible?.contentData?.showFooter}
-                      >
-                        <Switch />
-                      </Form.Item>
-                      {
-                        userAuthList.includes('monitor.changeLogo') ?
-                          <Form.Item
-                            name={'changeLogo'}
-                            label="允许更换logo"
-                            valuePropName="checked"
-                            initialValue={editVisible?.contentData?.changeLogo}
-                          >
-                            <Switch />
-                          </Form.Item>
-                          : null
-                      }
-                    </Form>
-                  </div>
-                </Modal>
-                : null
-            }
-          </div>
-        }, [dataList, searchVal, JSON.stringify(editVisible?.contentData)])}
+                    }}
+                    onOk={() => {
+                      form.validateFields().then(values => {
+                        getParams(editVisible.id).then((params) => {
+                          if (params && params.code === 'SUCCESS') {
+                            updateParams(editVisible.id, {
+                              ...params.data,
+                              contentData: Object.assign(
+                                params.data?.contentData,
+                                values
+                              ),
+                            }).then((res: any) => {
+                              if (res && res.code === 'SUCCESS') {
+                                setDataList((prev: any) => {
+                                  const result = (prev || [])?.map?.((i: any) => {
+                                    if (i.id === res.data.id) {
+                                      return res.data;
+                                    }
+                                    return i;
+                                  });
+                                  loopProjectStatusFun(result);
+                                  return result;
+                                });
+                              } else {
+                                message.error(res?.msg || res?.message || '接口异常');
+                              }
+                            });
+                          } else {
+                            message.error(params?.msg || params?.message || '接口异常');
+                          }
+                        });
+                        form.resetFields();
+                        setEditVisible(null);
+                      });
+                    }}
+                    getContainer={false}
+                  >
+                    <div className="plugin-manager-modal-body">
+                      <Form form={form} scrollToFirstError>
+                        <Form.Item
+                          name={'showLogo'}
+                          label="展示logo"
+                          valuePropName="checked"
+                          initialValue={editVisible?.contentData?.showLogo}
+                        >
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item
+                          name={'showHeader'}
+                          label="展示头部"
+                          valuePropName="checked"
+                          initialValue={editVisible?.contentData?.showHeader}
+                        >
+                          <Switch />
+                        </Form.Item>
+                        <Form.Item
+                          name={'showFooter'}
+                          label="展示底部"
+                          valuePropName="checked"
+                          initialValue={editVisible?.contentData?.showFooter}
+                        >
+                          <Switch />
+                        </Form.Item>
+                        {
+                          userAuthList.includes('monitor.changeLogo') ?
+                            <Form.Item
+                              name={'changeLogo'}
+                              label="允许更换logo"
+                              valuePropName="checked"
+                              initialValue={editVisible?.contentData?.changeLogo}
+                            >
+                              <Switch />
+                            </Form.Item>
+                            : null
+                        }
+                      </Form>
+                    </div>
+                  </Modal>
+                  : null
+              }
+            </Fragment>
+          }, [dataList, searchVal, JSON.stringify(editVisible?.contentData)])}
+        </div>
       </div>
     </div>
   );
@@ -282,12 +275,9 @@ const AlertItem = (props: any) => {
     ipcRenderer.ipcCommTest(
       'alert-open-browser',
       JSON.stringify({
-        type: 'child',
-        data: {
-          type: 'child',
-          ipUrl: dpmDomain,
-          id,
-        },
+        type: 'ccd',
+        ipUrl: dpmDomain,
+        id,
       })
     );
   };
