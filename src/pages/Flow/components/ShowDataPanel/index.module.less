@@ -3,6 +3,10 @@
   width: 100%;
 
   :global {
+    .ant-splitter .ant-splitter-panel {
+      overflow: hidden;
+    }
+
     .config-panel-right {
       width: 100%;
       height: 100%;
@@ -19,12 +23,17 @@
       &-body {
         height: calc(100% - 40px);
         width: 100%;
+        justify-content: center;
       }
 
       &-footer-toolbar {
+        height: 29px;
+        line-height: 29px;
         border-bottom: 1px solid rgba(144, 144, 144, 0.2);
 
         &-item {
+          height: 100%;
+          line-height: 1;
           padding: 8px 12px;
           cursor: pointer;
 
@@ -45,6 +54,36 @@
         &-item:hover {
           background-color: #e6f4ff;
           color: rgb(114, 114, 114);
+        }
+      }
+
+      &-footer-body {
+        height: calc(100% - 29px);
+        overflow-y: auto;
+        font-size: 12px;
+        padding: 4px 8px;
+        user-select: text;
+
+        &-item {
+          gap: 4px;
+
+          &-title {
+            opacity: 0.6;
+            white-space: nowrap;
+          }
+        }
+
+        &-history-item {
+          margin-bottom: 8px;
+
+          &-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+          }
+
+          &-body {
+            margin-left: 8px;
+          }
         }
       }
     }

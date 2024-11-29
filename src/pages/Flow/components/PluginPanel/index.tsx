@@ -364,7 +364,10 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         return pre.concat([
           {
             key: '' + index,
-            label: `${item?.config?.alias} (${item?.config?.name})`,
+            name: `${item?.config?.alias} (${item?.config?.name})`,
+            label: <Button block>
+              <TooltipDiv>{`${item?.config?.alias} (${item?.config?.name})`}</TooltipDiv>
+            </Button>,
             onClick: () => {
               graphData.centerPoint(
                 item?.position.x + item?.size?.width / 2,
@@ -666,6 +669,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
     };
     addPluginFun(0);
   };
+  console.log(nodes);
 
   return (
     <div className={`flex-box ${styles.pluginPanel}`}>
@@ -733,7 +737,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                 <Fragment>
                   <Menu
                     mode="inline"
-                    items={nodes?.filter((i: any) => _.toUpper(i?.label).indexOf(_.toUpper(searchVal)) > -1)}
+                    items={nodes?.filter((i: any) => _.toUpper(i?.name).indexOf(_.toUpper(searchVal)) > -1)}
                     selectable={false}
                   />
                 </Fragment>

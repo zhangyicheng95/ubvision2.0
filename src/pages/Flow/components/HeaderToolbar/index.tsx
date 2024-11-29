@@ -4,7 +4,7 @@ import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined, SaveOut
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasStart, setErrorList, setFlowRunningData, setLoading, setLogList, setSaveGraph } from '@/redux/actions';
+import { IRootActions, setCanvasStart, setErrorList, setFlowRunningData, setFlowRunningDataHistory, setLoading, setLogList, setSaveGraph } from '@/redux/actions';
 import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
 import { defaultConfig } from 'antd/es/theme/context';
 import { useNavigate } from 'react-router';
@@ -225,7 +225,10 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       socketError.listen((error: string) => dispatch(setErrorList(error)), api);
       socketLog.listen((log: string) => dispatch(setLogList(log)));
       setTimeout(() => {
-        socketData.listen((data: any) => dispatch(setFlowRunningData(data)));
+        socketData.listen((data: any) => {
+          dispatch(setFlowRunningData(data));
+          dispatch(setFlowRunningDataHistory({ [new Date().getTime()]: data }));
+        });
         // socketState.listen((data: any) => dispatch(setFlowRunningStatus(data)));
       }, 200);
     };

@@ -51,6 +51,7 @@ const initalState: IRootActions = {
 	logList: [], // 日志列表
 	errorList: [], // 告警列表
 	flowRunningData: {}, // 流程运行数据
+	flowRunningDataHistory: {}, // 流程运行数据-历史数据
 	flowRunningStatus: {}, // 流程运行状态
 	pluginList: [], // 插件管理列表
 };
@@ -97,6 +98,7 @@ const flowInitalState = {
 	logList: [], // 日志列表
 	errorList: [], // 告警列表
 	flowRunningData: {}, // 流程运行数据
+	flowRunningDataHistory: {}, // 流程运行数据-历史数据
 	flowRunningStatus: {}, // 流程运行状态
 };
 
@@ -215,6 +217,15 @@ const rootReducer = (state = initalState, actions: any) => {
 				flowRunningData: !actions.flowRunningData ? {} : {
 					...state.flowRunningData,
 					...actions.flowRunningData
+				},
+			};
+		// 流程图-运行数据-历史数据
+		case rootActionTypes.SET_FLOW_RUNNING_DATA_HISTORY:
+			return {
+				...state,
+				flowRunningDataHistory: !actions.flowRunningDataHistory ? {} : {
+					...state.flowRunningDataHistory,
+					...actions.flowRunningDataHistory
 				},
 			};
 		// 流程图-运行状态

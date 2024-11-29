@@ -315,7 +315,10 @@ const createWindow = async (arg?: any) => {
       nodeIntegration: true, // 是否集成Node
     },
   })
-
+  mainWindow['customType'] = `main-${res?.id}`;
+  mainWindow.on('focus', () => {
+    mainWindow.setAlwaysOnTop(false);
+  });
   // 最小化窗口
   ipcMain.handle(`minimize-${mainWindow.id}`, () => {
     mainWindow.minimize();

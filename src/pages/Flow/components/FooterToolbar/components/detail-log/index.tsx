@@ -31,7 +31,6 @@ const DetailLog: React.FC<Props> = (props) => {
   const id = params?.['id'];
 
   const domRef = useRef<any>(null);
-  const pauseRenderRef = useRef(false);
   const [searchData, setSearchData] = useState('');
   const [logSavePath, setLogSavePath] = useState('');
 
@@ -64,58 +63,12 @@ const DetailLog: React.FC<Props> = (props) => {
       return;
     }
   }, [localStorage.getItem('general_setting')]);
-  // 日志信息变化时，动态改变信息数量
-  // useEffect(() => {
-  //   const box = domRef.current?.getElementsByClassName?.('log-content')?.[0];
-  //   console.log(pauseRenderRef.current);
-    
-  //   if (box) {
-  //     if (type === 'log') {
-  //       box.innerHTML = logList
-  //         .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
-  //         .join(`<br/>`);
-  //     } else if (type === 'error') {
-  //       box.innerHTML = errorList
-  //         .filter((i: any) => ('' + i).indexOf(searchData || '') > -1)
-  //         .map((item: any) => {
-  //           const { level, node_name, nid, message, time } = item;
-  //           return <div className="content-item" key={`problem_${nid}`}>
-  //             <span>
-  //               {moment(time).format('YYYY-MM-DD HH:mm:ss')}&nbsp;
-  //             </span>
-  //             &nbsp;
-  //             <div
-  //               className="content-item-span"
-  //               style={{
-  //                 color:
-  //                   level === 'warning'
-  //                     ? logColors.warning
-  //                     : level === 'error'
-  //                       ? logColors.error
-  //                       : logColors.critical,
-  //               }}
-  //               dangerouslySetInnerHTML={{
-  //                 __html: `节点${node_name || ''}（${nid || ''
-  //                   }）${message}`,
-  //               }}
-  //             />
-  //           </div>
-  //         })?.join('<br/>');
-  //     };
-  //   };
-  // }, [type, logList, searchData]);
 
   return (
     <div
       ref={domRef}
       className={`${styles.detailPanel} flex-box-column`}
       id={'detail-log'}
-      // onMouseOver={() => {
-      //   pauseRenderRef.current = true;
-      // }}
-      // onMouseOut={() => {
-      //   pauseRenderRef.current = false;
-      // }}
     >
       <div className="header-search-box flex-box">
         <Tooltip placement="bottom" title="清空控制台">
@@ -133,7 +86,11 @@ const DetailLog: React.FC<Props> = (props) => {
               message.warning('请先保存');
               return;
             }
-            openFolder(`${logSavePath}\\`);
+            openFolder(`${logSavePath}\\`).then(res => {
+              if (res === 'error') {
+                message.error('请打开正确路径');
+              };
+            });
           }}
         >
           打开日志存储目录

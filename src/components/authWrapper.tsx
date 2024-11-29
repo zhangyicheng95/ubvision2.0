@@ -2,6 +2,7 @@ import React from 'react';
 
 import useAuth from '@/hooks/useAuth';
 import _ from 'lodash';
+import { GetQueryObj } from '@/utils/utils';
 
 const authWrapper = (WrappedComponent: any) => {
 
@@ -11,11 +12,11 @@ const authWrapper = (WrappedComponent: any) => {
 
     // 默认进来读取本地设置的主题
     const params: any = !!location.search
-      ? new URLSearchParams(location.search)
+      ? GetQueryObj(location.search)
       : !!location.href
-        ? new URLSearchParams(location.href)
+        ? GetQueryObj(location.href)
         : {};
-    const number = params.get('number') || 1;
+    const number = params?.['number'];
     const theme = localStorage.getItem('theme-mode');
     if (!_.isNull(number)) {
       window?.ipcRenderer?.invoke?.(`theme-mode-${number}`, theme || 'dark');

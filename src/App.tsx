@@ -29,14 +29,6 @@ import PluginEditPage from './pages/Plugin/components/PluginEdit';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
-  const params: any = !!location.search
-    ? new URLSearchParams(location.search)
-    : !!location.href
-      ? new URLSearchParams(location.href)
-      : {};
-
-  const number = params.get('number') || 1;
-
   const [api, contextHolder] = notification.useNotification(notificationSetting);
   const dispatch = useDispatch();
   const timeRef = useRef<any>();

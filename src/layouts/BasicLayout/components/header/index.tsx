@@ -8,16 +8,15 @@ import {
 } from '@ant-design/icons';
 import styles from './index.module.less';
 import { useNavigate } from 'react-router-dom';
-import { clearAllInterval } from '@/utils/utils';
+import { clearAllInterval, GetQueryObj } from '@/utils/utils';
 
 const CHeader: React.FC = (props: any) => {
   const params: any = !!location.search
-    ? new URLSearchParams(location.search)
+    ? GetQueryObj(location.search)
     : !!location.href
-      ? new URLSearchParams(location.href)
+      ? GetQueryObj(location.href)
       : {};
-
-  const number = params.get('number') || 1;
+  const number = params?.['number'];
   var document: any = window.document;
   const navigate = useNavigate();
   // 展开/全屏

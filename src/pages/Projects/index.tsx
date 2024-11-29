@@ -405,6 +405,7 @@ const ProjectItem = (props: any) => {
   };
   // 复制
   const onCopy = (item: any) => {
+    setLoading(true);
     getParams(id).then((res) => {
       if (!!res && res.code === 'SUCCESS') {
         const {
@@ -942,7 +943,7 @@ const ProjectItem = (props: any) => {
                   {label}
                 </span>
               ) : (
-                <a key={`operation-${key}`} onClick={() => click(item)}>
+                <a key={`operation-${key}`} onClick={() => !!click && click(item)}>
                   {label}
                 </a>
               );

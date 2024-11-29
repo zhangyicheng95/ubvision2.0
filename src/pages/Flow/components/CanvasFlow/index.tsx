@@ -287,9 +287,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
             const { cell, magnet } = args;
             const data = cell.getData();
             if (
-              !_.isEmpty(data) &&
-              _.isBoolean(data?.graphLock) &&
-              data.graphLock
+              (!_.isEmpty(data) && _.isBoolean(data?.graphLock) && data.graphLock)
+              ||
+              !!data?.canvasStart
             ) {
               return false;
             }
@@ -330,12 +330,13 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               // shape: `dag-edge`,
               ...lineType || {},
               attrs: {
-                ...lineType.attrs || {},
+                ...lineType?.attrs || {},
                 line: {
-                  ...lineType.attrs.line,
+                  ...lineType?.attrs?.line || {},
                   stroke: color,
                 }
               },
+              zIndex: 0
             });
           },
         },
@@ -432,9 +433,10 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     return () => {
       unbindEvent();
     }
-  }, [graphRef.current, canvasData]);
+  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
   // 绑定事件
   const bindEvent = useCallback(() => {
+    console.log('绑定事件');
     if (graphRef.current) {
       graphRef?.current?.on('edge:mouseenter', edgeMoveIn);
       graphRef?.current?.on('edge:mouseleave', edgeMoveOut);
@@ -451,7 +453,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       window.addEventListener('keydown', onKeyDown);
       window.addEventListener('keyup', onKeyUp);
     }
-  }, [graphRef.current, canvasData]);
+  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
   // group相关
   const positionChange = () => {
     let ctrlPressed = false;
@@ -548,6 +550,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   };
   // 解绑事件
   const unbindEvent = useCallback(() => {
+    console.log('解绑事件');
     if (graphRef.current) {
       // 删除所有事件监听
       graphRef?.current?.off('edge:mouseenter', edgeMoveIn);
@@ -565,7 +568,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     }
-  }, [graphRef.current, canvasData]);
+  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
   // 初始化渲染节点
   const initGraph = useCallback(() => {
     return new Promise((resolve: any, reject: any) => {
@@ -678,6 +681,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   stroke
                 }
               },
+              zIndex: 0
             } : {}
           });
           return edge;
@@ -739,12 +743,15 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, [graphRef.current, canvasData?.id]);
   // 键盘按下
   const onKeyDown = useCallback((event: any) => {
+    // 有选中的节点，不做任何事件处理
+    if (selectedNode) return;
     const { metaKey, ctrlKey, shiftKey, key } = event;
     // 选中的节点
     const selectedCells = (graphRef?.current?.getSelectedCells() || []);
     const seletedGroups = selectedCells.filter((i: any) => i.id.indexOf('group_') > -1);
     const seletedNodes = selectedCells.filter((i: any) => i?.store?.data?.customId.indexOf('node_') > -1);
     if (key === 'Backspace') {
+      if (canvasStart) return;
       // 删除分组
       if (seletedGroups?.length > 0) {
         confirm({
@@ -983,6 +990,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       };
       document.body.removeChild(input);
     } else if ((metaKey || ctrlKey) && key === 's') {
+      if (canvasStart) return;
       // 保存方案
       saveGraph(canvasData);
     } else if ((metaKey || ctrlKey) && key === 'z' && !shiftKey) {
@@ -1003,13 +1011,14 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         nodeSearchRef?.current?.focus();
       }, 200);
     } else if (metaKey || ctrlKey) {
+      if (canvasStart) return;
       // 按下ctrl，选择节点
       ctrlRef.current = true;
     } else if (key === 'Escape') {
       // 取消查找节点
       closeNodeSearch();
     }
-  }, [canvasData]);
+  }, [canvasData, canvasStart, selectedNode]);
   // 键盘抬起
   const onKeyUp = useCallback((event: any) => {
     // 取消节点多选

@@ -27,6 +27,7 @@ export enum rootActionTypes {
 	"SET_LOG_LIST" = "SET_LOG_LIST",
 	"SET_ERROR_LIST" = "SET_ERROR_LIST",
 	"SET_FLOW_RUNNING_DATA" = "SET_FLOW_RUNNING_DATA",
+	"SET_FLOW_RUNNING_DATA_HISTORY" = "SET_FLOW_RUNNING_DATA_HISTORY",
 	"SET_FLOW_RUNNING_STATUS" = "SET_FLOW_RUNNING_STATUS",
 	"SET_PLUGIN_LIST" = "SET_PLUGIN_LIST",
 	"CLEAR_FLOW_DATA" = "CLEAR_FLOW_DATA",
@@ -83,7 +84,8 @@ export interface IRootActions {
 	getCanvasPlugins: () => null, // 获取侧边插件列表
 	logList: string[], // 日志列表
 	errorList: string[], // 告警列表
-	flowRunningData: {}, // 流程运行数据
+	flowRunningData: any, // 流程运行数据
+	flowRunningDataHistory: any, // 流程运行数据-历史数据
 	flowRunningStatus: {}, // 流程运行状态
 	pluginList: [], // 插件管理列表
 }
@@ -212,6 +214,13 @@ export const setFlowRunningData = (flowRunningData: any) => {
 	return {
 		type: rootActionTypes.SET_FLOW_RUNNING_DATA,
 		flowRunningData
+	};
+};
+// 流程图-运行数据-历史数据
+export const setFlowRunningDataHistory = (flowRunningDataHistory: any) => {
+	return {
+		type: rootActionTypes.SET_FLOW_RUNNING_DATA_HISTORY,
+		flowRunningDataHistory
 	};
 };
 // 流程图-节点状态

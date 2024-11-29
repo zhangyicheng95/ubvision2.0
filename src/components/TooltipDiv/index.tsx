@@ -8,6 +8,7 @@ interface Props {
   style?: any;
   placement?: any;
   onClick?: any;
+  onContextMenu?: any;
   className?: string;
   id?: string;
   onDragStart?: any;

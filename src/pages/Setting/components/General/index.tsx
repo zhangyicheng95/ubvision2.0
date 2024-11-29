@@ -7,6 +7,7 @@ import {
 import styles from './index.module.less';
 import * as _ from 'lodash-es';
 import TooltipDiv from '@/components/TooltipDiv';
+import { GetQueryObj } from '@/utils/utils';
 
 interface Props {
 
@@ -14,11 +15,11 @@ interface Props {
 
 const GeneralPage: React.FC<Props> = () => {
   const params: any = !!location.search
-    ? new URLSearchParams(location.search)
+    ? GetQueryObj(location.search)
     : !!location.href
-      ? new URLSearchParams(location.href)
+      ? GetQueryObj(location.href)
       : {};
-  const number = params.get('number');
+  const number = params?.['number'];
   const { ipcRenderer }: any = window || {};
   const [form] = Form.useForm();
   const {

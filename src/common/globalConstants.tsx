@@ -70,7 +70,7 @@ export const notificationSetting: any = {
     placement: 'topRight',
     stack: false,
     rtl: false, // RTL 模式,开启的话，文字会向右对齐
-    top: 80,  // 消息从顶部弹出时，距离顶部的位置，单位像素
+    top: 60,  // 消息从顶部弹出时，距离顶部的位置，单位像素
     maxCount: 3, // 最大显示数，超过限制时，最早的消息会被自动关闭
 };
 

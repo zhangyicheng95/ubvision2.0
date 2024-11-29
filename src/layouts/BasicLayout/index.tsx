@@ -8,6 +8,7 @@ import styles from './index.module.less';
 import { useSelector } from 'react-redux';
 import { IRootActions } from '@/redux/actions';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { GetQueryObj } from '@/utils/utils';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -20,14 +21,14 @@ const BasicLayout = (props: any) => {
   const { children, route } = props;
   const { loading, projectList } = useSelector((state: IRootActions) => state);
   const params: any = !!window.location.search
-    ? new URLSearchParams(window.location.search)
+    ? GetQueryObj(window.location.search)
     : !!window.location.href
-      ? new URLSearchParams(window.location.href)
+      ? GetQueryObj(window.location.href)
       : {};
+  const number = params?.['number'];
   const location = useLocation();
   const { pathname = '/home' } = location;
 
-  const number = params.get('number') || 1;
   // 某些模块不需要展示侧边栏
   const ifShowSiderNav = useMemo(() => {
     return (

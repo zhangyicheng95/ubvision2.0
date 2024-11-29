@@ -54,7 +54,7 @@ export const chooseFile = (
 export const openFolder = (path: string, isFile?: boolean) => {
   return new Promise((resolve, reject) => {
     if (!path) {
-      reject('请打开正确路径')
+      reject('error')
     }
     if (isFile) {
       shell?.openPath(path);
