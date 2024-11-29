@@ -1,4 +1,6 @@
-import { app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification, dialog } from 'electron';
+import {
+  app, BrowserWindow, shell, ipcMain, nativeTheme, IpcMainEvent, Notification, dialog
+} from 'electron';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -9,6 +11,7 @@ import modules from '../DB/modules/index';
 import { exec } from 'child_process';
 import { networkInterfaces } from 'os';
 import { resolveHtmlPath } from './util';
+import writeShortcutLink from 'windows-shortcuts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, '../..');
 
@@ -128,9 +131,25 @@ ipcMain.on('alert-open-browser', async (event: IpcMainEvent, arg: string) => {
   const data = JSON.parse(arg);
   createWindow(JSON.stringify(data));
 });
+const readPathDir = (event: any) => {
+  const fastPath = path.join(
+    app.getPath('appData'),
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\`
+  );
+  fs.readdir(fastPath, (err, files) => {
+    if (err) {
+      console.error(`无法读取快速启动目录:${err}`);
+      event.sender.send('alert-read-startUp-reply', { err });
+      return;
+    };
+    event.sender.send('alert-read-startUp-reply', { files });
+  });
+};
 // 读取快速启动列表
-ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg: string) => {
-  console.log(`alert-read-startUp: ${arg}`);
+ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg?: any) => readPathDir(event));
+// 添加项目到快速启动列表
+ipcMain.on('alert-add-startUp', async (event: IpcMainEvent, arg: string) => {
+  console.log(`alert-add-startUp: ${arg}`);
   // 处理传递的参数
   let res: any = arg;
   try {
@@ -139,16 +158,25 @@ ipcMain.on('alert-read-startUp', async (event: IpcMainEvent, arg: string) => {
   // 快捷方式放在哪，名称
   const shortcutPath = path.join(
     app.getPath('appData'),
-    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'
-    }`
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'}`
   );
-  if (process.platform === 'win32') {
-    const detail = shell.readShortcutLink(shortcutPath);
-    event.sender.send('alert-read-startUp-reply', {
-      success: !!detail?.target || !!detail?.cwd,
-      id: res.id,
-    });
-  }
+  console.log(`添加的目标路径:${shortcutPath}`);
+  const targetPath = res?.id ? `myubvision:?id=${res.id}` : process.execPath;
+  // @ts-ignore
+  const result = writeShortcutLink.create(shortcutPath, {
+    target: targetPath,
+    cwd: process.cwd(), // 工作目录
+    desc: 'My App Shortcut', // 快捷方式描述
+    icon: targetPath,  // 使用目标本身作为快捷方式图标
+  }, function (err) {
+    if (err) {
+      console.error('快捷方式创建失败:', err);
+    } else {
+      console.log('快捷方式创建成功:', shortcutPath);
+      // 创建完成后，返回结果
+      readPathDir(event);
+    }
+  });
 });
 // 从快速启动列表删除项目
 ipcMain.on('alert-delete-startUp', async (event: IpcMainEvent, arg: string) => {
@@ -161,17 +189,12 @@ ipcMain.on('alert-delete-startUp', async (event: IpcMainEvent, arg: string) => {
   // 快捷方式放在哪，名称
   const shortcutPath = path.join(
     app.getPath('appData'),
-    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'
-    }`
+    `\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\${res?.name ? res.name : 'myubvision.lnk'}`
   );
-  if (process.platform === 'win32') {
-    shell.trashItem(shortcutPath);
-    // 创建完成后，返回结果
-    event.sender.send('alert-read-startUp-reply', {
-      success: false,
-      id: res.id,
-    });
-  }
+  shell.trashItem(shortcutPath).then(() => {
+    // 删除完成后，返回结果
+    readPathDir(event);
+  });
 });
 // 监听readFile，接收渲染进程发送的消息
 ipcMain.on('resource-file-read', async (event: IpcMainEvent, arg: string) => {
@@ -221,7 +244,7 @@ ipcMain.on(`system-notification`, (event: any, arg: any) => {
       silent: true, // 系统默认的通知声音
     });
     notification.on('failed', (event, err) => {
-      console.log(`event:${JSON.stringify(event)}\nerr:${err}`);
+      console.log(`event:${JSON.stringify(event)} \nerr:${err}`);
     });
     notification.show();
   } else {
@@ -243,9 +266,6 @@ ipcMain.on('read-file-content', (event: any, arg: any) => {
 });
 
 let win: BrowserWindow | null = null;
-let myWindow: any = null,
-  myChildWindow: any = null;
-let tray = null;
 const preload = path.join(__dirname, '../preload/index.mjs');
 const indexHtml = path.join(RENDERER_DIST, 'index.html');
 // 检测当前点击的窗口，是否已打开
@@ -264,8 +284,7 @@ function toggleAlwaysOnTop(type: string) {
 // 创建主窗口
 const createWindow = async (arg?: any) => {
   console.log(`argargarg:${arg}`);
-
-  let res: any = arg || {};
+  let res: any = arg || { id: 1 };
   let params = '';
   try {
     res = JSON.parse(arg);
@@ -300,10 +319,10 @@ const createWindow = async (arg?: any) => {
     return;
   }
   const mainWindow: any = new BrowserWindow({
-    width: !!params ? 1440 : 1280,
-    height: !!params ? 900 : 810,
-    minWidth: !!params ? 1440 : 1280,
-    minHeight: !!params ? 900 : 810,
+    width: !!res?.type ? 1440 : 1280,
+    height: !!res?.type ? 900 : 810,
+    minWidth: !!res?.type ? 1440 : 1280,
+    minHeight: !!res?.type ? 900 : 810,
     type: `main-${res?.id}`,
     frame: false, // 隐藏窗口框架
     skipTaskbar: false, //是否在任务栏中显示窗口
@@ -314,7 +333,7 @@ const createWindow = async (arg?: any) => {
       webSecurity: false, //网络安全，false允许访问本地文件
       nodeIntegration: true, // 是否集成Node
     },
-  })
+  });
   mainWindow['customType'] = `main-${res?.id}`;
   mainWindow.on('focus', () => {
     mainWindow.setAlwaysOnTop(false);
@@ -334,7 +353,6 @@ const createWindow = async (arg?: any) => {
   // 关闭窗口
   ipcMain.handle(`close-${mainWindow.id}`, (event: any, arg: any) => {
     if (arg) {
-      myWindow = null;
       mainWindow?.close?.();
       mainWindow?.destroy?.();
     } else {

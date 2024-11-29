@@ -16,7 +16,7 @@ const CHeader: React.FC = (props: any) => {
     : !!location.href
       ? GetQueryObj(location.href)
       : {};
-  const number = params?.['number'];
+  const number = [undefined, 'undefined'].includes(params?.['number']) ? 1 : params?.['number'];
   var document: any = window.document;
   const navigate = useNavigate();
   // 展开/全屏

@@ -25,7 +25,7 @@ const BasicLayout = (props: any) => {
     : !!window.location.href
       ? GetQueryObj(window.location.href)
       : {};
-  const number = params?.['number'];
+  const number = [undefined, 'undefined'].includes(params?.['number']) ? 1 : params?.['number'];
   const location = useLocation();
   const { pathname = '/home' } = location;
 

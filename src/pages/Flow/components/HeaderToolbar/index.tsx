@@ -25,7 +25,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       ? GetQueryObj(location.href)
       : {};
   const id = params?.['id'];
-  const number = params?.['number'];
+  const number = [undefined, 'undefined'].includes(params?.['number']) ? 1 : params?.['number'];
   const { graphData, canvasData, canvasStart, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();

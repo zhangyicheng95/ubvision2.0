@@ -16,7 +16,7 @@ const authWrapper = (WrappedComponent: any) => {
       : !!location.href
         ? GetQueryObj(location.href)
         : {};
-    const number = params?.['number'];
+    const number = [undefined, 'undefined'].includes(params?.['number']) ? 1 : params?.['number'];
     const theme = localStorage.getItem('theme-mode');
     if (!_.isNull(number)) {
       window?.ipcRenderer?.invoke?.(`theme-mode-${number}`, theme || 'dark');

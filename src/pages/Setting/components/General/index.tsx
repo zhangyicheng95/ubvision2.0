@@ -19,7 +19,7 @@ const GeneralPage: React.FC<Props> = () => {
     : !!location.href
       ? GetQueryObj(location.href)
       : {};
-  const number = params?.['number'];
+  const number = [undefined, 'undefined'].includes(params?.['number']) ? 1 : params?.['number'];
   const { ipcRenderer }: any = window || {};
   const [form] = Form.useForm();
   const {

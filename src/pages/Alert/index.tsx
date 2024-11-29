@@ -24,17 +24,32 @@ const userAuthList = getUserAuthList();
 interface Props { }
 
 const AlertRouter: React.FC<Props> = (props: any) => {
+  const { ipcRenderer }: any = window || {};
   const { projectList, loopProjectStatusFun } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
-  const [dataList, setDataList] = useState([]);
+  const [dataList, setDataList] = useState<any>([]);
   const [popoverVisible, setPopoverVisible] = useState(false);
   const [editVisible, setEditVisible] = useState<any>(null);
   const [searchVal, setSearchVal] = useState('');
 
   // 进入页面默认拉取
   useEffect(() => {
-    setDataList(projectList)
+    ipcRenderer.on('alert-read-startUp-reply', function (arg: any, res: any) {
+      console.log('alert-read-startUp-reply', res);
+      if (res.err) {
+        setDataList(projectList);
+      } else {
+        const list = projectList?.map((item: any) => {
+          return {
+            ...item,
+            ifOnStartUp: (res?.files || [])?.includes(`${item.name}.lnk`)
+          }
+        });
+        setDataList(list);
+      }
+    });
+    ipcRenderer.ipcCommTest('alert-read-startUp');
 
     return () => {
       setDataList([]);
@@ -243,29 +258,6 @@ const AlertItem = (props: any) => {
   const { item, setDataList, loopGetStatus, setEditVisible, form } = props;
   const { name, id, running, ifOnStartUp, contentData, updatedAt } = item;
 
-  // 获取是否存在快速启动列表中
-  useEffect(() => {
-    ipcRenderer.on('alert-read-startUp-reply', function (res: any) {
-      setDataList((prev: any) =>
-        (prev || [])?.map?.((i: any) => {
-          if (i.id === res.id) {
-            return {
-              ...i,
-              ifOnStartUp: !!res && res.success,
-            };
-          }
-          return i;
-        })
-      );
-    });
-    ipcRenderer.ipcCommTest(
-      'alert-read-startUp',
-      JSON.stringify({
-        id,
-        name: `${name}.lnk`,
-      })
-    );
-  }, [id]);
   // 点击打开新窗口
   const onClick = (item: any) => {
     message.destroy();
@@ -390,7 +382,7 @@ const AlertItem = (props: any) => {
       </div>
     } : null,
     userAuthList.includes('monitor.headerOperation') ? {
-      key: `show-logo-${id}`,
+      key: `show-operation-${id}`,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
         setEditVisible(item);
         setTimeout(() => {
