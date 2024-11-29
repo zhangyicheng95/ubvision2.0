@@ -36,7 +36,6 @@ const AlertRouter: React.FC<Props> = (props: any) => {
   // 进入页面默认拉取
   useEffect(() => {
     ipcRenderer.on('alert-read-startUp-reply', function (arg: any, res: any) {
-      console.log('alert-read-startUp-reply', res);
       if (res.err) {
         setDataList(projectList);
       } else {

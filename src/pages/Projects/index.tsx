@@ -116,10 +116,14 @@ const ProjectPage: React.FC<Props> = (props: any) => {
               !!res.data &&
               !!res.data?.id
             ) {
-              // navigate('/flow', {
-              //   state: data,
-              // });
               getProjectListFun?.();
+              ipcRenderer?.ipcCommTest(
+                'alert-open-browser',
+                JSON.stringify({
+                  type: 'flow',
+                  id: res.data?.id,
+                })
+              );
             } else {
               message.error(res?.message || res?.msg || '接口异常');
             }

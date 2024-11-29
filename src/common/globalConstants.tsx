@@ -38,6 +38,8 @@ interface centerProps {
     hostName: string;
 };
 export const permissionRule = (local: localProps, center: centerProps) => {
+    console.log('已经授权的信息', local);
+    console.log('当前信息', center);
     return center?.useNum > local?.num
         ||
         center.today >= local?.time

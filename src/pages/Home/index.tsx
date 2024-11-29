@@ -43,7 +43,7 @@ const tipList = [
 ]
 
 const Home: React.FC<Props> = (props: any) => {
-  const { projectList } = useSelector((state: IRootActions) => state);
+  const { projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
   const navigate = useNavigate();
   const userAuthList = getUserAuthList();
   const { ipcRenderer }: any = window || {};
@@ -100,6 +100,7 @@ const Home: React.FC<Props> = (props: any) => {
               !!res.data &&
               !!res.data?.id
             ) {
+              getProjectListFun?.();
               ipcRenderer?.ipcCommTest(
                 'alert-open-browser',
                 JSON.stringify({
@@ -265,6 +266,8 @@ const Home: React.FC<Props> = (props: any) => {
                     className="flex-box home-body-bottom-right-document-list-item"
                     key={`home-body-bottom-right-document-list-item-${index}`}
                     onClick={() => {
+                      message.destroy();
+                      message.info('功能开发中，敬请期待。')
                       // window.open(`http://www.baidu.com/s?wd=${item}`);
                     }}
                   >
