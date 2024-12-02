@@ -320,36 +320,64 @@ const createWindow = async (arg?: any) => {
       })
       .join('&');
   } catch (err) { }
-  const mainsWindow = toggleAlwaysOnTop(`main-${res?.id}`);
-  if (!!mainsWindow) {
-    if (mainsWindow?.isMinimized?.()) {
-      mainsWindow?.restore?.();
+  /*******************打开窗口之前，检查这个id是否已经打开了别的窗口********************/
+  const openedFlowWindow = toggleAlwaysOnTop(`main-${res?.id}`);
+  const openedCCDWindow = toggleAlwaysOnTop(`child-${res?.id}`);
+  if (res?.type === 'ccd') {
+    if (!!openedFlowWindow) {
+      // 要打开的是监视器，检查有没有打开流程图
+      if (openedFlowWindow?.isMinimized?.()) {
+        openedFlowWindow?.restore?.();
+      }
+      openedFlowWindow?.focus?.();
+      // childWindow.setAlwaysOnTop(true);
+      dialog.showMessageBox(openedFlowWindow, {
+        type: 'warning',
+        title: '警告',
+        message: '请先关闭该方案的流程编辑器，然后再打开界面监视器',
+        buttons: ['确定'],
+      });
+      return;
+    } else if (!!openedCCDWindow) {
+      // 没有打开流程图的话，就检查是不是已经打开过监视器
+      if (openedCCDWindow?.isMinimized?.()) {
+        openedCCDWindow?.restore?.();
+      }
+      openedCCDWindow?.focus?.();
+      return;
     }
-    mainsWindow?.focus?.();
-    // mainsWindow.setAlwaysOnTop(true);
-    return;
-  }
-  const childWindow = toggleAlwaysOnTop(`child-${res?.id}`);
-  if (!!childWindow) {
-    if (childWindow?.isMinimized?.()) {
-      childWindow?.restore?.();
+  } else {
+    if (!!openedCCDWindow) {
+      // 要打开的是监视器，检查有没有打开流程图
+      if (openedCCDWindow?.isMinimized?.()) {
+        openedCCDWindow?.restore?.();
+      }
+      openedCCDWindow?.focus?.();
+      // childWindow.setAlwaysOnTop(true);
+      dialog.showMessageBox(openedCCDWindow, {
+        type: 'warning',
+        title: '警告',
+        message: '请先关闭该方案的界面监视器，然后再打开流程编辑器',
+        buttons: ['确定'],
+      });
+      return;
+    } else if (!!openedFlowWindow) {
+      // 没有打开流程图的话，就检查是不是已经打开过监视器
+      if (openedFlowWindow?.isMinimized?.()) {
+        openedFlowWindow?.restore?.();
+      }
+      openedFlowWindow?.focus?.();
+      return;
     }
-    childWindow?.focus?.();
-    // childWindow.setAlwaysOnTop(true);
-    dialog.showMessageBox(childWindow, {
-      type: 'warning',
-      title: '警告',
-      message: '请先关闭该方案的界面监视器，然后再打开流程编辑器',
-      buttons: ['确定'],
-    });
-    return;
   };
+  /*******************打开窗口之前，检查这个id是否已经打开了别的窗口********************/
+  const windowType = res?.type === 'ccd' ? 'child' : res?.type === 'software' ? 'software' : 'main';
   const mainWindow: any = new BrowserWindow({
     width: !!res?.type ? 1440 : 1280,
     height: !!res?.type ? 900 : 810,
     minWidth: !!res?.type ? 1440 : 1280,
     minHeight: !!res?.type ? 900 : 810,
-    type: `main-${res?.id}`,
+    type: `${windowType}-${res?.id}`,
     frame: false, // 隐藏窗口框架
     skipTaskbar: false, //是否在任务栏中显示窗口
     kiosk: false,
@@ -360,7 +388,7 @@ const createWindow = async (arg?: any) => {
       nodeIntegration: true, // 是否集成Node
     },
   });
-  mainWindow['customType'] = `main-${res?.id}`;
+  mainWindow['customType'] = `${windowType}-${res?.id}`;
   mainWindow.on('focus', () => {
     mainWindow.setAlwaysOnTop(false);
   });

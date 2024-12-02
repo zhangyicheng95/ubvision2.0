@@ -38,31 +38,21 @@ const AlertRouter: React.FC<Props> = (props: any) => {
 
   useEffect(() => {
     // 新手引导-只有第一次进来才开启引导
-    if (!loading && !localStorage.getItem('ubvision-tour-alert')) {
+    if (!loading && !localStorage.getItem('ubvision-tour-alert') && userAuthList?.includes('projects.list')) {
       setTimeout(() => {
         setTourOpen(true);
-        setTourSteps(userAuthList?.includes('projects.list') ?
-          [
-            {
-              title: '添加监控页面',
-              description: '需要添加新的监控页面，在这里添加',
-              target: alertRef.current['add'],
-            },
-            !!alertRef.current['alertItem'] ? {
-              title: '已添加的监控页面',
-              description: '添加完页面后，左键点击打开，右键可以做一些属性编辑',
-              target: alertRef.current['alertItem'],
-            } : {}
-          ]
-          :
-          [
-            !!alertRef.current['alertItem'] ? {
-              title: '已添加的监控页面',
-              description: '添加完页面后，左键点击打开，右键可以做一些属性编辑',
-              target: alertRef.current['alertItem'],
-            } : {}
-          ]
-        );
+        setTourSteps([
+          {
+            title: '添加监控页面',
+            description: '需要添加新的监控页面，在这里添加',
+            target: alertRef.current['add'],
+          },
+          !!alertRef.current['alertItem'] ? {
+            title: '已添加的监控页面',
+            description: '添加完页面后，左键点击打开，右键可以做一些属性编辑',
+            target: alertRef.current['alertItem'],
+          } : {}
+        ]);
       }, 500);
     };
   }, [loading, localStorage.getItem('ubvision-tour-slider')]);
@@ -306,9 +296,6 @@ const AlertItem = (props: any) => {
 
   // 点击打开新窗口
   const onClick = (item: any) => {
-    message.destroy();
-    message.info('功能开发中。。。');
-    return;
     const { id } = item;
     ipcRenderer.ipcCommTest(
       'alert-open-browser',

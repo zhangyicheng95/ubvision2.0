@@ -141,7 +141,7 @@ const App: React.FC = () => {
       });
     };
     // 获取机器hostname
-    ipcRenderer.once('hostname-read-reply', function (res: any) {
+    ipcRenderer?.once?.('hostname-read-reply', function (res: any) {
       if (res === 'error') {
         message.error('系统信息获取失败');
       } else {
@@ -152,7 +152,7 @@ const App: React.FC = () => {
         // form.setFieldsValue({ _HOSTNAME: res });
       }
     });
-    ipcRenderer.ipcCommTest('hostname-read');
+    ipcRenderer?.ipcCommTest?.('hostname-read');
 
     return () => {
       !!timeRef.current && clearInterval(timeRef.current);
