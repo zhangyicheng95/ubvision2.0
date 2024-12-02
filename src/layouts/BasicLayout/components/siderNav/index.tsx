@@ -115,12 +115,10 @@ const SiderNav: React.FC<Props> = (props: any) => {
         }}
         items={sliderList}
       />
-      <Tooltip title={ipcRenderer?.process?.env?.APP_VERSION || 'V0.1.0.Alpha'} placement="left">
-        <div className="sider-bottom flex-box-column">
-          <div className="sider-bottom-title">UBVISION</div>
-          <span className="sider-bottom-label">V{ipcRenderer?.process?.env?.APP_VERSION || '0.1.0.Alpha'}</span>
-        </div>
-      </Tooltip>
+      <div className="sider-bottom flex-box-column">
+        <div className="sider-bottom-title">UBVISION</div>
+        <span className="sider-bottom-label">V{ipcRenderer?.process?.env?.APP_VERSION || '0.1.0.Alpha'}</span>
+      </div>
       <div
         className={`setting-icon-box flex-box-center ${selectedKeys?.indexOf('/userSetting') > -1 ? 'menu-selected-self' : ''}`}
         onClick={() => {
