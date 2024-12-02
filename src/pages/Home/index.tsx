@@ -26,10 +26,10 @@ import {
   ApartmentOutlined, BugFilled, FieldTimeOutlined, FolderAddOutlined, FolderOpenOutlined, FolderOutlined, LaptopOutlined, PlusOutlined, ProjectOutlined
 } from '@ant-design/icons';
 import TooltipDiv from '@/components/TooltipDiv';
-import icon1 from './机械臂1.png';
-import icon2 from './机械臂2.png';
-import icon3 from './机械臂3.png';
-import icon4 from './机械臂4.png';
+import icon1 from '../../assets/home/机械臂1.png';
+import icon2 from '../../assets/home/机械臂2.png';
+import icon3 from '../../assets/home/机械臂3.png';
+import icon4 from '../../assets/home/机械臂4.png';
 import { dpmDomain } from '@/utils/fetch';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions } from '@/redux/actions';
