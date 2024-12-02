@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Layout, Menu, Tooltip, Popover } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Layout, Menu, Tooltip, Popover, Tour } from 'antd';
 import Icon, {
   HomeOutlined, SettingOutlined, VideoCameraOutlined, BlockOutlined, FundProjectionScreenOutlined, AuditOutlined, UserOutlined
 } from '@ant-design/icons';
@@ -7,6 +7,8 @@ import { useLocation, useNavigate } from 'react-router';
 import { menuConfig } from './config/siderNav';
 import styles from './index.module.less';
 import { getUserAuthList, getUserData } from '@/utils/utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setLoading } from '@/redux/actions';
 
 const { Sider } = Layout;
 const projectIcon = () => (
@@ -80,11 +82,34 @@ interface Props {
 }
 
 const SiderNav: React.FC<Props> = (props: any) => {
+  const { loading } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const { ipcRenderer }: any = window || {};
   const userAuthList = getUserAuthList();
   const userInfo = getUserData();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const menuRef = useRef<any>({});
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourSteps, setTourSteps] = useState<any>([]);
+
+  useEffect(() => {
+    // 新手引导-只有第一次进来才开启引导
+    if (!loading && userAuthList?.includes('projects.list') && !localStorage.getItem('ubvision-tour-slider')) {
+      setTourOpen(true);
+      setTourSteps(() => {
+        return menuConfig?.map?.((menu) => {
+          const { name, description, id } = menu;
+          return {
+            title: name,
+            description: description,
+            target: menuRef.current[id],
+          }
+        })
+      });
+    };
+  }, [loading]);
+
   const selectedKeys = useMemo(() => {
     return pathname === '/' ? (userAuthList?.includes('projects.list') ? '/home' : '/alert') : pathname;
   }, [pathname]);
@@ -94,7 +119,9 @@ const SiderNav: React.FC<Props> = (props: any) => {
       {
         key: path,
         label: <Popover placement="right" content={name}>
-          {iconList[icon]}
+          <div className='flex-box-center' ref={(element: any) => {
+            return (menuRef.current[id] = element);
+          }}>{iconList[icon]}</div>
         </Popover>,
       }
       : null;
@@ -143,6 +170,15 @@ const SiderNav: React.FC<Props> = (props: any) => {
       >
         <SettingOutlined className="bottom-setting-icon" />
       </div>
+      <Tour open={tourOpen} onClose={() => {
+        setTourOpen(false);
+        // 引导完，存在本地缓存，下次就不做引导了
+        localStorage.setItem('ubvision-tour-slider', 'true');
+        dispatch(setLoading(true));
+        setTimeout(() => {
+          dispatch(setLoading(false));
+        }, 500);
+      }} steps={tourSteps} />
     </Sider>
   );
 };

@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -7,6 +8,7 @@ import {
   Button,
   message,
   Modal,
+  Tour,
   Upload,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -43,10 +45,14 @@ const tipList = [
 ]
 
 const Home: React.FC<Props> = (props: any) => {
-  const { projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
+  const { loading, projectList, getProjectListFun } = useSelector((state: IRootActions) => state);
   const navigate = useNavigate();
   const userAuthList = getUserAuthList();
   const { ipcRenderer }: any = window || {};
+  const homeRef = useRef<any>({});
+
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourSteps, setTourSteps] = useState<any>([]);
   const [softwareList, setSoftwareList] = useState([]);
   const [tipNum, setTipNum] = useState(0);
   const [caseVisible, setCaseVisible] = useState(false);
@@ -59,6 +65,39 @@ const Home: React.FC<Props> = (props: any) => {
     { name: '3D视觉引导螺栓拧紧', icon: icon4, description: '3D视觉高精度定位螺栓位置，引导机器人完成拧紧。' }
   ]);
 
+  useEffect(() => {
+    // 新手引导-只有第一次进来才开启引导
+    if (!loading && !!localStorage.getItem('ubvision-tour-slider') && !localStorage.getItem('ubvision-tour-home')) {
+      setTourOpen(true);
+      setTourSteps([
+        {
+          title: 'tips提示',
+          description: 'tips提示',
+          target: homeRef.current['tip'],
+        },
+        {
+          title: '快捷操作',
+          description: '快捷操作',
+          target: homeRef.current['operation'],
+        },
+        {
+          title: '最近的方案',
+          description: '最近的方案',
+          target: homeRef.current['projects'],
+        },
+        {
+          title: '常用工具',
+          description: '常用工具',
+          target: homeRef.current['tools'],
+        },
+        {
+          title: '帮助文档',
+          description: '帮助文档',
+          target: homeRef.current['markdown'],
+        }
+      ]);
+    };
+  }, [loading, localStorage.getItem('ubvision-tour-slider')]);
   useEffect(() => {
     ProjectApi.getStorage('softwareStorage').then((res: any) => {
       if (!!res && res.code === 'SUCCESS' && !_.isEmpty(res.data)) {
@@ -125,7 +164,9 @@ const Home: React.FC<Props> = (props: any) => {
     <div className={`${styles.homePage}`}>
       <PrimaryTitle title="UBVISION  STUDIO" style={{ marginBottom: 8 }}></PrimaryTitle>
       <div className="flex-box-column home-body">
-        <div className="flex-box home-body-top">
+        <div className="flex-box home-body-top" ref={(element: any) => {
+          return (homeRef.current['tip'] = element);
+        }}>
           <img src={tipIcon} alt="" className='home-body-top-icon' />
           Tips:
           &nbsp;
@@ -139,7 +180,9 @@ const Home: React.FC<Props> = (props: any) => {
         </div>
         <div className="flex-box-start home-body-bottom">
           <div className="home-body-bottom-left">
-            <h1 className='home-body-bottom-title'>快捷操作</h1>
+            <h1 className='home-body-bottom-title' ref={(element: any) => {
+              return (homeRef.current['operation'] = element);
+            }}>快捷操作</h1>
             <div className="flex-box home-body-bottom-left-operation">
               <Button
                 type="text"
@@ -173,7 +216,9 @@ const Home: React.FC<Props> = (props: any) => {
                   // });
                 }}>打开案例库</Button>
             </div>
-            <h1 className='home-body-bottom-title'>最近的方案</h1>
+            <h1 className='home-body-bottom-title' ref={(element: any) => {
+              return (homeRef.current['projects'] = element);
+            }}>最近的方案</h1>
             <div className="home-body-bottom-left-list">
               {
                 (projectList?.slice(0, 5) || [])?.map((item: any, index: number) => {
@@ -216,7 +261,9 @@ const Home: React.FC<Props> = (props: any) => {
             <div className="flex-box home-body-bottom-right-project-list">
 
             </div> */}
-            <h1 className='home-body-bottom-title'>常用工具</h1>
+            <h1 className='home-body-bottom-title' ref={(element: any) => {
+              return (homeRef.current['tools'] = element);
+            }}>常用工具</h1>
             <div className="flex-box home-body-bottom-right-project-list">
               {
                 softwareList?.length ?
@@ -258,7 +305,9 @@ const Home: React.FC<Props> = (props: any) => {
                   </div>
               }
             </div>
-            <h1 className='home-body-bottom-title'>帮助文档</h1>
+            <h1 className='home-body-bottom-title' ref={(element: any) => {
+              return (homeRef.current['markdown'] = element);
+            }}>帮助文档</h1>
             <div className="flex-box-column home-body-bottom-right-document-list">
               {
                 ['快速入门', '通用插件介绍', '了解基础知识', '进阶使用技巧']?.map((item: string, index: number) => {
@@ -279,7 +328,11 @@ const Home: React.FC<Props> = (props: any) => {
           </div>
         </div>
       </div>
-
+      <Tour open={tourOpen} onClose={() => {
+        setTourOpen(false);
+        // 引导完，存在本地缓存，下次就不做引导了
+        localStorage.setItem('ubvision-tour-home', 'true');
+      }} steps={tourSteps} />
       {
         caseVisible ?
           <Modal

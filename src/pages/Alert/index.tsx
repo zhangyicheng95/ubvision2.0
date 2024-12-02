@@ -1,5 +1,5 @@
-import React, { Fragment, useEffect, useMemo, useState } from 'react';
-import { message, Dropdown, Popover, Select, Modal, Form, Switch, Divider } from 'antd';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { message, Dropdown, Popover, Select, Modal, Form, Switch, Divider, Tour } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -25,14 +25,47 @@ interface Props { }
 
 const AlertRouter: React.FC<Props> = (props: any) => {
   const { ipcRenderer }: any = window || {};
-  const { projectList, loopProjectStatusFun } = useSelector((state: IRootActions) => state);
+  const { loading, projectList, loopProjectStatusFun } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+  const alertRef = useRef<any>({});
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourSteps, setTourSteps] = useState<any>([]);
   const [dataList, setDataList] = useState<any>([]);
   const [popoverVisible, setPopoverVisible] = useState(false);
   const [editVisible, setEditVisible] = useState<any>(null);
   const [searchVal, setSearchVal] = useState('');
 
+  useEffect(() => {
+    // 新手引导-只有第一次进来才开启引导
+    if (!loading && !localStorage.getItem('ubvision-tour-alert')) {
+      setTimeout(() => {
+        setTourOpen(true);
+        setTourSteps(userAuthList?.includes('projects.list') ?
+          [
+            {
+              title: '添加监控页面',
+              description: '需要添加新的监控页面，在这里添加',
+              target: alertRef.current['add'],
+            },
+            !!alertRef.current['alertItem'] ? {
+              title: '已添加的监控页面',
+              description: '添加完页面后，左键点击打开，右键可以做一些属性编辑',
+              target: alertRef.current['alertItem'],
+            } : {}
+          ]
+          :
+          [
+            !!alertRef.current['alertItem'] ? {
+              title: '已添加的监控页面',
+              description: '添加完页面后，左键点击打开，右键可以做一些属性编辑',
+              target: alertRef.current['alertItem'],
+            } : {}
+          ]
+        );
+      }, 500);
+    };
+  }, [loading, localStorage.getItem('ubvision-tour-slider')]);
   // 进入页面默认拉取
   useEffect(() => {
     ipcRenderer.on('alert-read-startUp-reply', function (arg: any, res: any) {
@@ -118,6 +151,9 @@ const AlertRouter: React.FC<Props> = (props: any) => {
               >
                 <div
                   className="item-box box-animation add-box"
+                  ref={(element: any) => {
+                    return (alertRef.current['add'] = element);
+                  }}
                   onClick={(e) => {
                     setPopoverVisible(true);
                     e.preventDefault(); // 阻止默认的关闭行为
@@ -146,6 +182,11 @@ const AlertRouter: React.FC<Props> = (props: any) => {
                         loopGetStatus={loopProjectStatusFun}
                         setEditVisible={setEditVisible}
                         form={form}
+                        refFun={(element: any) => {
+                          if (index === 0) {
+                            return (alertRef.current['alertItem'] = element);
+                          }
+                        }}
                       />
                     );
                   })
@@ -246,6 +287,12 @@ const AlertRouter: React.FC<Props> = (props: any) => {
           }, [dataList, searchVal, JSON.stringify(editVisible?.contentData)])}
         </div>
       </div>
+
+      <Tour open={tourOpen} onClose={() => {
+        setTourOpen(false);
+        // 引导完，存在本地缓存，下次就不做引导了
+        localStorage.setItem('ubvision-tour-alert', 'true');
+      }} steps={tourSteps} />
     </div>
   );
 };
@@ -254,7 +301,7 @@ export default AlertRouter;
 
 const AlertItem = (props: any) => {
   const { ipcRenderer }: any = window || {};
-  const { item, setDataList, loopGetStatus, setEditVisible, form } = props;
+  const { item, setDataList, loopGetStatus, setEditVisible, form, refFun } = props;
   const { name, id, running, ifOnStartUp, contentData, updatedAt } = item;
 
   // 点击打开新窗口
@@ -411,6 +458,7 @@ const AlertItem = (props: any) => {
       <div
         // className={`item-box ${running ? styles.runningBorder : 'box-animation'}`}
         className={`item-box box-animation`}
+        ref={(element) => refFun(element)}
         onClick={() => {
           return onClick(item);
         }}

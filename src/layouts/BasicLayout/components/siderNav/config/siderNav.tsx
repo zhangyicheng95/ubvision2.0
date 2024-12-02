@@ -3,6 +3,7 @@ import React from 'react';
 export const menuConfig = [
   {
     name: '首页',
+    description: '软件portal首页',
     icon: 'home',
     path: `/home`,
     key: `/home`,
@@ -11,6 +12,7 @@ export const menuConfig = [
   },
   {
     name: '项目列表',
+    description: '所有的方案流程',
     icon: 'project',
     path: `/project`,
     key: `/project`,
@@ -19,6 +21,7 @@ export const menuConfig = [
   },
   {
     name: '监控列表',
+    description: '前端展示的监视器页面',
     icon: 'alert',
     path: `/alert`,
     key: `/alert`,
@@ -27,6 +30,7 @@ export const menuConfig = [
   },
   // {
   //   name: '采集器',
+  //   description: '',
   //   icon: 'collect',
   //   path: `/collect`,
   //   key: `/collect`,
@@ -35,6 +39,7 @@ export const menuConfig = [
   // },
   {
     name: '插件管理',
+    description: '流程中自定义的插件管理',
     icon: 'plugin',
     path: `/plugin`,
     key: `/plugin`,
@@ -51,6 +56,7 @@ export const menuConfig = [
   // },
   {
     name: '三方软件管理',
+    description: '集成常用的第三方应用的快捷方式到这里',
     icon: 'software',
     path: `/software`,
     key: `/software`,
@@ -59,6 +65,7 @@ export const menuConfig = [
   },
   {
     name: '权限管理',
+    description: '管理不同用户的权限',
     icon: 'auth',
     path: `/auth`,
     key: `/auth`,

@@ -29,12 +29,6 @@ const Measurement: React.FC<Props> = (props: any) => {
     min = -100000,
     type = 'float',
   } = props;
-
-  const refnum_0 = useRef();
-  const refnum_1 = useRef();
-  const refnum_2 = useRef();
-  const refnum_3 = useRef();
-  const refList: any = [refnum_0, refnum_1, refnum_2, refnum_3];
   const [selfValue, setSelfValue] = useState<any>({});
   const [focus, setFocus] = useState<any>({
     refnum_0: false,
@@ -111,7 +105,6 @@ const Measurement: React.FC<Props> = (props: any) => {
             <div
               className={`input-name ${focus[`refnum_${index}`] ? 'focus' : ''
                 } ${titleColor ? 'bgColor' : ''}`}
-              onClick={() => refList[index]?.current?.focus()}
             >
               {alias}
             </div>
@@ -119,7 +112,6 @@ const Measurement: React.FC<Props> = (props: any) => {
               <Input
                 disabled={disabled}
                 className={`self_input ${className}`}
-                ref={refList[index]}
                 defaultValue={!!value ? value : ''}
                 onFocus={() =>
                   setFocus((prev: any) =>
@@ -142,7 +134,6 @@ const Measurement: React.FC<Props> = (props: any) => {
               <Switch
                 disabled={disabled}
                 className={`self_input ${className}`}
-                ref={refList[index]}
                 defaultChecked={!!value}
                 onChange={(checked) => {
                   const val = checked;
@@ -160,7 +151,6 @@ const Measurement: React.FC<Props> = (props: any) => {
               <InputNumber
                 disabled={disabled}
                 className={`self_input ${className}`}
-                ref={refList[index]}
                 defaultValue={value}
                 precision={type === 'float' ? precision : 0}
                 step={step}

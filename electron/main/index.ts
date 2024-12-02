@@ -138,7 +138,7 @@ const readPathDir = (event: any) => {
   );
   fs.readdir(fastPath, (err, files) => {
     if (err) {
-      console.error(`无法读取快速启动目录:${err}`);
+      console.log(`无法读取快速启动目录:${err}`);
       event.sender.send('alert-read-startUp-reply', { err });
       return;
     };
