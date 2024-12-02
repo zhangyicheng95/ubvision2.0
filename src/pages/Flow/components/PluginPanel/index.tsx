@@ -669,7 +669,6 @@ const PluginPanel: React.FC<Props> = (props: any) => {
     };
     addPluginFun(0);
   };
-  console.log(nodes);
 
   return (
     <div className={`flex-box ${styles.pluginPanel}`}>

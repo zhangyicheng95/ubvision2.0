@@ -337,7 +337,13 @@ const Toolbar: React.FC<Props> = (props) => {
         name="截图"
         disabled={!!canvasStart}
         onClick={() => {
-          graphData.exportJPEG(canvasData?.name, { padding: 8, quality: 1, width: 1920 * 4, height: 1080 * 4 });
+          graphData.exportJPEG(canvasData?.name, {
+            padding: 8,
+            quality: 1,
+            width: 1920 * 10,
+            height: 1080 * 10,
+            backgroundColor: localStorage.getItem('theme-mode') === 'dark' ? '#000000' : '#f5f5f5'
+          });
         }}
       />
       <Button

@@ -7,6 +7,7 @@ import { Snapline } from '@antv/x6-plugin-snapline';
 import { History } from '@antv/x6-plugin-history';
 import { MiniMap } from '@antv/x6-plugin-minimap';
 import { Selection } from '@antv/x6-plugin-selection';
+import { Keyboard } from '@antv/x6-plugin-keyboard';
 import styles from './index.module.less';
 import BasicPort from '@/components/BasicPort';
 import { createRoot } from 'react-dom/client';
@@ -410,7 +411,14 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           showNodeSelectionBox: true,
           // modifiers: 'shift|alt|meta'
         })
-      ).use(new Export());
+      ).use(
+        new Export()
+      ).use(
+        // 键盘快捷键
+        new Keyboard({
+          enabled: true
+        }),
+      );
       dispatch(setGraphData(graphRef.current));
     };
 
@@ -433,7 +441,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     return () => {
       unbindEvent();
     }
-  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
+  }, [graphRef.current, canvasData, canvasStart]);
   // 绑定事件
   const bindEvent = useCallback(() => {
     console.log('绑定事件');
@@ -450,10 +458,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       graphRef?.current?.on('node:mouseleave', nodeMoveOut);
       graphRef?.current?.on('blank:click', blankClick);
       graphRef?.current?.on('blank:dblclick', reset);
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
+      flowDomRef?.current?.addEventListener('keydown', onKeyDown);
     }
-  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
+  }, [graphRef.current, canvasData, canvasStart]);
   // group相关
   const positionChange = () => {
     let ctrlPressed = false;
@@ -565,10 +572,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       graphRef?.current?.off('node:mouseleave', nodeMoveOut);
       graphRef?.current?.off('blank:click', blankClick);
       graphRef?.current?.off('blank:dblclick', reset);
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
+      flowDomRef?.current?.removeEventListener('keydown', onKeyDown);
     }
-  }, [graphRef.current, canvasData, canvasStart, selectedNode]);
+  }, [graphRef.current, canvasData, canvasStart]);
   // 初始化渲染节点
   const initGraph = useCallback(() => {
     return new Promise((resolve: any, reject: any) => {
@@ -743,8 +749,6 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, [graphRef.current, canvasData?.id]);
   // 键盘按下
   const onKeyDown = useCallback((event: any) => {
-    // 有选中的节点，不做任何事件处理
-    if (selectedNode) return;
     const { metaKey, ctrlKey, shiftKey, key } = event;
     // 选中的节点
     const selectedCells = (graphRef?.current?.getSelectedCells() || []);
@@ -799,10 +803,33 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         const result = {
           group: group,
           nodes: (group._children)?.map((node: any) => {
-            return node?.store?.data?.config
+            const { config, position, shape, size } = node?.store?.data;
+            if (shape?.indexOf('dag-node') > -1) {
+              return { ...config, position, size };
+            }
+            return null;
           })?.filter(Boolean),
           edges: (group._children || [])?.reduce((pre: any, node: any) => {
-            return graphRef.current?.getConnectedEdges(node);
+            if (node?.store?.data?.shape?.indexOf('dag-node') > -1) {
+              const edges = graphRef.current?.getConnectedEdges(node);
+              const edge: any = [];
+              (edges || []).forEach((i: any) => {
+                const sourceCell = i?.store?.data?.source?.cell;
+                const targetCell = i?.store?.data?.target?.cell;
+                if (
+                  group._children?.filter((j: any) => j?.store?.data?.shape?.indexOf('dag-node') > -1)
+                  &&
+                  group._children?.filter((i: any) => i.id === sourceCell)?.length
+                  &&
+                  group._children?.filter((i: any) => i.id === targetCell)?.length
+                ) {
+                  edge.push(i);
+                }
+              });
+              return _.uniqBy(pre.concat(edge), 'id');
+            } else {
+              return _.uniqBy(pre, 'id');
+            }
           }, [])?.filter(Boolean)
         };
         copyUrlToClipBoard(
@@ -813,15 +840,36 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       } else if (seletedNodes?.length > 0) {
         // 复制节点
         const nodes = (seletedNodes || [])?.map((i: any) => {
+          const { config, position, shape, size } = i?.store?.data;
           return {
-            ...i?.store?.data?.config,
-            id: getuid(),
-            customId: `node_${guid()}`
+            ...config,
+            position,
+            size
           };
         });
+        const result = {
+          nodes,
+          edges: nodes.reduce((pre: any, cen: any) => {
+            const node = graphRef.current?.getCellById(cen.id);
+            const edges = graphRef.current?.getConnectedEdges(node);
+            const edge: any = [];
+            (edges || []).forEach((i: any) => {
+              const sourceCell = i?.store?.data?.source?.cell;
+              const targetCell = i?.store?.data?.target?.cell;
+              if (
+                nodes?.filter((i: any) => i.id === sourceCell)?.length
+                &&
+                nodes?.filter((i: any) => i.id === targetCell)?.length
+              ) {
+                edge.push(i);
+              }
+            });
+            return _.uniqBy(pre.concat(edge), 'id');
+          }, [])
+        }
         copyUrlToClipBoard(
           JSON.stringify({
-            node: JSON.parse(JSON.stringify(nodes)),
+            node: JSON.parse(JSON.stringify(result)),
           })
         );
       };
@@ -841,10 +889,10 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               const firstGroup = group?.position;
               const xDifference = graphClickPositionRef.current.x - firstGroup.x;
               const yDifference = graphClickPositionRef.current.y - firstGroup.y;
-              const { id, size, attrs, collapsed = false, } = group;
+              const { size, attrs, collapsed = false, } = group;
               let { width, height } = size;
               const parent = createGroup(
-                id,
+                `group_${guid()}`,
                 graphClickPositionRef.current?.x,
                 graphClickPositionRef.current?.y,
                 width,
@@ -854,15 +902,20 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               // 分组添加到画布中
               graphRef.current.addNode(parent);
               // 粘贴节点到分组中
-              let addNodes: any = [];
+              let addNodes: any = [],
+                nodeIdObj: any = {};
               (nodes || []).forEach((node: any) => {
                 const { width = 0, height = 0 } = node?.size || {};
+                const id = getuid();
+                const customId = `node_${guid()}`;
+                nodeIdObj = Object.assign({}, nodeIdObj, { [node.id]: id });
+                const realData = { ...node, id, customId };
                 register({
-                  shape: `dag-node-${node.customId}`,
+                  shape: `dag-node-${customId}`,
                   // @ts-ignore
                   component: (
                     <AlgoNode
-                      data={node}
+                      data={realData}
                       setSyncNode={setSyncNode}
                       setRunningNode={setRunningNode}
                     />
@@ -870,8 +923,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                 });
                 const { topPorts, bottomPorts } = formatPorts(node?.ports?.items || []);
                 const nodeCanvas = graphRef?.current.createNode({
-                  shape: `dag-node-${node.customId}`,
-                  id: node.id,
+                  shape: `dag-node-${customId}`,
+                  id,
                   portMarkup: [Markup.getForeignObjectMarkup()],
                   ports: Object.assign({}, node?.ports, {
                     items: topPorts.concat(bottomPorts)
@@ -886,8 +939,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                     height:
                       height < archSize.nodeHeight ? archSize.nodeHeight : height,
                   },
-                  config: node,
-                  customId: node.customId,
+                  config: realData,
+                  customId,
                 });
                 addNodes.push(nodeCanvas);
               });
@@ -900,18 +953,28 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                 }
               };
               dispatch(setCanvasData(result));
-              setTimeout(() => {
-                // 新增节点添加到画布中
-                graphRef.current.addNodes(addNodes);
+              // 新增节点添加到画布中
+              graphRef.current.addNodes(addNodes);
+              (addNodes || []).forEach((node: any) => {
                 // 新增节点加到group下
-                parent.addChild(...addNodes);
+                parent.addChild(node);
+              });
+              setTimeout(() => {
                 // 粘贴画线到分组中
                 let addEdges: any = [];
                 (edges || []).forEach((edge: any) => {
-                  const source = graphRef.current.getCellById(edge.source.cell);
-                  const target = graphRef.current.getCellById(edge.target.cell);
-                  if (!!source && !!target) {
-                    addEdges.push(_.omit(edge, 'parent'));
+                  const { attrs, shape, source, target } = edge;
+                  const cenSource = nodeIdObj[source?.cell];
+                  const cenTarget = nodeIdObj[target?.cell];
+                  if (addNodes?.filter((i: any) => i.id === cenSource)?.length && addNodes?.filter((i: any) => i.id === cenTarget)?.length) {
+                    const cell = graphRef.current.createEdge({
+                      shape,
+                      attrs,
+                      zIndex: 0,
+                      source: { cell: cenSource, port: source?.port },
+                      target: { cell: cenTarget, port: target?.port },
+                    });
+                    addEdges.push(cell);
                   };
                 });
                 graphRef.current.addEdges(addEdges);
@@ -923,20 +986,26 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   parent.toggleCollapse();
                 };
               }, 200);
-            } else if (res[0] === 'node' && res[1]?.length) {
+            } else if (res[0] === 'node' && !!res[1]) {
               // 粘贴节点
-              const firstNode = res[1]?.[0]?.position;
+              const { nodes, edges } = res[1];
+              const firstNode = nodes?.[0]?.position;
               const xDifference = graphClickPositionRef.current.x - firstNode.x;
               const yDifference = graphClickPositionRef.current.y - firstNode.y;
-              let addNodes: any = [];
-              (res[1] || []).forEach((node: any) => {
+              let addNodes: any = [],
+                nodeIdObj: any = {};
+              (nodes || []).forEach((node: any, index: number) => {
                 const { width = 0, height = 0 } = node?.size || {};
+                const id = getuid();
+                const customId = `node_${guid()}`;
+                nodeIdObj = Object.assign({}, nodeIdObj, { [node.id]: id });
+                const realData = { ...node, id, customId };
                 register({
-                  shape: `dag-node-${node.customId}`,
+                  shape: `dag-node-${realData.customId}`,
                   // @ts-ignore
                   component: (
                     <AlgoNode
-                      data={node}
+                      data={realData}
                       setSyncNode={setSyncNode}
                       setRunningNode={setRunningNode}
                     />
@@ -944,8 +1013,8 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                 });
                 const { topPorts, bottomPorts } = formatPorts(node?.ports?.items || []);
                 const nodeCanvas = graphRef?.current.createNode({
-                  shape: `dag-node-${node.customId}`,
-                  id: node.id,
+                  shape: `dag-node-${realData.customId}`,
+                  id,
                   portMarkup: [Markup.getForeignObjectMarkup()],
                   ports: Object.assign({}, node?.ports, {
                     items: topPorts.concat(bottomPorts)
@@ -960,11 +1029,13 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                     height:
                       height < archSize.nodeHeight ? archSize.nodeHeight : height,
                   },
-                  config: node,
-                  customId: node.customId,
+                  config: realData,
+                  customId,
                 });
                 addNodes.push(nodeCanvas);
               });
+              // 新增节点添加到画布中
+              graphRef.current.addNodes(addNodes);
               // 更新方案内容
               const result = {
                 ...canvasData || {},
@@ -975,8 +1046,24 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
               };
               dispatch(setCanvasData(result));
               setTimeout(() => {
-                // 新增节点添加到画布中
-                graphRef.current.addNodes(addNodes);
+                // 粘贴画线到分组中
+                let addEdges: any = [];
+                (edges || []).forEach((edge: any) => {
+                  const { attrs, shape, source, target } = edge;
+                  const cenSource = nodeIdObj[source?.cell];
+                  const cenTarget = nodeIdObj[target?.cell];
+                  if (addNodes?.filter((i: any) => i.id === cenSource)?.length && addNodes?.filter((i: any) => i.id === cenTarget)?.length) {
+                    const cell = graphRef.current.createEdge({
+                      shape,
+                      attrs,
+                      zIndex: 0,
+                      source: { cell: cenSource, port: source?.port },
+                      target: { cell: cenTarget, port: target?.port },
+                    });
+                    addEdges.push(cell);
+                  };
+                });
+                graphRef.current.addEdges(addEdges);
                 // 同步节点状态
                 setTimeout(() => {
                   syncNodeStatus(addNodes?.map((node: any) => node?.store?.data?.config));
@@ -989,6 +1076,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         }
       };
       document.body.removeChild(input);
+      ctrlRef.current = false;
     } else if ((metaKey || ctrlKey) && key === 's') {
       if (canvasStart) return;
       // 保存方案
@@ -1018,12 +1106,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
       // 取消查找节点
       closeNodeSearch();
     }
-  }, [canvasData, canvasStart, selectedNode]);
-  // 键盘抬起
-  const onKeyUp = useCallback((event: any) => {
-    // 取消节点多选
-    ctrlRef.current = false;
-  }, [canvasData]);
+  }, [flowDomRef?.current, canvasData, canvasStart]);
   // 节点添加
   const nodeAdd = useCallback((flow: any) => {
     const { node } = flow;
@@ -1086,7 +1169,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   }, []);
   // 节点右键
   const nodeRightClick = useCallback((flow: any) => {
-
+    console.log('节点右键');
   }, []);
   // 连线高亮
   const edgeHighLightFun = useCallback((node: any, ifLight: boolean) => {
@@ -1177,10 +1260,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   // 空白处单击
   const blankClick = (e: any) => {
     graphClickPositionRef.current = { x: e.x, y: e.y };
+    ctrlRef.current = false;
   };
   // 空白处双击
   const reset = (event: any) => {
     dispatch(setSelectedNode(''));
+    ctrlRef.current = false;
   };
   // 节点搜索
   const onNodeSearch = useCallback((val: any) => {
@@ -1272,9 +1357,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   return (
     <div className={`flex-box-column ${styles.canvasPage}`}>
       <Toolbar />
-      <div ref={(element: any) => {
-        return (flowDomRef.current = element);
-      }} />
+      <div
+        id="antvX-topo"
+        ref={(element: any) => {
+          return (flowDomRef.current = element);
+        }}
+      />
       <MiniMapPanel />
       {nodeSelectVisible ? (
         <div className="flex-box canvas-search-box">

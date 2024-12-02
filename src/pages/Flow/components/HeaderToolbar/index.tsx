@@ -41,12 +41,12 @@ const HeaderToolbar: React.FC<Props> = (props) => {
           const { groupList, nodeList, edgeList } = prev;
           const { shape, } = cent;
           if (shape === "dag-group") {
-            const groupConfig: object = groups?.filter((i: any) => i.id === cent.id)?.[0] || {};
+            const groupConfig: any = groups?.filter((i: any) => i.id === cent.id)?.[0] || {};
             return {
               ...prev,
               groupList: groupList?.concat({
                 ...cent,
-                ..._.omit(groupConfig, 'childrenList'),
+                config: groupConfig?.config || {},
               }),
             };
           } else if (shape?.indexOf("dag-node") > -1) {

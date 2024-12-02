@@ -41,6 +41,7 @@ const ShowDataPanel: React.FC<Props> = (props: any) => {
   const inputNodes = useMemo(() => {
     if (!graphData || !selectedNode) return null;
     const nodeId = selectedNode?.split('$%$')?.[1];
+    if (!nodeId) return;
     // 选中的节点实例
     const node = graphData.getCellById(nodeId);
     const inputs = (graphData.getIncomingEdges(node) || [])?.map((line: any) => line?.store?.data?.source?.cell);

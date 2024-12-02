@@ -144,7 +144,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
     return new Promise((resolve, reject) => {
       validateFields()
         .then((values) => {
-          console.log(values);
           try {
             if (selectedNode?.indexOf('node_') > -1 && !!nodeConfig) {
               // 节点编辑-保存
@@ -365,7 +364,6 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
-                console.log(nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}

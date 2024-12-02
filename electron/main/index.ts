@@ -409,6 +409,7 @@ const createWindow = async (arg?: any) => {
   if (VITE_DEV_SERVER_URL) {
     // 开发环境
     mainWindow.loadURL(`${VITE_DEV_SERVER_URL}${urlParams}`);
+    mainWindow.webContents.openDevTools();
   } else {
     const url = `file://${indexHtml}${urlParams}`;
     console.log(`加载的页面url:${url}`);
