@@ -433,7 +433,9 @@ const createWindow = async (arg?: any) => {
       ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
       : res?.type === 'software'
         ? `#/softwareopen?url=${res.url}&number=${mainWindow.id}`
-        : `?number=${mainWindow.id}`;
+        : res?.type === 'markdown'
+          ? `#/markdown?id=${res.id}&number=${mainWindow.id}`
+          : `?number=${mainWindow.id}`;
   if (VITE_DEV_SERVER_URL) {
     // 开发环境
     mainWindow.loadURL(`${VITE_DEV_SERVER_URL}${urlParams}`);

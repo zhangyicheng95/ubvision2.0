@@ -273,7 +273,15 @@ const Home: React.FC<Props> = (props: any) => {
                       className="flex-box-column home-body-bottom-right-project-list-item"
                       key={`flex-box-column home-body-bottom-right-project-list-item-${index}`}
                       onClick={() => {
-                        ipcRenderer.ipcCommTest('startup-software', value);
+                        if (type === 'web') {
+                          ipcRenderer.ipcCommTest('alert-open-browser', JSON.stringify({
+                            type: 'software',
+                            url: value,
+                            id
+                          }));
+                        } else if (type === 'electron') {
+                          ipcRenderer.ipcCommTest('startup-software', value);
+                        }
                       }}
                     >
                       <div className='flex-box-center home-body-bottom-right-project-list-item-icon'>
@@ -310,17 +318,30 @@ const Home: React.FC<Props> = (props: any) => {
             }}>帮助文档</h1>
             <div className="flex-box-column home-body-bottom-right-document-list">
               {
-                ['快速入门', '通用插件介绍', '了解基础知识', '进阶使用技巧']?.map((item: string, index: number) => {
+                [
+                  { label: '快速入门', value: 'quickStart' },
+                  { label: '通用插件介绍', value: 'pluginIntroduction' },
+                  { label: '了解基础知识', value: 'basicKnowledge' },
+                  { label: '进阶使用技巧', value: 'usageSkills' }
+                ]?.map((item: any, index: number) => {
+                  const { label, value } = item;
                   return <a
                     className="flex-box home-body-bottom-right-document-list-item"
-                    key={`home-body-bottom-right-document-list-item-${index}`}
+                    key={`home-body-bottom-right-document-list-item-${value}`}
                     onClick={() => {
                       message.destroy();
-                      message.info('功能开发中，敬请期待。')
+                      message.info('功能开发中，敬请期待。');
+                      ipcRenderer.ipcCommTest(
+                        'alert-open-browser',
+                        JSON.stringify({
+                          type: 'markdown',
+                          id: value,
+                        })
+                      );
                       // window.open(`http://www.baidu.com/s?wd=${item}`);
                     }}
                   >
-                    {item}
+                    {label}
                   </a>
                 })
               }

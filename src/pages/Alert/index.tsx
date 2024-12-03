@@ -301,7 +301,6 @@ const AlertItem = (props: any) => {
       'alert-open-browser',
       JSON.stringify({
         type: 'ccd',
-        ipUrl: dpmDomain,
         id,
       })
     );

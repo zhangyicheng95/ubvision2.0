@@ -75,7 +75,8 @@ const CHeader: React.FC = (props: any) => {
       `close-${number}`,
       location.href?.indexOf('#/flow') > -1 ||
       location.href?.indexOf('#/ccd') > -1 ||
-      location.href?.indexOf('#/softwareopen') > -1
+      location.href?.indexOf('#/softwareopen') > -1 ||
+      location.href?.indexOf('#/markdown') > -1
     );
   };
   // 改变主题色

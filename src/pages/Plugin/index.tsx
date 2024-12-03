@@ -1,14 +1,12 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete, Dropdown, Menu, Popconfirm, Badge, Upload, Modal } from 'antd';
+import { Button, message, Dropdown, Popconfirm, Badge, Upload, Modal } from 'antd';
 import {
-  DeleteOutlined, CloudDownloadOutlined, FieldTimeOutlined, FolderAddOutlined, FolderOpenOutlined, FolderOutlined, LaptopOutlined, PlusOutlined, ProjectOutlined
+  DeleteOutlined, CloudDownloadOutlined, PlusOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
-import { login } from '@/services/auth';
-import { cryptoEncryption, downFileFun, formatJson, getUserAuthList, intersectionABList } from '@/utils/utils';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { downFileFun, formatJson, getUserAuthList, intersectionABList } from '@/utils/utils';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setLoading, setPluginList } from '@/redux/actions';
