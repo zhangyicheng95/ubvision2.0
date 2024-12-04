@@ -254,6 +254,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
             })
           }
         }));
+        message.success('同步成功');
       }
     }
   }, [syncNode, graphData]);

@@ -8,7 +8,7 @@ interface Props {
   setEmpowerVisible: any;
 }
 
-const ResourceRouter: React.FC<Props> = (props: any) => {
+const SettingPage: React.FC<Props> = (props: any) => {
   const { setEmpowerVisible } = props;
   return (
     <SettingLayout>
@@ -29,4 +29,4 @@ const ResourceRouter: React.FC<Props> = (props: any) => {
     </SettingLayout>
   );
 };
-export default ResourceRouter;
+export default SettingPage;

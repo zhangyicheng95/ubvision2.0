@@ -10,7 +10,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
 
   return (
     <div className={`flex-box-column ${styles.CCDPage}`}>
-
+      ccd
     </div>
   );
 };

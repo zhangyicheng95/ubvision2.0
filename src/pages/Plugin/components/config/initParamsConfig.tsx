@@ -1708,6 +1708,13 @@ export const InitParamsEdit = (props: any) => {
           value: i[1]
         }
       }));
+    } else if (type === "Measurement") {
+      setOptions(Object.entries(data.value || {})?.map((i: any) => {
+        return {
+          id: guid(),
+          ...i[1],
+        }
+      }));
     };
   }, [data.value, data.localPath]);
 

@@ -9,7 +9,7 @@ import GroupPage from '@/pages/Auth/components/Group';
 import GroupEditPage from '@/pages/Auth/components/Group/Edit';
 import { getUserAuthList } from '@/utils/utils';
 
-const AuthRouter = () => {
+const AuthPage = () => {
   const [stateData, dispatch] = useReducer(reducer, State, init);
   const userAuthList = getUserAuthList();
 
@@ -52,4 +52,4 @@ const AuthRouter = () => {
     </AuthorLayout>
   );
 };
-export default AuthRouter;
+export default AuthPage;

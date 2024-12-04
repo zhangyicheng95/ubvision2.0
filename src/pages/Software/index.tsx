@@ -34,7 +34,7 @@ const userAuthList = getUserAuthList();
 
 interface Props { }
 
-const SoftwareList: React.FC<Props> = (props: any) => {
+const SoftwarePage: React.FC<Props> = (props: any) => {
   const { loading } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
@@ -302,7 +302,7 @@ const SoftwareList: React.FC<Props> = (props: any) => {
   );
 };
 
-export default SoftwareList;
+export default SoftwarePage;
 
 const SoftwareItem = (props: any) => {
   const { ipcRenderer }: any = window || {};

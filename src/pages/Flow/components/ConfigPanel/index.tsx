@@ -8,7 +8,7 @@ import {
   Splitter, Switch, Tabs, TabsProps,
 } from 'antd';
 import {
-  CloudUploadOutlined, MinusCircleOutlined, PlusOutlined, MinusOutlined,
+  CloudUploadOutlined, PlusOutlined, MinusOutlined, FolderOpenOutlined, FolderOutlined
 } from '@ant-design/icons';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import TooltipDiv from '@/components/TooltipDiv';
@@ -364,6 +364,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
           <div className="config-panel-left">
             {
               useMemo(() => {
+                console.log(nodeConfig);
                 return <Fragment>
                   <TooltipDiv className="config-panel-left-title boxShadow">
                     {nodeConfig?.name || '方案通用配置'}
@@ -388,12 +389,46 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                 Object.entries(nodeConfig?.config?.initParams || {})
                                   ?.sort((a: any, b: any) => a[1].sort - b[1].sort)
                                   ?.map((res: any, index: number) => {
+                                    if (!!nodeConfig?.config?.group?.filter((i: any) => i.children?.includes(res[0]))?.length) return null;
                                     return <FormatWidgetToDom
                                       key={res[0]}
                                       config={[`params$%$${res[0]}`, res[1]]}
                                       form={form}
                                       disabled={canvasStart || res[1]?.disabled}
                                     />
+                                  })
+                              }
+                              {
+                                (nodeConfig?.config?.group || [])
+                                  ?.sort((a: any, b: any) => a.sort - b.sort)
+                                  ?.map((item: any, index: number) => {
+                                    const { id, name, children, open } = item;
+                                    return <div
+                                      className="config-panel-left-body-panel-group"
+                                      key={id}
+                                    >
+                                      <div className="config-panel-left-body-panel-group-title">
+                                        {open ? <FolderOpenOutlined /> : <FolderOutlined />} {name}
+                                      </div>
+                                      <div className="config-panel-left-body-panel-group-body">
+                                        {
+                                          (children || [])
+                                            ?.map((i: string) => nodeConfig?.config?.initParams[i])?.filter(Boolean)
+                                            ?.sort((a: any, b: any) => a.sort - b.sort)
+                                            ?.map((itemData: any) => {
+                                              if (itemData) {
+                                                return <FormatWidgetToDom
+                                                  key={itemData.name}
+                                                  config={[`params$%$${itemData.name}`, itemData]}
+                                                  form={form}
+                                                  disabled={canvasStart || itemData?.disabled}
+                                                />
+                                              };
+                                              return null;
+                                            })
+                                        }
+                                      </div>
+                                    </div>
                                   })
                               }
                               <Divider>高级设置</Divider>

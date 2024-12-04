@@ -23,7 +23,7 @@ const userAuthList = getUserAuthList();
 
 interface Props { }
 
-const AlertRouter: React.FC<Props> = (props: any) => {
+const AlertPage: React.FC<Props> = (props: any) => {
   const { ipcRenderer }: any = window || {};
   const { loading, projectList, loopProjectStatusFun } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
@@ -287,7 +287,7 @@ const AlertRouter: React.FC<Props> = (props: any) => {
   );
 };
 
-export default AlertRouter;
+export default AlertPage;
 
 const AlertItem = (props: any) => {
   const { ipcRenderer }: any = window || {};

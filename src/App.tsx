@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import '@/App.css';
 import { Button, ConfigProvider, Form, Input, message, Modal, notification, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
@@ -6,33 +6,36 @@ import zhCN from 'antd/locale/zh_CN';
 import 'dayjs/locale/zh-cn';
 import BasicLayout from '@/layouts/BasicLayout';
 import { HashRouter, Route, Routes } from 'react-router-dom';
-import { copyUrlToClipBoard, cryptoDecrypt, GetQueryObj, getUserAuthList, timeToString } from '@/utils/utils';
+import { copyUrlToClipBoard, cryptoDecrypt, cryptoEncryption, getLoginTime, GetQueryObj, getUserAuthList, getUserData, timeToString } from '@/utils/utils';
 import * as _ from 'lodash-es';
 import ProjectApi from '@/api/project';
 import authWrapper from '@/components/authWrapper';
-import Login from '@/pages/Login';
+import LoginPage from '@/pages/Login';
 import HomePage from '@/pages/Home';
 import ProjectPage from '@/pages/Projects';
-import AlertRouter from '@/pages/Alert';
+import AlertPage from '@/pages/Alert';
 import FlowPage from '@/pages/Flow';
 import PluginPage from '@/pages/Plugin';
-import SoftwareRouter from '@/pages/Software';
+import SoftwarePage from '@/pages/Software';
 import SoftwareOpenPage from '@/pages/SoftwareOpen';
-import AuthRouter from '@/pages/Auth';
+import AuthPage from '@/pages/Auth';
 import CCDPage from '@/pages/CCD';
 import MarkdownPage from '@/pages/Markdown';
 import UserPage from '@/pages/UserInfo';
-import Setting from '@/pages/Setting';
+import SettingPage from '@/pages/Setting';
 import { notificationSetting, permissionRule } from '@/common/globalConstants';
 import { getDataList, getListStatusService } from '@/services/flowEditor';
 import { useDispatch } from 'react-redux';
 import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
 import PluginEditPage from './pages/Plugin/components/PluginEdit';
+import { useReloadAfterStationary } from './hooks/useReloadAfterStationary';
+import { login } from './services/auth';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
   const [api, contextHolder] = notification.useNotification(notificationSetting);
   const dispatch = useDispatch();
+  const userData = getUserData();
   const timeRef = useRef<any>();
   const loopTimerRef = useRef<any>();
   const [form] = Form.useForm();
@@ -217,6 +220,51 @@ const App: React.FC = () => {
       console.log(err);
     }
   };
+  // 登录
+  const onLogin = (values: any) => {
+    const userData = getUserData();
+    const { password, ...rest } = values;
+    login({
+      password: cryptoEncryption(password),
+      ...rest,
+    }).then((res: any) => {
+      if (res && res.code === 'SUCCESS') {
+        localStorage.setItem(
+          'userInfo',
+          JSON.stringify(
+            Object.assign({}, res?.data, { loginTime: new Date().getTime() })
+          )
+        );
+        if (res?.data?.id !== userData?.id) {
+          location.href = location.href?.split('#/')?.[0] + '#/alert';
+          window.location.reload();
+        }
+      } else {
+        message.error(res?.msg || res?.message || '接口异常');
+      }
+      setLoading(false);
+    });
+  };
+  if (!userData?.userName && location?.href?.indexOf?.('#/flow') < 0) {
+    onLogin({ userName: 'sany', password: '123' });
+  } else if (
+    userData.userName !== 'sany' &&
+    location.href?.indexOf('#/flow') < 0
+  ) {
+    useReloadAfterStationary(
+      { wait: 1000 * 60 * 60 * 2, interval: 1000 * 60 },
+      () => {
+        const time = getLoginTime();
+        const current = new Date().getTime();
+        if (
+          location.href?.indexOf('#/login') < 0 &&
+          current - time >= 2 * 60 * 60 * 1000
+        ) {
+          onLogin({ userName: 'sany', password: '123' });
+        }
+      }
+    );
+  };
 
   return (
     <Fragment>
@@ -275,20 +323,20 @@ const App: React.FC = () => {
                         ) :
                           (
                             <Routes>
-                              <Route path="/login" element={<Login />} />
+                              <Route path="/login" element={<LoginPage />} />
                               <Route path="/home" element={<HomePage />} />
                               <Route path="/project" element={<ProjectPage />} />
-                              <Route path="/alert/*" element={<AlertRouter />} />
+                              <Route path="/alert/*" element={<AlertPage />} />
                               <Route path="/plugin" element={<PluginPage />} />
                               <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
-                              <Route path="/software" element={<SoftwareRouter />} />
-                              <Route path="/auth/*" element={<AuthRouter />} />
+                              <Route path="/software" element={<SoftwarePage />} />
+                              <Route path="/auth/*" element={<AuthPage />} />
                               <Route path="/userSetting" element={<UserPage />} />
-                              <Route path="/setting/*" element={<Setting setEmpowerVisible={setEmpowerVisible} />} />
+                              <Route path="/setting/*" element={<SettingPage setEmpowerVisible={setEmpowerVisible} />} />
                               {userAuthList?.includes('projects.list') ? (
                                 <Route path="*" element={<HomePage />} />
                               ) : (
-                                <Route path="*" element={<AlertRouter />} />
+                                <Route path="*" element={<AlertPage />} />
                               )}
                             </Routes>
                           )

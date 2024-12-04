@@ -19,7 +19,7 @@ interface Props {
 const Measurement: React.FC<Props> = (props: any) => {
   const {
     onChange = null,
-    value = '',
+    value = undefined,
     disabled,
     className = '',
     titleColor,

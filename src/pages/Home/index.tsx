@@ -331,14 +331,13 @@ const Home: React.FC<Props> = (props: any) => {
                     onClick={() => {
                       message.destroy();
                       message.info('功能开发中，敬请期待。');
-                      ipcRenderer.ipcCommTest(
-                        'alert-open-browser',
-                        JSON.stringify({
-                          type: 'markdown',
-                          id: value,
-                        })
-                      );
-                      // window.open(`http://www.baidu.com/s?wd=${item}`);
+                      // ipcRenderer.ipcCommTest(
+                      //   'alert-open-browser',
+                      //   JSON.stringify({
+                      //     type: 'markdown',
+                      //     id: value,
+                      //   })
+                      // );
                     }}
                   >
                     {label}

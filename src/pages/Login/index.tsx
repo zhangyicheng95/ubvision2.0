@@ -9,7 +9,7 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons';
 
 interface Props { }
 
-const Login: React.FC<Props> = (props: any) => {
+const LoginPage: React.FC<Props> = (props: any) => {
   const [form] = Form.useForm();
   const { setFieldsValue } = form;
   const navigate = useNavigate();
@@ -149,4 +149,4 @@ const Login: React.FC<Props> = (props: any) => {
   );
 };
 
-export default Login;
+export default LoginPage;

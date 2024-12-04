@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
  * 判断是否长时间未操作 重新reload当前页面  释放内存
  */
 export type OperateConfig = { wait?: number, interval?: number }
-export const hasOperate = (callback: () => void, config?: OperateConfig) => { //second是检测未操作的时间，秒为单位，callback是该时间段未点击需要执行的函数
+export const hasOperate = (callback: () => void, config?: OperateConfig) => {
+  //second是检测未操作的时间，秒为单位，callback是该时间段未点击需要执行的函数
   const { wait, interval } = Object.assign({ wait: 1000 * 60 * 5, interval: 1000 * 60 }, config)
   const maxTime = wait; // 此处设置倒计时时间，单位为秒
   let time = maxTime;
@@ -19,7 +20,6 @@ export const hasOperate = (callback: () => void, config?: OperateConfig) => { //
 
   const intervalId = setInterval(function () {
     time = time - interval;
-    console.log('app倒计时:', time);
     if (time <= 0) {
       clearInterval(intervalId);
       callback();

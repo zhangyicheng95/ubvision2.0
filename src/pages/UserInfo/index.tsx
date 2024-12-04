@@ -1,7 +1,4 @@
-import React, {
-  Fragment,
-  useState,
-} from 'react';
+import React, { Fragment, useState } from 'react';
 import {
   Input,
   message,
@@ -11,21 +8,15 @@ import {
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import * as _ from 'lodash-es';
-import {
-  cryptoEncryption,
-  getUserAuthList, getUserData,
-} from '@/utils/utils';
+import { cryptoEncryption, getUserData } from '@/utils/utils';
 import styles from './index.module.less';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { modifyPassword, updateUserById } from '@/services/auth';
-import userIcon from '@/assets/imgs/user.svg';
 import { UserOutlined } from '@ant-design/icons';
-
-const { confirm } = Modal;
 
 interface Props { }
 
-const UserPage: React.FC<Props> = () => {
+const UserInfoPage: React.FC<Props> = () => {
   const [form] = Form.useForm();
   const [form1] = Form.useForm();
   const { validateFields } = form;
@@ -198,4 +189,4 @@ const UserPage: React.FC<Props> = () => {
   );
 };
 
-export default UserPage;
+export default UserInfoPage;

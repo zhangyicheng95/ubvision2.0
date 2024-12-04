@@ -50,44 +50,64 @@
         &-param {
           padding: 0 32px;
 
+          .label-style {
+            line-height: 32px;
+            justify-content: flex-end;
+            align-items: flex-start;
+            gap: 4px;
+
+            div:first-child {
+              min-width: 14px;
+            }
+          }
+
+          .label-style::after {
+            content: '：';
+            margin-left: -4px;
+          }
+
+          .wrapper-style {
+            .top-content {
+              width: 100%;
+
+              &-plugin-operation {
+                line-height: 32px;
+                margin-bottom: 8px;
+              }
+
+              .plugin-style {
+                flex: 1;
+              }
+            }
+
+            .plugin-icon {
+              margin-left: 8px;
+            }
+          }
+
           &-item {
             background-color: rgba(144, 144, 144, .2);
             margin-bottom: 8px;
             padding: 8px;
+          }
 
-            .label-style {
-              line-height: 32px;
-              justify-content: flex-end;
-              align-items: flex-start;
-              gap: 4px;
+          &-group-item {
+            background-color: rgba(144, 144, 144, .2);
+            margin-bottom: 8px;
 
-              div:first-child {
-                min-width: 14px;
+            &-title-box {
+              width: 100%;
+              cursor: pointer;
+              padding: 8px;
+
+              &-title {
+                flex: 1;
+                font-weight: bold;
               }
             }
 
-            .label-style::after {
-              content: '：';
-              margin-left: -4px;
-            }
-
-            .wrapper-style {
-              .top-content {
-                width: 100%;
-
-                &-plugin-operation {
-                  line-height: 32px;
-                  margin-bottom: 8px;
-                }
-
-                .plugin-style {
-                  flex: 1;
-                }
-              }
-
-              .plugin-icon {
-                margin-left: 8px;
-              }
+            &-body {
+              padding: 16px 8px 8px;
             }
           }
         }
@@ -132,6 +152,16 @@
 
     @media (prefers-color-scheme: light) {
       .plugin-edit-body {
+        &-center {
+          &-param {
+            &-group-item {
+              &-body {
+                border-top: 2px solid rgb(255, 255, 255);
+              }
+            }
+          }
+        }
+
         &-right {
           background-color: rgb(248, 248, 248);
         }
@@ -140,6 +170,16 @@
 
     @media (prefers-color-scheme: dark) {
       .plugin-edit-body {
+        &-center {
+          &-param {
+            &-group-item {
+              &-body {
+                border-top: 2px solid rgb(82, 82, 82);
+              }
+            }
+          }
+        }
+
         &-right {
           background-color: #111;
         }
