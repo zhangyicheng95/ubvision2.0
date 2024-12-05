@@ -22,7 +22,7 @@ export const authorToChinese: any = {
   'monitor.delete': '监控列表-删除',
   'monitor.addDesk': '监控列表-创建桌面快捷方式',
   'monitor.addSelfStart': '监控列表-添加开机自启动列表',
-  'monitor.headerOperation': '监控列表-显示/隐藏头部/底部',
+  'monitor.headerOperation': '监控列表-前端布局编辑',
   'monitor.changeLogo': '监控列表-更换logo',
   'monitor.copyUrl': '监控列表-复制访问链接',
   plugins: '插件管理',

@@ -426,7 +426,10 @@ const createWindow = async (arg?: any) => {
   ipcMain.handle(`theme-get-${mainWindow.id}`, (event: any, arg: any) => {
     return nativeTheme.themeSource;
   });
-
+  ipcMain.handle(`toggle-fullscreen-${mainWindow.id}`, (event) => {
+    const isFullScreen = mainWindow.isFullScreen();
+    mainWindow.setFullScreen(!isFullScreen);
+  });
   const urlParams = res?.type?.indexOf('ccd') > -1
     ? `#/${res?.type}?id=${res.id}&number=${mainWindow.id}`
     : res?.type === 'flow'

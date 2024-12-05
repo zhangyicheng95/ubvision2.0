@@ -40,6 +40,8 @@ const MoveItem: React.FC<Props> = (props: any) => {
     right: 1920,
     bottom: 1080,
   });
+  // 屏幕分辨率宽高比例 width/height
+  const [windowsScale, setWindowsScale] = useState(1);
   // 屏幕变化
   const windowResize = () => {
     const box: any = boxRef.current;
@@ -54,6 +56,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
   };
   // 初始化
   useEffect(() => {
+    setWindowsScale(window.screen.width / window.screen.height);
     windowResize();
     window.addEventListener('resize', windowResize);
     setSnapContainer(document.querySelector('.ccd-main-box'));
@@ -136,9 +139,16 @@ const MoveItem: React.FC<Props> = (props: any) => {
     <div
       className="ccd-main-box"
       ref={boxRef}
-      style={{ height: '100%', width: '100%' }}
+      style={Object.assign(
+        {
+          height: !!boxRef?.current?.clientWidth ? (boxRef?.current?.clientWidth / windowsScale) : '100%',
+        },
+        // ifCanEdit ? { border: '2px solid red' } : {}
+      )}
       onClick={(e) => {
-        dispatch(setSelectedNode(''));
+        if (ifCanEdit) {
+          dispatch(setSelectedNode(''));
+        };
         e.preventDefault();
         e.stopPropagation();
       }}

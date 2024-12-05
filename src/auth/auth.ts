@@ -34,7 +34,7 @@ export const authorIds = [
       'monitor.addSelfStart',
       'monitor.headerOperation',
       'monitor.changeLogo',
-      'monitor.copyUrl',
+      // 'monitor.copyUrl',
     ],
   },
   {

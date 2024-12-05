@@ -114,6 +114,7 @@
     "productName": "UBVision",
     "appId": "com.ubsense.ubvision",
     "asar": true,
+    "compression": "maximum",
     "asarUnpack": [
       "**\\*.{node,dll}",
       "../node_modules/node-notifier/**/*"

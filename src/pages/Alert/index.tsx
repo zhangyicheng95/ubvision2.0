@@ -7,6 +7,7 @@ import {
   PoweroffOutlined,
   SettingOutlined,
   CopyOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
 import * as _ from 'lodash-es';
@@ -423,9 +424,9 @@ const AlertItem = (props: any) => {
     } : null,
     { type: 'divider' },
     userAuthList.includes('monitor.headerOperation') ? {
-      key: `show-operation-${id}`,
+      key: `ccd-page-edit-${id}`,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => onClick(item, 'ccd/edit')}>
-        <SettingOutlined className="contextMenu-icon" />
+        <EditOutlined className="contextMenu-icon" />
         搭建监视器页面
         <span className="contextMenu-text">CCDPage Edit</span>
       </div>

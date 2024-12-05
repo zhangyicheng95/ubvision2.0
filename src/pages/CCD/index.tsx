@@ -11,11 +11,13 @@ import { getParams, updateParams } from '@/services/flowEditor';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DropSortableItem from '@/components/DragComponents/DropSortableItem';
-import MoveItem from './MoveabledItem/MoveItem';
+import MoveItem from './layout/MoveItem';
 import Moveable from 'react-moveable';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setLoading, setSelectedNode } from '@/redux/actions';
 import { useCallback } from 'react';
+import CCDHeaderPage from './layout/header';
+import CCDFooterPage from './layout/footer';
 
 interface Props { }
 
@@ -26,6 +28,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
       ? GetQueryObj(location.href)
       : {};
   const id = params?.['id'];
+  const number = params?.['number'];
   const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
   // 布局是否可编辑
@@ -33,8 +36,17 @@ const CCDPage: React.FC<Props> = (props: any) => {
     return location.hash?.indexOf('edit') > -1;
   }, [location.hash]);
   const [dataList, setDataList] = useState<any>([]);
+
   // 初始化
   useEffect(() => {
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        console.log('页面loaded');
+        window?.ipcRenderer?.invoke(`toggle-fullscreen-${number}`);
+      }, 3000)
+    });
+
+    dispatch(setLoading(true));
     getParams(id).then((res: any) => {
       if (res && res.code === 'SUCCESS') {
         const box: any = document.querySelector('#moveableBox');
@@ -82,6 +94,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
           ?.filter((i: any) => !!i.width);
         setDataList(contentList);
         dispatch(setCanvasData(res?.data || {}));
+        dispatch(setLoading(false));
       } else {
         message.error(res?.msg || res?.message || '接口异常');
       };
@@ -100,7 +113,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
     updateParams(canvasData?.id, param).then((res) => {
       if (!!res && res.code === 'SUCCESS') {
         message.success('保存成功');
-
+        // 保存完跳到展示页
         setTimeout(() => {
           let hash = '';
           if (location.href?.indexOf('?') > -1) {
@@ -119,19 +132,28 @@ const CCDPage: React.FC<Props> = (props: any) => {
   return (
     <div className={`flex-box-column ${styles.CCDPage}`}>
       {
-        ifCanEdit ?
-          <div className="flex-box">
-            <Button
-              icon={<SaveOutlined />}
-              size='small'
-              type="primary" onClick={onSave}>保存</Button>
-          </div>
-          : null
+        // 头部
+        useMemo(() => {
+          return ifCanEdit ?
+            <CCDHeaderPage dataList={dataList} />
+            : null
+        }, [dataList])
       }
-      <MoveItem
-        data={dataList}
-        setDataList={setDataList}
-      />
+      {
+        // 布局每一个组件
+        <div className='flex-box-start ccd-page-body-box'>
+          <DndProvider backend={HTML5Backend}>
+            <MoveItem
+              data={dataList}
+              setDataList={setDataList}
+            />
+          </DndProvider>
+        </div>
+      }
+      {
+        // 底部
+        <CCDFooterPage dataList={dataList} />
+      }
     </div>
   );
 };
