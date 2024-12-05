@@ -61,6 +61,7 @@ export interface IRootActions {
 		},
 		graphLock: boolean, // 画布锁
 		lineType: '', // 连线类型
+		contentData: {}, // 前端布局
 	}; // 画布数据
 	canvasDataBase: {
 		id: '',
@@ -77,6 +78,7 @@ export interface IRootActions {
 		},
 		graphLock: boolean, // 画布锁
 		lineType: '', // 连线类型
+		contentData: {}, // 前端布局
 	}; // 画布数据备份
 	canvasStart: false; // 方案启动
 	selectedNode: string, // 双击选中节点
@@ -243,3 +245,4 @@ export const setPluginList = (pluginList: any) => {
 		pluginList
 	};
 };
+// 界面编辑器-

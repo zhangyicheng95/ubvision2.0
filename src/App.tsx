@@ -308,7 +308,7 @@ const App: React.FC = () => {
                   ) :
                     location.href?.indexOf('#/ccd') > -1 ? (
                       <Routes>
-                        <Route path="/ccd" element={<CCDPage />} />
+                        <Route path="/ccd/*" element={<CCDPage />} />
                       </Routes>
                     ) :
                       location.href?.indexOf('#/softwareopen') > -1 ? (

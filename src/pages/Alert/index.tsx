@@ -295,12 +295,12 @@ const AlertItem = (props: any) => {
   const { name, id, running, ifOnStartUp, contentData, updatedAt } = item;
 
   // 点击打开新窗口
-  const onClick = (item: any) => {
+  const onClick = (item: any, type?: string) => {
     const { id } = item;
     ipcRenderer.ipcCommTest(
       'alert-open-browser',
       JSON.stringify({
-        type: 'ccd',
+        type: type || 'ccd',
         id,
       })
     );
@@ -392,16 +392,6 @@ const AlertItem = (props: any) => {
         <span className="contextMenu-text">Self Starting</span>
       </div>
     } : null,
-    userAuthList.includes('monitor.copyUrl') ? {
-      key: `copyUrl-${id}`,
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        copyUrlLink(item);
-      }}>
-        <CopyOutlined className="contextMenu-icon" />
-        复制访问链接
-        <span className="contextMenu-text">Copy URL</span>
-      </div>
-    } : null,
     { type: 'divider' },
     userAuthList.includes('monitor.delete') ? {
       key: `delete-${id}`,
@@ -430,7 +420,16 @@ const AlertItem = (props: any) => {
         编辑
         <span className="contextMenu-text">CCD Edit</span>
       </div>
-    } : null
+    } : null,
+    { type: 'divider' },
+    userAuthList.includes('monitor.headerOperation') ? {
+      key: `show-operation-${id}`,
+      label: <div className='flex-box-justify-between dropdown-box' onClick={() => onClick(item, 'ccd/edit')}>
+        <SettingOutlined className="contextMenu-icon" />
+        搭建监视器页面
+        <span className="contextMenu-text">CCDPage Edit</span>
+      </div>
+    } : null,
   ]?.filter(Boolean);
 
   return (

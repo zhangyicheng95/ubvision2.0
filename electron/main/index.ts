@@ -323,7 +323,7 @@ const createWindow = async (arg?: any) => {
   /*******************打开窗口之前，检查这个id是否已经打开了别的窗口********************/
   const openedFlowWindow = toggleAlwaysOnTop(`main-${res?.id}`);
   const openedCCDWindow = toggleAlwaysOnTop(`child-${res?.id}`);
-  if (res?.type === 'ccd') {
+  if (res?.type?.indexOf('ccd') > -1) {
     if (!!openedFlowWindow) {
       // 要打开的是监视器，检查有没有打开流程图
       if (openedFlowWindow?.isMinimized?.()) {
@@ -371,7 +371,7 @@ const createWindow = async (arg?: any) => {
     }
   };
   /*******************打开窗口之前，检查这个id是否已经打开了别的窗口********************/
-  const windowType = res?.type === 'ccd' ? 'child' : res?.type === 'software' ? 'software' : 'main';
+  const windowType = res?.type?.indexOf('ccd') > -1 ? 'child' : res?.type === 'software' ? 'software' : 'main';
   const mainWindow: any = new BrowserWindow({
     width: !!res?.type ? 1440 : 1280,
     height: !!res?.type ? 900 : 810,
@@ -427,8 +427,8 @@ const createWindow = async (arg?: any) => {
     return nativeTheme.themeSource;
   });
 
-  const urlParams = res?.type === 'ccd'
-    ? `#/ccd?id=${res.id}&number=${mainWindow.id}`
+  const urlParams = res?.type?.indexOf('ccd') > -1
+    ? `#/${res?.type}?id=${res.id}&number=${mainWindow.id}`
     : res?.type === 'flow'
       ? `#/flow?id=${!!res.id && res.id !== 'new' ? res.id : ''}&number=${mainWindow.id}`
       : res?.type === 'software'
