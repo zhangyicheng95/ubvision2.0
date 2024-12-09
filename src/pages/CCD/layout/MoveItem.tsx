@@ -3,24 +3,28 @@ import Moveable from 'react-moveable';
 import { getuid, guid } from '@/utils/utils';
 import * as _ from 'lodash';
 import TooltipDiv from '@/components/TooltipDiv';
-import { Button, message, Modal, Form, Dropdown, Menu, Badge, Image } from 'antd';
+import { Button, message, Modal, Form, Dropdown, Menu, Badge, Image, Input } from 'antd';
 import {
-  SaveOutlined,
+  SaveOutlined, SettingOutlined, DeleteOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
 import ChartPreviewModal from '../components/ChartPreviewModal';
 import LogPreviewModal from '../components/LogPreviewModal';
 import dataItemImageNG from '@/assets/images/item-bg-ng.png';
+import { editLeftPanel } from '../index';
+import { windowTypeList } from './config';
+import homeBg from '@/assets/images/home-bg.png';
 
 interface Props {
   data?: [];
   setDataList?: any;
+  initParams?: any;
 }
 
 const MoveItem: React.FC<Props> = (props: any) => {
   const {
-    data, setDataList
+    data, setDataList, initParams
   } = props;
   const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
@@ -42,20 +46,25 @@ const MoveItem: React.FC<Props> = (props: any) => {
   });
   // 屏幕分辨率宽高比例 width/height
   const [windowsScale, setWindowsScale] = useState(1);
+  const [windowTypeFirst, setWindowTypeFirst] = useState('charts');
+  const [windowTypeSecond, setWindowTypeSecond] = useState('all');
+  const [searchVal, setSearchVal] = useState('');
 
   // 屏幕变化
   const windowResize = () => {
-    const box: any = boxRef.current;
-    const height = box?.clientWidth * window.screen.height / window.screen.width;
-    const diff = ifCanEdit ? 400 : 0;
+    console.log('屏幕尺寸变化');
+
+    initParams?.();
     // 拿到屏幕的分辨率宽高比
     const scale = window.screen.width / window.screen.height;
+    const box: any = boxRef.current;
+    const height = box?.clientWidth / scale;
     if (ifCanEdit) {
       dispatch(setCanvasData({
         ...canvasData,
         ...{
           contentData: {
-            windowsScale: window.screen.width / (window.screen.width - diff)
+            windowsScale: window.screen.width / (window.screen.width - editLeftPanel)
           }
         }
       }));
@@ -65,8 +74,8 @@ const MoveItem: React.FC<Props> = (props: any) => {
     setBoxSize((prev: any) => {
       return {
         ...prev,
-        left: diff,
-        right: box?.clientWidth + diff,
+        left: editLeftPanel,
+        right: box?.clientWidth + editLeftPanel + 15,
         bottom: height,
       };
     });
@@ -97,7 +106,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
   // 拖拽
   function handleDragEnd(e: any) {
     let { width, height, left, top, transform } = e?.target?.style;
-    const className = e?.target?.className?.split(` `)?.[1];
+    const className = e?.target?.className?.split(` `)?.filter((i: any) => i?.indexOf('_') > -1)?.[0];
     width = Number(width.split('px')?.[0]);
     height = Number(height.split('px')?.[0]);
     left = Number(left.split('px')?.[0]);
@@ -121,7 +130,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
   };
   // 缩放
   function handleResizeEnd(e: any) {
-    const className = e?.target?.className?.split(` `)?.[1];
+    const className = e?.target?.className?.split(` `)?.filter((i: any) => i?.indexOf('_') > -1)?.[0];
     let { width, height } = e?.target?.style;
     width = Number(width?.split('px')?.[0] || 0);
     height = Number(height?.split('px')?.[0] || 0);
@@ -137,7 +146,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
   };
   // 旋转
   function handleRotateEnd(e: any) {
-    const className = e?.target?.className?.split(` `)?.[1];
+    const className = e?.target?.className?.split(` `)?.filter((i: any) => i?.indexOf('_') > -1)?.[0];
     const { transform } = e?.target?.style;
     const rotate = transform.split('rotate(')?.[1]?.split('deg)')?.[0];
 
@@ -151,6 +160,32 @@ const MoveItem: React.FC<Props> = (props: any) => {
       return item;
     }));
   };
+  // 每个item右键
+  const settingList: any = (item: any) => {
+    return [
+      {
+        key: `edit`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          console.log(item);
+        }}>
+          <SettingOutlined className="contextMenu-icon" />
+          编辑
+          <span className="contextMenu-text">CCD Edit</span>
+        </div>
+      },
+      { type: 'divider' },
+      {
+        key: `delete`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          console.log(item);
+        }}>
+          <DeleteOutlined className="contextMenu-icon" />
+          删除
+          <span className="contextMenu-text">CCD Delete</span>
+        </div>
+      }
+    ];
+  };
 
   return (
     <div
@@ -158,24 +193,84 @@ const MoveItem: React.FC<Props> = (props: any) => {
     >
       {
         !!ifCanEdit ?
-          <div className="ccd-main-box-plugin-panel">
-            组件栏
+          <div className="flex-box-column ccd-main-box-plugin-panel" style={{
+            width: editLeftPanel - (editLeftPanel > 0 ? 16 : 0),
+            minWidth: editLeftPanel - (editLeftPanel > 0 ? 16 : 0),
+            maxWidth: editLeftPanel - (editLeftPanel > 0 ? 16 : 0)
+          }}>
+            <div className="ccd-main-box-plugin-panel-search-box">
+              <Input.Search onSearch={(val) => {
+                setSearchVal(val);
+              }} />
+            </div>
+            <div className="ccd-main-box-plugin-panel-body">
+              <div className="flex-box ccd-main-box-plugin-panel-body">
+                <div className="flex-box ccd-main-box-plugin-panel-body-type">
+                  <div className="ccd-main-box-plugin-panel-body-type-first">
+                    {
+                      windowTypeList?.map((item: any) => {
+                        const { label, value, icon, types, contents } = item;
+                        return <div
+                          className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-first-item ${windowTypeFirst === value ? 'menu-selected-self' : ''}`}
+                          key={value}
+                          onClick={() => setWindowTypeFirst(value)}
+                        >
+                          {icon}
+                          {label}
+                        </div>
+                      })
+                    }
+                  </div>
+                  <div className="ccd-main-box-plugin-panel-body-type-second">
+                    {
+                      (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.types || [])
+                        ?.map((item: any) => {
+                          const { label, value, } = item;
+                          return <div
+                            className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-second-item ${windowTypeSecond === value ? 'menu-selected-self' : ''}`}
+                            key={value}
+                            onClick={() => setWindowTypeSecond(value)}
+                          >
+                            {label}
+                          </div>
+                        })
+                    }
+                  </div>
+                </div>
+                <div className="ccd-main-box-plugin-panel-body-content">
+                  {
+                    (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.contents || [])
+                      ?.filter((i: any) => i.label?.indexOf(searchVal) > -1 && (windowTypeSecond === 'all' ? i : _.toUpper(i.value)?.indexOf(_.toUpper(windowTypeSecond)) > -1))
+                      ?.map((item: any) => {
+                        const { label, value, type, icon } = item;
+                        return <div
+                          className={`flex-box-column-start ccd-main-box-plugin-panel-body-content-item`}
+                          key={`${type}-${value}`}
+                        >
+                          <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
+                          <div className="ccd-main-box-plugin-panel-body-content-item-icon">
+                            {icon ? <Image src={icon} /> : <img src={homeBg} />}
+                          </div>
+                        </div>
+                      })
+                  }
+                </div>
+              </div>
+            </div>
           </div>
           : null
       }
       <div style={{
         height: '100%',
-        width: ifCanEdit ? "calc(100% - 400px)" : "100%",
+        width: `calc(100% - ${editLeftPanel - (editLeftPanel > 0 ? 16 : 0)}px)`,
         overflowY: 'auto',
         overflowX: 'hidden'
       }}>
         <div className="ccd-main-box-canvas"
           ref={boxRef}
-          style={Object.assign(
-            {
-              height: boxRef?.current?.clientWidth / windowsScale
-            },
-          )}
+          style={{
+            height: ((((boxRef?.current?.clientWidth || 1920) / windowsScale + 30) > window.screen.height) ? window.screen.height : (boxRef?.current?.clientWidth / windowsScale))
+          }}
           onClick={(e) => {
             if (ifCanEdit) {
               dispatch(setSelectedNode(''));
@@ -185,23 +280,31 @@ const MoveItem: React.FC<Props> = (props: any) => {
           }}
         >
           {(data || [])?.map((item: any, index: number) => {
-            let { name, x, y, width, height, rotate = 0, type } = item;
+            let { name, x, y, width, height, rotate = 0, type, id } = item;
             const target = `.${name}`;
             if (width === 0 || height === 0) {
               return null;
             }
             return <Fragment key={index}>
-              <div
-                className={`move-item ${name}`}
-                style={{
-                  height,
-                  width,
-                  transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+              <Dropdown
+                getPopupContainer={(triggerNode: any) => {
+                  return triggerNode?.parentNode || document.body;
                 }}
-                onClick={(e) => handelClick(name, e)}
+                menu={{ items: settingList(item) }}
+                trigger={['contextMenu']}
               >
-                {name}
-              </div>
+                <div
+                  className={`move-item ${name}`}
+                  style={{
+                    height,
+                    width,
+                    transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+                  }}
+                  onClick={(e) => handelClick(name, e)}
+                >
+                  {name}
+                </div>
+              </Dropdown>
               <Moveable
                 target={target} // 拖拽目标
 
@@ -217,7 +320,11 @@ const MoveItem: React.FC<Props> = (props: any) => {
                 // 磁吸功能
                 snappable={true} // 是否初始化磁吸功能
                 snapContainer={snapContainer} // 磁吸功能的容器
-                bounds={boxSize} // 边界点
+                bounds={{
+                  ...boxSize,
+                  // right: boxRef.current?.clientWidth + editLeftPanel,
+                  // bottom: boxRef.current?.clientHeight
+                }} // 边界点
 
                 // 缩放
                 resizable={selectedNode === name} // 是否可以缩放

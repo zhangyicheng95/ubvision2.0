@@ -22,17 +22,95 @@
         overflow: hidden;
 
         &-plugin-panel {
-          width: 400px;
           height: 100%;
+          margin-right: 16px;
           background-color: rgba(144, 144, 144, .3);
           z-index: 1;
+
+          &-search-box {
+            .ant-input-outlined {
+              border-left: 0;
+            }
+          }
+
+          &-body {
+            flex: 1;
+            height: 100%;
+            width: 100%;
+            font-size: 13px;
+
+            &-type {
+              width: 112px;
+              height: 100%;
+              background-color: rgba(144, 144, 144, .1);
+
+              &-first {
+                width: 50%;
+                height: 100%;
+                background-color: rgba(144, 144, 144, .1);
+                overflow: auto;
+
+                &-item {
+                  padding: 8px;
+                  cursor: pointer;
+
+                  .icon {
+                    font-size: 18px;
+                    margin-bottom: 2px;
+                  }
+                }
+              }
+
+              &-second {
+                width: 50%;
+                height: 100%;
+                overflow: auto;
+
+                &-item {
+                  padding: 8px;
+                  cursor: pointer;
+                }
+              }
+            }
+
+            &-content {
+              flex: 1;
+              height: calc(100% - 16px);
+              overflow: auto;
+              padding: 16px;
+
+              &-item {
+                height: 160px;
+                width: 100%;
+                background-color: rgba(144, 144, 144, .1);
+                margin-bottom: 16px;
+
+                &-title {
+                  height: 30px;
+                  line-height: 30px;
+                  width: 100%;
+                  padding: 0 8px;
+                  background-color: rgba(144, 144, 144, .2);
+                }
+
+                &-icon {
+                  width: 100%;
+                  height: calc(100% - 30px);
+
+                  img,
+                  .ant-image {
+                    height: 100%;
+                    width: 100%;
+                  }
+                }
+              }
+            }
+          }
         }
 
         &-canvas {
           height: 100%;
           position: relative;
-          // overflow-y: auto;
-          // overflow-x: hidden;
 
           .move-item {
             position: absolute;
@@ -51,7 +129,7 @@
         width: 100%;
         height: 100%;
         background-image: radial-gradient(circle, #ccc 1px, transparent 1px);
-        background-size: 16px 16px;
+        background-size: 10px 10px;
         /* you can adjust the spacing of dots by changing these values */
         opacity: 0.5;
         z-index: 0;
@@ -63,7 +141,6 @@
       height: 32px;
       min-height: 32px;
       max-height: 32px;
-
       border-top: 1px solid rgba(144, 144, 144, .3);
     }
 
@@ -75,7 +152,7 @@
           }
 
           &-canvas {
-            background-color: rgb(66, 66, 66);
+            background-color: rgb(225, 225, 225);
           }
         }
       }

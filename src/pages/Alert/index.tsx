@@ -393,17 +393,19 @@ const AlertItem = (props: any) => {
         <span className="contextMenu-text">Self Starting</span>
       </div>
     } : null,
-    { type: 'divider' },
-    userAuthList.includes('monitor.delete') ? {
-      key: `delete-${id}`,
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        onDelete(item);
-      }}>
-        <DeleteOutlined className="contextMenu-icon" />
-        删除
-        <span className="contextMenu-text">CCD Delete</span>
-      </div>
-    } : null,
+    ...userAuthList.includes('monitor.delete') ? [
+      { type: 'divider' },
+      {
+        key: `delete-${id}`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          onDelete(item);
+        }}>
+          <DeleteOutlined className="contextMenu-icon" />
+          删除
+          <span className="contextMenu-text">CCD Delete</span>
+        </div>
+      }
+    ] : [],
     userAuthList.includes('monitor.headerOperation') ? {
       key: `show-operation-${id}`,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
@@ -422,15 +424,17 @@ const AlertItem = (props: any) => {
         <span className="contextMenu-text">CCD Edit</span>
       </div>
     } : null,
-    { type: 'divider' },
-    userAuthList.includes('monitor.headerOperation') ? {
-      key: `ccd-page-edit-${id}`,
-      label: <div className='flex-box-justify-between dropdown-box' onClick={() => onClick(item, 'ccd/edit')}>
-        <EditOutlined className="contextMenu-icon" />
-        搭建监视器页面
-        <span className="contextMenu-text">CCDPage Edit</span>
-      </div>
-    } : null,
+    ...userAuthList.includes('monitor.headerOperation') ? [
+      { type: 'divider' },
+      {
+        key: `ccd-page-edit-${id}`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => onClick(item, 'ccd/edit')}>
+          <EditOutlined className="contextMenu-icon" />
+          搭建监视器页面
+          <span className="contextMenu-text">CCDPage Edit</span>
+        </div>
+      }
+    ] : [],
   ]?.filter(Boolean);
 
   return (
