@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
 import { getuid, guid } from '@/utils/utils';
 import * as _ from 'lodash';
@@ -8,7 +8,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
 import ChartPreviewModal from '../components/ChartPreviewModal';
 import LogPreviewModal from '../components/LogPreviewModal';
 import dataItemImageNG from '@/assets/images/item-bg-ng.png';
@@ -42,29 +42,46 @@ const MoveItem: React.FC<Props> = (props: any) => {
   });
   // 屏幕分辨率宽高比例 width/height
   const [windowsScale, setWindowsScale] = useState(1);
+
   // 屏幕变化
   const windowResize = () => {
     const box: any = boxRef.current;
-    const height = (box?.clientWidth - 2) * window.screen.height / window.screen.width;
+    const height = box?.clientWidth * window.screen.height / window.screen.width;
+    const diff = ifCanEdit ? 400 : 0;
+    // 拿到屏幕的分辨率宽高比
+    const scale = window.screen.width / window.screen.height;
+    if (ifCanEdit) {
+      dispatch(setCanvasData({
+        ...canvasData,
+        ...{
+          contentData: {
+            windowsScale: window.screen.width / (window.screen.width - diff)
+          }
+        }
+      }));
+    };
+    setWindowsScale(scale);
+    //渲染边界
     setBoxSize((prev: any) => {
       return {
         ...prev,
-        right: box?.clientWidth - 2,
-        bottom: height <= box?.clientHeight ? height : box?.clientHeight,
+        left: diff,
+        right: box?.clientWidth + diff,
+        bottom: height,
       };
     });
   };
   // 初始化
   useEffect(() => {
-    setWindowsScale(window.screen.width / window.screen.height);
-    windowResize();
-    window.addEventListener('resize', windowResize);
-    setSnapContainer(document.querySelector('.ccd-main-box'));
-
-    return () => {
-      window.removeEventListener('resize', windowResize);
+    if (canvasData.id) {
+      windowResize();
+      window.addEventListener('resize', windowResize);
+      setSnapContainer(document.querySelector('.ccd-main-box'));
     }
-  }, []);
+    return () => {
+      window?.removeEventListener?.('resize', windowResize);
+    }
+  }, [canvasData.id]);
   // 磁吸效果辅助线的dom列表
   const elementGuidelines = useMemo(() => {
     return (data || [])?.map((item: any) => `.${item.name}`);
@@ -137,102 +154,118 @@ const MoveItem: React.FC<Props> = (props: any) => {
 
   return (
     <div
-      className="ccd-main-box"
-      ref={boxRef}
-      style={Object.assign(
-        {
-          height: !!boxRef?.current?.clientWidth ? (boxRef?.current?.clientWidth / windowsScale) : '100%',
-        },
-        // ifCanEdit ? { border: '2px solid red' } : {}
-      )}
-      onClick={(e) => {
-        if (ifCanEdit) {
-          dispatch(setSelectedNode(''));
-        };
-        e.preventDefault();
-        e.stopPropagation();
-      }}
+      className="flex-box-start ccd-main-box"
     >
-      {(data || [])?.map((item: any, index: number) => {
-        const { name, x, y, width, height, rotate = 0, type } = item;
-        const target = `.${name}`;
-        if (width === 0 || height === 0) {
-          return null;
-        }
-        return <Fragment key={index}>
-          <div
-            className={`move-item ${name}`}
-            style={{
-              height,
-              width,
-              transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
-            }}
-            onClick={(e) => handelClick(name, e)}
-          >
-            {name}
+      {
+        !!ifCanEdit ?
+          <div className="ccd-main-box-plugin-panel">
+            组件栏
           </div>
-          <Moveable
-            target={target} // 拖拽目标
-
-            // 拖动
-            draggable={selectedNode === name} // 元素可拖动
-            padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // padding距离
-            zoom={selectedNode === name ? 1 : 0} // 缩放包裹的moveable
-            origin={false} // 显示中心点
-            boundingBox={true} // 元素将被限制在其父容器内移动
-            throttleDrag={0} // 拖拽阈值 达到这个值才执行拖拽
-            onDragEnd={handleDragEnd}
-
-            // 磁吸功能
-            snappable={true} // 是否初始化磁吸功能
-            snapContainer={snapContainer} // 磁吸功能的容器
-            bounds={boxSize} // 边界点
-
-            // 缩放
-            resizable={selectedNode === name} // 是否可以缩放
-            throttleResize={0} //  缩放阈值
-            renderDirections={['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']} // 变化的点
-            onResizeEnd={handleResizeEnd}
-
-            // 旋转
-            rotatable={selectedNode === name} // 旋转
-            throttleRotate={0} // 旋转阈值
-            rotationPosition={"top"}  // 旋转方向
-            onRotateEnd={handleRotateEnd} // 旋转完成
-
-            // 辅助线
-            snapGap={true} // 开启辅助线
-            elementGuidelines={elementGuidelines}
-            snapDirections={{
-              "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
-            }} // 辅助线方向
-            elementSnapDirections={{
-              "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
-            }} // 元素捕捉方向
-            snapThreshold={10} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
-            isDisplaySnapDigit={true} // 是否展示与磁吸辅助线的距离
-            snapDigit={0} //捕捉距离数字
-
-            // 每一个图形变换的更新动作
-            onRender={(e) => {
-              itemRef.current = e;
-              e.target.style.cssText += e.cssText;
-            }}
-          />
-        </Fragment>
-      })}
-      {
-        // 图表放大预览
-        _.isObject(myChartVisible) && !_.isEmpty(myChartVisible) ? (
-          <ChartPreviewModal option={myChartVisible} onCancel={() => setMyChartVisible(null)} />
-        ) : null
+          : null
       }
-      {
-        // 日志放大预览
-        !!logDataVisible ? (
-          <LogPreviewModal type={logDataVisible} onCancel={() => setLogDataVisible('')} />
-        ) : null
-      }
+      <div style={{
+        height: '100%',
+        width: ifCanEdit ? "calc(100% - 400px)" : "100%",
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}>
+        <div className="ccd-main-box-canvas"
+          ref={boxRef}
+          style={Object.assign(
+            {
+              height: boxRef?.current?.clientWidth / windowsScale
+            },
+          )}
+          onClick={(e) => {
+            if (ifCanEdit) {
+              dispatch(setSelectedNode(''));
+            };
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          {(data || [])?.map((item: any, index: number) => {
+            let { name, x, y, width, height, rotate = 0, type } = item;
+            const target = `.${name}`;
+            if (width === 0 || height === 0) {
+              return null;
+            }
+            return <Fragment key={index}>
+              <div
+                className={`move-item ${name}`}
+                style={{
+                  height,
+                  width,
+                  transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+                }}
+                onClick={(e) => handelClick(name, e)}
+              >
+                {name}
+              </div>
+              <Moveable
+                target={target} // 拖拽目标
+
+                // 拖动
+                draggable={selectedNode === name} // 元素可拖动
+                padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // padding距离
+                zoom={selectedNode === name ? 1 : 0} // 缩放包裹的moveable
+                origin={false} // 显示中心点
+                boundingBox={true} // 元素将被限制在其父容器内移动
+                throttleDrag={0} // 拖拽阈值 达到这个值才执行拖拽
+                onDragEnd={handleDragEnd}
+
+                // 磁吸功能
+                snappable={true} // 是否初始化磁吸功能
+                snapContainer={snapContainer} // 磁吸功能的容器
+                bounds={boxSize} // 边界点
+
+                // 缩放
+                resizable={selectedNode === name} // 是否可以缩放
+                throttleResize={0} //  缩放阈值
+                renderDirections={['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']} // 变化的点
+                onResizeEnd={handleResizeEnd}
+
+                // 旋转
+                rotatable={selectedNode === name} // 旋转
+                throttleRotate={0} // 旋转阈值
+                rotationPosition={"top"}  // 旋转方向
+                onRotateEnd={handleRotateEnd} // 旋转完成
+
+                // 辅助线
+                snapGap={true} // 开启辅助线
+                elementGuidelines={elementGuidelines}
+                snapDirections={{
+                  "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
+                }} // 辅助线方向
+                elementSnapDirections={{
+                  "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
+                }} // 元素捕捉方向
+                snapThreshold={10} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
+                isDisplaySnapDigit={true} // 是否展示与磁吸辅助线的距离
+                snapDigit={0} //捕捉距离数字
+
+                // 每一个图形变换的更新动作
+                onRender={(e) => {
+                  itemRef.current = e;
+                  e.target.style.cssText += e.cssText;
+                }}
+              />
+            </Fragment>
+          })}
+          {
+            // 图表放大预览
+            _.isObject(myChartVisible) && !_.isEmpty(myChartVisible) ? (
+              <ChartPreviewModal option={myChartVisible} onCancel={() => setMyChartVisible(null)} />
+            ) : null
+          }
+          {
+            // 日志放大预览
+            !!logDataVisible ? (
+              <LogPreviewModal type={logDataVisible} onCancel={() => setLogDataVisible('')} />
+            ) : null
+          }
+        </div>
+      </div>
     </div>
   );
 };

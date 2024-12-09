@@ -369,7 +369,7 @@ const Home: React.FC<Props> = (props: any) => {
             <div className="flex-box case-body">
               {
                 (caseList || [])?.map((item: any, index: number) => {
-                  const { icon, name, description } = item;
+                  const { id, icon, name, description } = item;
                   return <div
                     className="case-item-box"
                     key={`case-item-box-${index}`}
@@ -377,6 +377,14 @@ const Home: React.FC<Props> = (props: any) => {
                       message.destroy();
                       message.info('功能开发中，敬请期待。')
                       console.log(item);
+                      return;
+                      ipcRenderer.ipcCommTest(
+                        'alert-open-browser',
+                        JSON.stringify({
+                          type: 'case',
+                          id: id || guid(),
+                        })
+                      );
                       return;
                       addParams(item).then((res) => {
                         if (

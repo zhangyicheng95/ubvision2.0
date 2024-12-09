@@ -61,7 +61,9 @@ export interface IRootActions {
 		},
 		graphLock: boolean, // 画布锁
 		lineType: '', // 连线类型
-		contentData: {}, // 前端布局
+		contentData: {
+			windowsScale: 1,
+		}, // 前端布局
 	}; // 画布数据
 	canvasDataBase: {
 		id: '',

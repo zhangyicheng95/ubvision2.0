@@ -31,6 +31,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
   const number = params?.['number'];
   const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
+  const moveRef = useRef<any>();
   // 布局是否可编辑
   const ifCanEdit = useMemo(() => {
     return location.hash?.indexOf('edit') > -1;
@@ -39,7 +40,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
 
   // 初始化
   useEffect(() => {
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('loaded', () => {
       setTimeout(() => {
         console.log('页面loaded');
         window?.ipcRenderer?.invoke(`toggle-fullscreen-${number}`);
@@ -91,7 +92,19 @@ const CCDPage: React.FC<Props> = (props: any) => {
                   : {}),
             };
           })
+          ?.map((item: any) => {
+            const { x, y, width, height } = item;
+            const diff = location.hash?.indexOf('edit') > -1 ? 400 : 0;
+            return {
+              ...item,
+              x: (x > 0 ? x : 0) * contentData?.windowsScale * ((moveRef?.current?.clientWidth - diff) / window.screen.width),
+              y: (y > 0 ? y : 0) * contentData?.windowsScale * ((moveRef?.current?.clientWidth - diff) / window.screen.width),
+              width: width * contentData?.windowsScale * ((moveRef?.current?.clientWidth - diff) / window.screen.width),
+              height: height * contentData?.windowsScale * ((moveRef?.current?.clientWidth - diff) / window.screen.width),
+            }
+          })
           ?.filter((i: any) => !!i.width);
+
         setDataList(contentList);
         dispatch(setCanvasData(res?.data || {}));
         dispatch(setLoading(false));
@@ -141,7 +154,11 @@ const CCDPage: React.FC<Props> = (props: any) => {
       }
       {
         // 布局每一个组件
-        <div className='flex-box-start ccd-page-body-box'>
+        <div
+          ref={moveRef}
+          className='flex-box-start ccd-page-body-box'
+          style={{ height: `calc(100% - ${ifCanEdit ? 64 : 32}px)` }}
+        >
           <DndProvider backend={HTML5Backend}>
             <MoveItem
               data={dataList}

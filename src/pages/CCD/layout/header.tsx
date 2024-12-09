@@ -52,7 +52,7 @@ const CCDHeaderPage: React.FC<Props> = (props: any) => {
             }
             dispatch(setLoading(false));
         });
-    }, [dataList]);
+    }, [dataList, canvasData]);
 
     return (
         <div className="flex-box ccd-page-header-box">

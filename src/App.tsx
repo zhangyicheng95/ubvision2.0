@@ -23,6 +23,7 @@ import CCDPage from '@/pages/CCD';
 import MarkdownPage from '@/pages/Markdown';
 import UserPage from '@/pages/UserInfo';
 import SettingPage from '@/pages/Setting';
+import CasePage from '@/pages/Home/Case';
 import { notificationSetting, permissionRule } from '@/common/globalConstants';
 import { getDataList, getListStatusService } from '@/services/flowEditor';
 import { useDispatch } from 'react-redux';
@@ -96,7 +97,8 @@ const App: React.FC = () => {
       location.href?.indexOf('#/flow') > -1 ||
       location.href?.indexOf('#/ccd') > -1 ||
       location.href?.indexOf('#/softwareopen') > -1 ||
-      location.href?.indexOf('#/markdown') > -1
+      location.href?.indexOf('#/markdown') > -1 ||
+      location.href?.indexOf('#/case') > -1
     ) {
 
     } else {
@@ -321,25 +323,31 @@ const App: React.FC = () => {
                             <Route path="/markdown" element={<MarkdownPage />} />
                           </Routes>
                         ) :
-                          (
+                          location.href?.indexOf('#/case') > -1 ? (
                             <Routes>
-                              <Route path="/login" element={<LoginPage />} />
-                              <Route path="/home" element={<HomePage />} />
-                              <Route path="/project" element={<ProjectPage />} />
-                              <Route path="/alert/*" element={<AlertPage />} />
-                              <Route path="/plugin" element={<PluginPage />} />
-                              <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
-                              <Route path="/software" element={<SoftwarePage />} />
-                              <Route path="/auth/*" element={<AuthPage />} />
-                              <Route path="/userSetting" element={<UserPage />} />
-                              <Route path="/setting/*" element={<SettingPage setEmpowerVisible={setEmpowerVisible} />} />
-                              {userAuthList?.includes('projects.list') ? (
-                                <Route path="*" element={<HomePage />} />
-                              ) : (
-                                <Route path="*" element={<AlertPage />} />
-                              )}
+                              <Route path="/case" element={<CasePage />} />
                             </Routes>
-                          )
+                          ) :
+
+                            (
+                              <Routes>
+                                <Route path="/login" element={<LoginPage />} />
+                                <Route path="/home" element={<HomePage />} />
+                                <Route path="/project" element={<ProjectPage />} />
+                                <Route path="/alert/*" element={<AlertPage />} />
+                                <Route path="/plugin" element={<PluginPage />} />
+                                <Route path="/plugin/modify/:id" element={<PluginEditPage />} />
+                                <Route path="/software" element={<SoftwarePage />} />
+                                <Route path="/auth/*" element={<AuthPage />} />
+                                <Route path="/userSetting" element={<UserPage />} />
+                                <Route path="/setting/*" element={<SettingPage setEmpowerVisible={setEmpowerVisible} />} />
+                                {userAuthList?.includes('projects.list') ? (
+                                  <Route path="*" element={<HomePage />} />
+                                ) : (
+                                  <Route path="*" element={<AlertPage />} />
+                                )}
+                              </Routes>
+                            )
                 }
               </BasicLayout>
             </HashRouter>

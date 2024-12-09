@@ -13,22 +13,49 @@
     }
 
     .ccd-page-body-box {
-      height: calc(100% - 64px);
-      overflow: auto;
+      width: 100%;
 
       .ccd-main-box {
-        position: relative;
-        background-color: rgba(144, 144, 144, .1);
         width: 100%;
         height: 100%;
+        position: relative;
+        overflow: hidden;
 
-        .move-item {
-          position: absolute;
-          overflow: hidden;
-          background-color: rgba(144, 144, 144, .2);
-          border: 2px solid transparent;
+        &-plugin-panel {
+          width: 400px;
+          height: 100%;
+          background-color: rgba(144, 144, 144, .3);
           z-index: 1;
         }
+
+        &-canvas {
+          height: 100%;
+          position: relative;
+          // overflow-y: auto;
+          // overflow-x: hidden;
+
+          .move-item {
+            position: absolute;
+            overflow: hidden;
+            background-color: rgba(144, 144, 144, .1);
+            border: 2px solid transparent;
+          }
+        }
+      }
+
+      .ccd-main-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(circle, #ccc 1px, transparent 1px);
+        background-size: 16px 16px;
+        /* you can adjust the spacing of dots by changing these values */
+        opacity: 0.5;
+        z-index: 0;
+        /* you can adjust the opacity of the dots */
       }
     }
 
@@ -41,12 +68,36 @@
     }
 
     @media (prefers-color-scheme: light) {
+      .ccd-page-body-box {
+        .ccd-main-box {
+          &-plugin-panel {
+            background-color: #fff;
+          }
+
+          &-canvas {
+            background-color: rgb(66, 66, 66);
+          }
+        }
+      }
+
       .ccd-page-footer-box {
         background-color: rgb(255, 255, 255);
       }
     }
 
     @media (prefers-color-scheme: dark) {
+      .ccd-page-body-box {
+        .ccd-main-box {
+          &-plugin-panel {
+            background-color: #000;
+          }
+
+          &-canvas {
+            background-color: rgb(20, 20, 20);
+          }
+        }
+      }
+
       .ccd-page-footer-box {
         background-color: rgb(0, 0, 0);
       }
