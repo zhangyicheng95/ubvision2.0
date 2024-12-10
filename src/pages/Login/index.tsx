@@ -3,17 +3,20 @@ import { Button, Form, message, Input, AutoComplete } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
-import { login } from '@/services/auth';
+import { loginService } from '@/services/auth';
 import { cryptoEncryption } from '@/utils/utils';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 
 interface Props { }
 
 const LoginPage: React.FC<Props> = (props: any) => {
+  const { loading } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
   const { setFieldsValue } = form;
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   const clickNum = useRef(0);
 
   useEffect(() => {
@@ -28,8 +31,8 @@ const LoginPage: React.FC<Props> = (props: any) => {
 
   const onFinish = (values: any) => {
     const { userName, password } = values;
-    setLoading(true);
-    login({
+    dispatch(setLoadingAction(true));
+    loginService({
       ...values,
       password: cryptoEncryption(password),
     })
@@ -64,7 +67,7 @@ const LoginPage: React.FC<Props> = (props: any) => {
         } else {
           message.error(res?.message || '接口异常');
         }
-        setLoading(false);
+        dispatch(setLoadingAction(false));
       })
       .catch((err: any) => {
         const { errorFields } = err;

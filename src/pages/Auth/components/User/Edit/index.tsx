@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react';
 import { Button, Form, Input, message, Select, Spin } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './index.module.less';
-import { addUser, getGroupList, getUserById, updateUserById } from '@/services/auth';
+import { addUserService, getGroupListService, getUserByIdService, updateUserByIdService } from '@/services/auth';
 import { StoreEnum } from '@/pages/Auth/store/typing';
 import { cryptoEncryption, getUserData } from '@/utils/utils';
 import * as _ from 'lodash';
@@ -25,7 +25,7 @@ const UserEditPage: React.FC<Props> = (props: any) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   useEffect(() => {
-    getGroupList().then((res: any) => {
+    getGroupListService().then((res: any) => {
       if (!!res && res?.code === 'SUCCESS') {
         setGroupList(res?.data || []);
       } else {
@@ -34,7 +34,7 @@ const UserEditPage: React.FC<Props> = (props: any) => {
     });
     if (!!state) {
       setLoading(true);
-      getUserById(state).then((res: any) => {
+      getUserByIdService(state).then((res: any) => {
         if (!!res && res?.code === 'SUCCESS') {
           const result = _.omit(res?.data, 'password') || {};
           setData(result);
@@ -65,7 +65,7 @@ const UserEditPage: React.FC<Props> = (props: any) => {
           } : {});
         console.log(params)
         if (data?.id) {
-          updateUserById(data?.id, params).then((res: any) => {
+          updateUserByIdService(data?.id, params).then((res: any) => {
             if (!!res && res?.code === 'SUCCESS') {
               message.success('编辑成功');
               onCancel();
@@ -75,7 +75,7 @@ const UserEditPage: React.FC<Props> = (props: any) => {
             setLoading(false);
           });
         } else {
-          addUser(params).then((res: any) => {
+          addUserService(params).then((res: any) => {
             if (!!res && res?.code === 'SUCCESS') {
               message.success('添加成功');
               onCancel();

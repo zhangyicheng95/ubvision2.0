@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { getUserAuth, getUserAuthList, getUserData, guid } from '@/utils/utils';
 import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
-import { deleteUserById, getUserList } from '@/services/auth';
+import { deleteUserByIdService, getUserListService } from '@/services/auth';
 import { userType } from '@/common/globalConstants';
 
 
@@ -27,7 +27,7 @@ const UserPage: React.FC<Props> = (props: any) => {
 
   const getList = () => {
     setLoading(true);
-    getUserList().then((res: any) => {
+    getUserListService().then((res: any) => {
       if (!!res && res?.code === 'SUCCESS') {
         setData(res?.data || []);
       } else {
@@ -108,7 +108,7 @@ const UserPage: React.FC<Props> = (props: any) => {
                   title="确定删除?"
                   onConfirm={() => {
                     setLoading(true);
-                    deleteUserById(record.id).then((res: any) => {
+                    deleteUserByIdService(record.id).then((res: any) => {
                       if (!!res && res?.code === 'SUCCESS') {
                         getList();
                       } else {

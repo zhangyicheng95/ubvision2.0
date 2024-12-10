@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { Button, message, Modal, Dropdown, Upload, Radio, Input } from 'antd';
 import {
   ScissorOutlined, GatewayOutlined, GroupOutlined, UngroupOutlined, ClearOutlined,
@@ -7,14 +7,10 @@ import {
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setCanvasStart, setLoading } from '@/redux/actions';
-import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
-import { defaultConfig } from 'antd/es/theme/context';
+import { IRootActions, setCanvasDataAction } from '@/redux/actions';
 import { useNavigate } from 'react-router';
 import { GetQueryObj, guid } from '@/utils/utils';
 import { createGroup } from '@/pages/Flow/utils';
-import { DagreLayout } from '@antv/layout'
-import { archSize } from '@/pages/Flow/common/constants';
 import BasicTable from '@/components/BasicTable';
 
 const { confirm } = Modal;
@@ -273,7 +269,7 @@ const Toolbar: React.FC<Props> = (props) => {
         size='small'
         style={{ width: '100%' }}
         onClick={() => {
-          dispatch(setCanvasData({
+          dispatch(setCanvasDataAction({
             ...canvasData,
             lineType: 'er'
           }));
@@ -288,7 +284,7 @@ const Toolbar: React.FC<Props> = (props) => {
         size='small'
         style={{ width: '100%' }}
         onClick={() => {
-          dispatch(setCanvasData({
+          dispatch(setCanvasDataAction({
             ...canvasData,
             lineType: 'metro'
           }));
@@ -303,7 +299,7 @@ const Toolbar: React.FC<Props> = (props) => {
         size='small'
         style={{ width: '100%' }}
         onClick={() => {
-          dispatch(setCanvasData({
+          dispatch(setCanvasDataAction({
             ...canvasData,
             lineType: 'straight'
           }));
@@ -318,7 +314,7 @@ const Toolbar: React.FC<Props> = (props) => {
         size='small'
         style={{ width: '100%' }}
         onClick={() => {
-          dispatch(setCanvasData({
+          dispatch(setCanvasDataAction({
             ...canvasData,
             lineType: 'curve'
           }));
@@ -393,7 +389,7 @@ const Toolbar: React.FC<Props> = (props) => {
           nodes.forEach((node: any) => {
             node.updateData({ graphLock: !canvasData.graphLock });
           });
-          dispatch(setCanvasData({
+          dispatch(setCanvasDataAction({
             ...canvasData,
             graphLock: !canvasData.graphLock
           }));
@@ -479,7 +475,7 @@ const Toolbar: React.FC<Props> = (props) => {
                   return node;
                 }
               }).filter(Boolean);
-              dispatch(setCanvasData({
+              dispatch(setCanvasDataAction({
                 ...canvasData,
                 flowData: {
                   ...canvasData.flowData,

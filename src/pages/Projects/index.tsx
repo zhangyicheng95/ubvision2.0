@@ -47,21 +47,21 @@ import {
   guid,
 } from '@/utils/utils';
 import {
-  addParams,
-  deleteParams,
+  addParamsService,
+  deleteParamsService,
   getFlowStatusService,
-  getHistoryList,
-  getParams,
+  getHistoryListService,
+  getParamsService,
   startFlowService,
   stopFlowService,
-  updateParams,
+  updateParamsService,
 } from '@/services/flowEditor';
 import styles from './index.module.less';
 import JSZip from 'jszip';
 import { openFolder } from '@/api/native-path';
 import BasicTable from '@/components/BasicTable';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 
 const { confirm } = Modal;
 
@@ -109,7 +109,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
           const data = _.omit(_.omit(JSON.parse(result), 'id'), 'alertShow');
           setUpdateLoading(true);
           // ProjectApi.add(data).then((res) => {
-          addParams(data).then((res) => {
+          addParamsService(data).then((res) => {
             if (
               !!res &&
               res.code === 'SUCCESS' &&
@@ -165,9 +165,9 @@ const ProjectPage: React.FC<Props> = (props: any) => {
         type="primary"
         disabled={!selectedRows?.length}
         onClick={() => {
-          setLoading(true);
+          dispatch(setLoadingAction(true));
           const onDelete = (id: string, index: number) => {
-            deleteParams(id).then((res) => {
+            deleteParamsService(id).then((res) => {
               if (!!res && res.code === 'SUCCESS') {
                 if (!!selectedRows[index + 1]) {
                   onDelete(selectedRows[index + 1], index + 1);
@@ -297,7 +297,7 @@ const ProjectPage: React.FC<Props> = (props: any) => {
                   item={item}
                   index={index}
                   setLoading={(data: boolean) => {
-                    dispatch(setLoading(data));
+                    dispatch(setLoadingAction(data));
                   }}
                   getList={() => getProjectListFun?.()}
                   setDataList={setDataList}
@@ -376,13 +376,13 @@ const ProjectItem = (props: any) => {
   }, [localStorage.getItem('general_setting')]);
   // 重命名
   const onRename = (name: string) => {
-    getParams(id).then((res) => {
+    getParamsService(id).then((res) => {
       if (!!res && res.code === 'SUCCESS') {
         const params = {
           ...res.data,
           name,
         };
-        updateParams(item?.id, params).then((res) => {
+        updateParamsService(item?.id, params).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             message.success('更新成功');
             getList();
@@ -410,7 +410,7 @@ const ProjectItem = (props: any) => {
   // 复制
   const onCopy = (item: any) => {
     setLoading(true);
-    getParams(id).then((res) => {
+    getParamsService(id).then((res) => {
       if (!!res && res.code === 'SUCCESS') {
         const {
           name,
@@ -427,7 +427,7 @@ const ProjectItem = (props: any) => {
           ...rest,
           name: `副本_${name}`,
         };
-        addParams(params).then((res) => {
+        addParamsService(params).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             message.success('复制成功');
             getList();
@@ -447,7 +447,7 @@ const ProjectItem = (props: any) => {
       title: `确定删除?`,
       content: '删除后无法恢复',
       onOk() {
-        deleteParams(id).then((res) => {
+        deleteParamsService(id).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             ipcRenderer?.ipcCommTest(
               'alert-delete-startUp',
@@ -469,7 +469,7 @@ const ProjectItem = (props: any) => {
   // 更新项目
   const onUpdateProject = (params: any) => {
     setLoading(true);
-    updateParams(id, params).then((res) => {
+    updateParamsService(id, params).then((res) => {
       if (!!res && res.code === 'SUCCESS') {
         message.success('更新成功');
       } else {
@@ -556,9 +556,9 @@ const ProjectItem = (props: any) => {
     ];
   }, [running]);
   // 获取历史记录列表
-  const getHistoryListFun = () => {
+  const getHistoryListServiceFun = () => {
     setLoading(true);
-    getHistoryList(id).then((res: any) => {
+    getHistoryListService(id).then((res: any) => {
       if (res && res.code === 'SUCCESS') {
         setHistoryList(res?.data?.reverse() || []);
         setHistoryVisible(name);
@@ -617,7 +617,7 @@ const ProjectItem = (props: any) => {
                     } else {
                       try {
                         const item = JSON.parse(file);
-                        updateParams(id, item).then((res) => {
+                        updateParamsService(id, item).then((res) => {
                           if (!!res && res.code === 'SUCCESS') {
                             getList();
                           } else {
@@ -729,7 +729,7 @@ const ProjectItem = (props: any) => {
         {
           key: `export-project-${id}`,
           label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-            getParams(id).then((res) => {
+            getParamsService(id).then((res) => {
               if (!!res && res.code === 'SUCCESS') {
                 const {
                   createdAt,
@@ -755,7 +755,7 @@ const ProjectItem = (props: any) => {
         {
           key: `export-config-${id}`,
           label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-            getParams(id).then((res) => {
+            getParamsService(id).then((res) => {
               if (!!res && res.code === 'SUCCESS') {
                 const { nodes } = res?.data?.flowData || {};
                 downFileFun(
@@ -844,7 +844,7 @@ const ProjectItem = (props: any) => {
     userAuthList.includes('projects.history') ? {
       key: `reset-history-${id}`,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-        getHistoryListFun();
+        getHistoryListServiceFun();
       }}>
         <HistoryOutlined className="contextMenu-icon" />
         历史记录

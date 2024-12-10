@@ -2,7 +2,7 @@ import React, { Fragment, memo, useCallback, useEffect, useMemo, useState } from
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasDataAction, setSelectedNodeAction } from '@/redux/actions';
 import {
   Button, Checkbox, DatePicker, Divider, Form, Input, InputNumber, message, Modal, Radio, Select,
   Splitter, Switch, Tabs, TabsProps,
@@ -289,7 +289,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                     })
                 }
               };
-              dispatch(setCanvasData(params));
+              dispatch(setCanvasDataAction(params));
               setPortList(inputPort.concat(outputPort));
               resolve(true);
               return;
@@ -331,7 +331,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                     })
                 }
               };
-              dispatch(setCanvasData(params));
+              dispatch(setCanvasDataAction(params));
               resolve(true);
               return;
             } else {
@@ -340,7 +340,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                 ...canvasData,
                 ...values,
               };
-              dispatch(setCanvasData(result));
+              dispatch(setCanvasDataAction(result));
               resolve(true);
               return;
             };
@@ -708,7 +708,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                             if (canvasStart) return;
                                             setSaveBtnDisabled(false);
                                             form.setFieldsValue({ plugin_dir: '' })
-                                            dispatch(setCanvasData({
+                                            dispatch(setCanvasDataAction({
                                               ...canvasData,
                                               plugin_dir: ''
                                             }));
@@ -728,7 +728,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                       chooseFolder((res: any) => {
                                         const path = _.isArray(res) ? res[0] : res;
                                         form.setFieldsValue({ plugin_dir: path })
-                                        dispatch(setCanvasData({
+                                        dispatch(setCanvasDataAction({
                                           ...canvasData,
                                           plugin_dir: path
                                         }));
@@ -782,7 +782,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                       })
                                     }
                                   };
-                                  dispatch(setCanvasData(result));
+                                  dispatch(setCanvasDataAction(result));
                                   message.destroy();
                                   message.success(`所有节点的数据推送已全部 ${checked ? '开启' : '关闭'}`, 5);
                                 }} />
@@ -834,7 +834,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                       onClick={() => {
                         onSave().then(() => {
                           setSaveBtnDisabled(true);
-                          dispatch(setSelectedNode(''));
+                          dispatch(setSelectedNodeAction(''));
                           message.success('保存成功');
                         })
                       }}

@@ -27,7 +27,7 @@ import ProjectApi from '@/api/project';
 import { dpmDomain } from '@/utils/fetch';
 import { getUserAuthList, guid } from '@/utils/utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 
 const { confirm } = Modal;
 const userAuthList = getUserAuthList();
@@ -49,7 +49,7 @@ const SoftwarePage: React.FC<Props> = (props: any) => {
 
   // 初始化列表
   const getList = () => {
-    dispatch(setLoading(true));
+    dispatch(setLoadingAction(true));
     ProjectApi.getStorage('softwareStorage').then((res: any) => {
       if (!!res && res.code === 'SUCCESS' && !_.isEmpty(res.data)) {
         const { list = [] } = res.data;
@@ -60,7 +60,7 @@ const SoftwarePage: React.FC<Props> = (props: any) => {
           }
         }));
       }
-      dispatch(setLoading(false));
+      dispatch(setLoadingAction(false));
     });
   };
   // 进入页面默认拉取

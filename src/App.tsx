@@ -25,12 +25,12 @@ import UserPage from '@/pages/UserInfo';
 import SettingPage from '@/pages/Setting';
 import CasePage from '@/pages/Home/Case';
 import { notificationSetting, permissionRule } from '@/common/globalConstants';
-import { getDataList, getListStatusService } from '@/services/flowEditor';
+import { getDataListService, getListStatusService } from '@/services/flowEditor';
 import { useDispatch } from 'react-redux';
-import { getProjectList, loopProjectStatus, setLoading, setProjectList } from '@/redux/actions';
+import { getProjectListAction, loopProjectStatusAction, setLoadingAction, setProjectListAction } from '@/redux/actions';
 import PluginEditPage from './pages/Plugin/components/PluginEdit';
 import { useReloadAfterStationary } from './hooks/useReloadAfterStationary';
-import { login } from './services/auth';
+import { loginService } from './services/auth';
 
 const App: React.FC = () => {
   const { ipcRenderer }: any = window || {};
@@ -62,30 +62,30 @@ const App: React.FC = () => {
                   _.isObject(res?.data) && !_.isEmpty(res?.data[item.id]),
               };
             });
-          dispatch(setProjectList(result));
+          dispatch(setProjectListAction(result));
           loopTimerRef.current = setTimeout(() => {
             loopGetStatus(list);
           }, 2500);
         } else {
           message.error(res?.message || '接口异常');
-          dispatch(setProjectList(list));
+          dispatch(setProjectListAction(list));
         };
-        dispatch(setLoading(false));
+        dispatch(setLoadingAction(false));
       });
     }
   };
   // 初始化列表
   const getList = () => {
     !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
-    dispatch(setLoading(true));
+    dispatch(setLoadingAction(true));
     // ProjectApi.list().then((res) => {
-    getDataList().then((res: any) => {
+    getDataListService().then((res: any) => {
       if (!!res && res.code === 'SUCCESS') {
         loopGetStatus(res?.data || []);
       } else {
         message.destroy(1);
         message.error(res?.message || '接口异常');
-        dispatch(setLoading(false));
+        dispatch(setLoadingAction(false));
       }
     });
   };
@@ -103,13 +103,13 @@ const App: React.FC = () => {
 
     } else {
       getList();
-      dispatch(getProjectList(getList));
-      dispatch(loopProjectStatus(loopGetStatus));
+      dispatch(getProjectListAction(getList));
+      dispatch(loopProjectStatusAction(loopGetStatus));
     }
 
     return () => {
       !!loopTimerRef.current && clearTimeout(loopTimerRef.current);
-      dispatch(setProjectList([]));
+      dispatch(setProjectListAction([]));
     };
   }, []);
   // 鉴权
@@ -226,7 +226,7 @@ const App: React.FC = () => {
   const onLogin = (values: any) => {
     const userData = getUserData();
     const { password, ...rest } = values;
-    login({
+    loginService({
       password: cryptoEncryption(password),
       ...rest,
     }).then((res: any) => {
@@ -244,7 +244,7 @@ const App: React.FC = () => {
       } else {
         message.error(res?.msg || res?.message || '接口异常');
       }
-      setLoading(false);
+      setLoadingAction(false);
     });
   };
   if (!userData?.userName && location?.href?.indexOf?.('#/flow') < 0) {

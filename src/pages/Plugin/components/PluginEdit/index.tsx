@@ -11,7 +11,7 @@ import { formatJson, guid, sortList } from '@/utils/utils';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions } from '@/redux/actions';
-import { getPlugin, updatePlugin } from '@/services/flowPlugin';
+import { getPluginService, updatePluginService } from '@/services/flowPlugin';
 import moment from 'moment';
 import TooltipDiv from '@/components/TooltipDiv';
 import { outputTypeObj, pluginsNameIcon, portTypeObj } from '@/pages/Flow/common/constants';
@@ -121,7 +121,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
   useEffect(() => {
     if (id) {
       // pluginApi.get(id).then((res: any) => {
-      getPlugin(id).then((res: any) => {
+      getPluginService(id).then((res: any) => {
         if (!!res && res.code === 'SUCCESS') {
           initPlugin(res.data);
         } else {
@@ -283,7 +283,7 @@ const PluginEditPage: React.FC<Props> = (props: any) => {
           ...pluginInfo,
           ...values
         };
-        updatePlugin(id, params).then((res) => {
+        updatePluginService(id, params).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             message.success('修改成功');
             navigate(-1);
@@ -1078,7 +1078,8 @@ const ParentDiv = (props: any) => {
     props;
   return (
     <DropSortableItem
-      onDragEnd={(source: any, target: any) => {
+      onDragEnd={(props: any) => {
+        const { source, target } = props;
         !!onDragEnd && onDragEnd?.(source, target);
       }}
       target={target}
@@ -1093,7 +1094,8 @@ const DragComponents = (props: any) => {
   return (
     <div>
       <DropSortableItem
-        onDragEnd={(source: any, target: any) => {
+        onDragEnd={(props: any) => {
+          const { source, target } = props;
           !!onDragEnd && onDragEnd?.(source, target);
         }}
         target={target}

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { getUserAuth, getUserAuthList, guid } from '@/utils/utils';
 import styles from './index.module.less';
 import BasicTable from '@/components/BasicTable';
-import { deleteGroupById, getGroupList } from '@/services/auth';
+import { deleteGroupByIdService, getGroupListService } from '@/services/auth';
 import moment from 'moment';
 import { userType } from '@/common/globalConstants';
 
@@ -24,7 +24,7 @@ const GroupPage: React.FC<Props> = (props: any) => {
 
   const getList = () => {
     setLoading(true);
-    getGroupList().then((res: any) => {
+    getGroupListService().then((res: any) => {
       if (!!res && res?.code === 'SUCCESS') {
         setData(res?.data || []);
       } else {
@@ -99,7 +99,7 @@ const GroupPage: React.FC<Props> = (props: any) => {
                   title="确定删除?"
                   onConfirm={() => {
                     setLoading(true);
-                    deleteGroupById(record.id).then((res: any) => {
+                    deleteGroupByIdService(record.id).then((res: any) => {
                       if (!!res && res?.code === 'SUCCESS') {
                         getList();
                       } else {

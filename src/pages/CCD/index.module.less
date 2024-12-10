@@ -75,15 +75,16 @@
 
             &-content {
               flex: 1;
-              height: calc(100% - 16px);
+              height: 100%;
               overflow: auto;
-              padding: 16px;
+              padding: 16px 16px 32px;
 
               &-item {
                 height: 160px;
                 width: 100%;
                 background-color: rgba(144, 144, 144, .1);
                 margin-bottom: 16px;
+                cursor: move;
 
                 &-title {
                   height: 30px;
@@ -96,6 +97,7 @@
                 &-icon {
                   width: 100%;
                   height: calc(100% - 30px);
+                  background-color: rgba(144, 144, 144, .1);
 
                   img,
                   .ant-image {
@@ -115,7 +117,6 @@
           .move-item {
             position: absolute;
             overflow: hidden;
-            background-color: rgba(144, 144, 144, .1);
             border: 2px solid transparent;
           }
         }
@@ -149,10 +150,18 @@
         .ccd-main-box {
           &-plugin-panel {
             background-color: #fff;
+
+            .font-selected-self {
+              background-color: #fff;
+            }
           }
 
           &-canvas {
             background-color: rgb(225, 225, 225);
+
+            .move-item {
+              background-color: rgb(213, 213, 213);
+            }
           }
         }
       }
@@ -167,10 +176,18 @@
         .ccd-main-box {
           &-plugin-panel {
             background-color: #000;
+
+            .font-selected-self {
+              background-color: #000;
+            }
           }
 
           &-canvas {
             background-color: rgb(20, 20, 20);
+
+            .move-item {
+              background-color: rgb(35, 35, 35);
+            }
           }
         }
       }

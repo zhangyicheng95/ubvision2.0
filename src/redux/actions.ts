@@ -63,6 +63,7 @@ export interface IRootActions {
 		lineType: '', // 连线类型
 		contentData: {
 			windowsScale: 1,
+			content: [],
 		}, // 前端布局
 	}; // 画布数据
 	canvasDataBase: {
@@ -82,6 +83,7 @@ export interface IRootActions {
 		lineType: '', // 连线类型
 		contentData: {
 			windowsScale: 1,
+			content: [],
 		}, // 前端布局
 	}; // 画布数据备份
 	canvasStart: false; // 方案启动
@@ -97,153 +99,153 @@ export interface IRootActions {
 }
 
 // 缓存用户token
-export const setToken = (token: string) => {
+export const setTokenAction = (token: string) => {
 	return {
 		type: rootActionTypes.SET_TOKEN,
 		token,
 	};
 };
 // loading
-export const setLoading = (loading: boolean) => {
+export const setLoadingAction = (loading: boolean) => {
 	return {
 		type: rootActionTypes.SET_LOADING,
 		loading
 	}
 };
 // 拉取方案列表函数
-export const getProjectList = (getProjectListFun: any) => {
+export const getProjectListAction = (getProjectListFun: any) => {
 	return {
 		type: rootActionTypes.GET_PROJECT_LIST,
 		getProjectListFun,
 	};
 };
 // 循环获取任务状态
-export const loopProjectStatus = (loopProjectStatusFun: any) => {
+export const loopProjectStatusAction = (loopProjectStatusFun: any) => {
 	return {
 		type: rootActionTypes.LOOP_PROJECT_STATUS,
 		loopProjectStatusFun,
 	};
 };
 // 设置方案列表
-export const setProjectList = (projectList: []) => {
+export const setProjectListAction = (projectList: []) => {
 	return {
 		type: rootActionTypes.SET_PROJECT_LIST,
 		projectList,
 	};
 };
 // 列表多选
-export const setSelectedRows = (selectedRows: []) => {
+export const setSelectedRowsAction = (selectedRows: []) => {
 	return {
 		type: rootActionTypes.SET_PROJECT_LIST,
 		selectedRows,
 	};
 };
 // 流程图-初始化画布
-export const setGraphData = (graphData: any) => {
+export const setGraphDataAction = (graphData: object) => {
 	return {
 		type: rootActionTypes.SET_GRAPH_DATA,
 		graphData
 	};
 };
 // 流程图-左侧插件列表
-export const setCanvasPlugins = (canvasPlugins: []) => {
+export const setCanvasPluginsAction = (canvasPlugins: []) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_PLUGINS,
 		canvasPlugins
 	};
 };
 // 流程图-内置插件列表
-export const setCanvasDirPlugins = (canvasDirPlugins: []) => {
+export const setCanvasDirPluginsAction = (canvasDirPlugins: object[]) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_DIR_PLUGINS,
 		canvasDirPlugins
 	};
 };
 // 流程图-方案信息
-export const setCanvasData = (canvasData: {}) => {
+export const setCanvasDataAction = (canvasData: object) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_DATA,
 		canvasData
 	};
 };
 // 流程图-方案信息-备份
-export const setCanvasDataBase = (canvasDataBase: {}) => {
+export const setCanvasDataActionBaseAction = (canvasDataBase: object) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_DATA_BASE,
 		canvasDataBase
 	};
 };
 // 流程图-启动信息
-export const setCanvasStart = (canvasStart: {}) => {
+export const setCanvasStartAction = (canvasStart: boolean) => {
 	return {
 		type: rootActionTypes.SET_CANVAS_START,
 		canvasStart
 	};
 };
 // 流程图-点击选中节点
-export const setSelectedNode: any = (selectedNode: '') => {
+export const setSelectedNodeAction = (selectedNode: string) => {
 	return {
 		type: rootActionTypes.SET_SELECTED_NODE,
 		selectedNode
 	}
 };
 // 流程图-保存方案信息
-export const setSaveGraph: any = (saveGraph: any) => {
+export const setSaveGraphAction = (saveGraph: any) => {
 	return {
 		type: rootActionTypes.SET_SAVE_GRAPH,
 		saveGraph
 	}
 };
-// 流程图-获取插件列表
-export const setGetCanvasPlugins = (getCanvasPlugins: any) => {
+// 流程图-获取插件列表函数
+export const setGetCanvasPluginsAction = (getCanvasPlugins: any) => {
 	return {
 		type: rootActionTypes.SET_GET_CANVAS_PLUGINS,
 		getCanvasPlugins
 	};
 };
 // 流程图-日志列表
-export const setLogList = (logList: any) => {
+export const setLogListAction = (logList: any) => {
 	return {
 		type: rootActionTypes.SET_LOG_LIST,
 		logList
 	};
 };
 // 流程图-告警列表
-export const setErrorList = (errorList: any) => {
+export const setErrorListAction = (errorList: any) => {
 	return {
 		type: rootActionTypes.SET_ERROR_LIST,
 		errorList
 	};
 };
 // 流程图-运行数据
-export const setFlowRunningData = (flowRunningData: any) => {
+export const setFlowRunningDataAction = (flowRunningData: any) => {
 	return {
 		type: rootActionTypes.SET_FLOW_RUNNING_DATA,
 		flowRunningData
 	};
 };
 // 流程图-运行数据-历史数据
-export const setFlowRunningDataHistory = (flowRunningDataHistory: any) => {
+export const setFlowRunningDataHistoryAction = (flowRunningDataHistory: object) => {
 	return {
 		type: rootActionTypes.SET_FLOW_RUNNING_DATA_HISTORY,
 		flowRunningDataHistory
 	};
 };
 // 流程图-节点状态
-export const setFlowRunningStatus = (flowRunningStatus: any) => {
+export const setFlowRunningStatusAction = (flowRunningStatus: object) => {
 	return {
 		type: rootActionTypes.SET_FLOW_RUNNING_STATUS,
 		flowRunningStatus
 	};
 };
 // 重置流程画布所有的init
-export const clearFlowData = () => {
+export const clearFlowDataAction = () => {
 	return {
 		type: rootActionTypes.CLEAR_FLOW_DATA,
 	};
 };
 // 插件管理-列表
-export const setPluginList = (pluginList: any) => {
+export const setPluginListAction = (pluginList: []) => {
 	return {
 		type: rootActionTypes.SET_PLUGIN_LIST,
 		pluginList

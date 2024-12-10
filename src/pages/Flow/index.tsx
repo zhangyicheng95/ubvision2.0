@@ -9,12 +9,12 @@ import CanvasFlow from './components/CanvasFlow';
 import FooterToolbar from './components/FooterToolbar';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  IRootActions, setCanvasData, setCanvasDataBase, setCanvasDirPlugins, setCanvasPlugins,
-  setCanvasStart, setGetCanvasPlugins, setLoading
+  IRootActions, setCanvasDataAction, setCanvasDataActionBaseAction, setCanvasDirPluginsAction, setCanvasPluginsAction,
+  setCanvasStartAction, setGetCanvasPluginsAction, setLoadingAction
 } from '@/redux/actions';
 import { GetQueryObj, getuid, guid, intersectionABList } from '@/utils/utils';
-import { getDirPluginList, getPluginList } from '@/services/flowPlugin';
-import { getFlowStatusService, getParams, processTest, unitTest } from '@/services/flowEditor';
+import { getDirPluginListService, getPluginListService } from '@/services/flowPlugin';
+import { getFlowStatusService, getParamsService, processTestService, unitTestService } from '@/services/flowEditor';
 
 interface Props { }
 
@@ -41,9 +41,9 @@ const FlowPage: React.FC<Props> = (props: any) => {
   const getPlugin = () => {
     return new Promise((resolve: any, reject: any) => {
       // pluginApi.list().then((res: any) => {
-      getPluginList().then((res: any) => {
+      getPluginListService().then((res: any) => {
         if (!!res && res.code === 'SUCCESS') {
-          dispatch(setCanvasPlugins(res.data || []));
+          dispatch(setCanvasPluginsAction(res.data || []));
           resolve(res.data || []);
         } else {
           message.error(res?.message || '接口异常');
@@ -53,9 +53,9 @@ const FlowPage: React.FC<Props> = (props: any) => {
   };
   // 获取云端的内置插件列表
   const getBuildInPlugin = () => {
-    getDirPluginList().then((res: any) => {
+    getDirPluginListService().then((res: any) => {
       if (!!res && res.code === 'SUCCESS') {
-        dispatch(setCanvasDirPlugins(res.data || []));
+        dispatch(setCanvasDirPluginsAction(res.data || []));
       } else {
         message.error(res?.message || '接口异常');
       }
@@ -64,22 +64,22 @@ const FlowPage: React.FC<Props> = (props: any) => {
   useLayoutEffect(() => {
     getPlugin();
     getBuildInPlugin();
-    dispatch(setGetCanvasPlugins(getPlugin));
+    dispatch(setGetCanvasPluginsAction(getPlugin));
   }, []);
   useLayoutEffect(() => {
     if (id) {
-      dispatch(setLoading(true));
+      dispatch(setLoadingAction(true));
       // 拉取数据
-      getParams(id).then((res) => {
+      getParamsService(id).then((res) => {
         if (!!res && res.code === 'SUCCESS') {
           // 获取任务状态
           getFlowStatusService(id).then((resStatus: any) => {
             if (!!resStatus && resStatus.code === 'SUCCESS') {
-              dispatch(setCanvasData(res?.data || {}));
-              dispatch(setCanvasDataBase(res?.data || {}));
-              dispatch(setCanvasStart(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
+              dispatch(setCanvasDataAction(res?.data || {}));
+              dispatch(setCanvasDataActionBaseAction(res?.data || {}));
+              dispatch(setCanvasStartAction(!!resStatus?.data && !!Object.keys?.(resStatus?.data)?.length));
             } else {
-              dispatch(setCanvasStart(false));
+              dispatch(setCanvasStartAction(false));
               message.error(
                 resStatus?.msg || resStatus?.message || '接口异常'
               );
@@ -87,7 +87,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
           });
         } else {
           message.error(res?.message || '接口异常');
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
         }
       });
     }
@@ -242,7 +242,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
           };
         };
         // 节点内容保存到方案中
-        dispatch(setCanvasData({
+        dispatch(setCanvasDataAction({
           ...canvasData,
           flowData: {
             ...canvasData?.flowData || {},
@@ -296,7 +296,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
         };
         // 拿到这条支路上所有的节点
         const nodes = canvasData.flowData?.nodes?.filter((i: any) => runningNode.includes(i.id));
-        processTest({ data: nodes }).then((res) => {
+        processTestService({ data: nodes }).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
 
           } else {
@@ -307,7 +307,7 @@ const FlowPage: React.FC<Props> = (props: any) => {
         // 一个节点单元测试
         const node = canvasData.flowData?.nodes?.filter((i: any) => runningNode.includes(i.id))?.[0];
         if (!!node) {
-          unitTest({ data: node }).then((res) => {
+          unitTestService({ data: node }).then((res) => {
             if (!!res && res.code === 'SUCCESS') {
 
             } else {

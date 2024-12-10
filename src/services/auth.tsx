@@ -2,7 +2,7 @@ import { fetchGet, fetchPost, fetchPut, fetchDelete } from '@/utils/fetch';
 
 const V1 = '';
 // 登录
-export const login = (params: any) => {
+export const loginService = (params: any) => {
   // return new Promise((resolve, reject) => {
   //   setTimeout(() => {
   //     resolve({
@@ -58,7 +58,7 @@ export const login = (params: any) => {
   return fetchPost(`${V1}/login`, { body: params });
 };
 // 登出
-export const logout = () => {
+export const logoutService = () => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       resolve({
@@ -69,51 +69,51 @@ export const logout = () => {
   return fetchGet(`${V1}/logout`);
 };
 // 修改密码
-export const modifyPassword = (id: string, params: any) => {
+export const modifyPasswordService = (id: string, params: any) => {
   return fetchPut(`${V1}/user_password/${id}`, { body: params });
 };
 // 获取权限分组list
-export const getGroupList = () => {
+export const getGroupListService = () => {
   return fetchGet(`${V1}/user_groups`);
 };
 // 新增分组
-export const addGroup = (params: any) => {
+export const addGroupService = (params: any) => {
   return fetchPost(`${V1}/user_group`, { body: params });
 };
 // 根据id获取单个分组详情
-export const getGroupById = (id: string) => {
+export const getGroupByIdService = (id: string) => {
   return fetchGet(`${V1}/user_group/${id}`);
 };
 // 根据id更新分组
-export const updateGroupById = (id: string, params: any) => {
+export const updateGroupByIdService = (id: string, params: any) => {
   return fetchPut(`${V1}/user_group/${id}`, { body: params });
 };
 // 根据id删除分组
-export const deleteGroupById = (id: string) => {
+export const deleteGroupByIdService = (id: string) => {
   return fetchDelete(`${V1}/user_group/${id}`);
 };
 // 获取用户列表
-export const getUserList = () => {
+export const getUserListService = () => {
   return fetchGet(`${V1}/users`);
 };
 // 新增用户
-export const addUser = (params: any) => {
+export const addUserService = (params: any) => {
   return fetchPost(`${V1}/user`, { body: params });
 };
 // 根据id获取单个用户详情
-export const getUserById = (id: string) => {
+export const getUserByIdService = (id: string) => {
   return fetchGet(`${V1}/user/${id}`);
 };
 // 根据id更新用户
-export const updateUserById = (id: string, params: any) => {
+export const updateUserByIdService = (id: string, params: any) => {
   return fetchPut(`${V1}/user/${id}`, { body: params });
 };
 // 根据id删除用户
-export const deleteUserById = (id: string) => {
+export const deleteUserByIdService = (id: string) => {
   return fetchDelete(`${V1}/user/${id}`);
 };
 // 访问gateway获取权限
-export const getAuthApi = () => {
+export const getAuthApiService = () => {
   return new Promise((resolve, reject) => {
     // setTimeout(() => {
     resolve({

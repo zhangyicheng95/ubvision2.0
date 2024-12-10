@@ -11,19 +11,22 @@ import * as _ from 'lodash-es';
 import { cryptoEncryption, getUserData } from '@/utils/utils';
 import styles from './index.module.less';
 import PrimaryTitle from '@/components/PrimaryTitle';
-import { modifyPassword, updateUserById } from '@/services/auth';
+import { modifyPasswordService, updateUserByIdService } from '@/services/auth';
 import { UserOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 
 interface Props { }
 
 const UserInfoPage: React.FC<Props> = () => {
+  const { loading } = useSelector((state: IRootActions) => state);
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [form1] = Form.useForm();
   const { validateFields } = form;
   const navigate = useNavigate();
   const userInfo = getUserData();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   return (
     <div className={`${styles.userInfoPage}`}>
@@ -54,10 +57,10 @@ const UserInfoPage: React.FC<Props> = () => {
                 type="primary"
                 loading={loading}
                 onClick={() => {
-                  setLoading(true);
+                  dispatch(setLoadingAction(true));
                   validateFields()
                     .then((values) => {
-                      updateUserById(userInfo.id, {
+                      updateUserByIdService(userInfo.id, {
                         ..._.omit(userInfo, 'password'),
                         ...values,
                       }).then((res: any) => {
@@ -74,7 +77,7 @@ const UserInfoPage: React.FC<Props> = () => {
                         } else {
                           message.error(res?.message || '接口异常');
                         }
-                        setLoading(false);
+                        dispatch(setLoadingAction(false));
                       });
                     })
                     .catch((err) => {
@@ -130,8 +133,8 @@ const UserInfoPage: React.FC<Props> = () => {
             onOk={() => {
               form1.validateFields().then((values) => {
                 const { old_password, new_password } = values;
-                setLoading(true);
-                modifyPassword(userInfo?.id, {
+                dispatch(setLoadingAction(true));
+                modifyPasswordService(userInfo?.id, {
                   new_password: cryptoEncryption(new_password),
                   old_password: cryptoEncryption(old_password),
                 }).then((res: any) => {
@@ -149,7 +152,7 @@ const UserInfoPage: React.FC<Props> = () => {
                   } else {
                     message.error(res?.msg || res?.message || '接口异常');
                   }
-                  setLoading(false);
+                  dispatch(setLoadingAction(false));
                 });
               });
             }}

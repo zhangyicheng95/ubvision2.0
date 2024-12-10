@@ -9,8 +9,8 @@ import styles from './index.module.less';
 import { downFileFun, formatJson, getUserAuthList, intersectionABList } from '@/utils/utils';
 import PrimaryTitle from '@/components/PrimaryTitle';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading, setPluginList } from '@/redux/actions';
-import { addPlugin, deletePlugin, getPluginList } from '@/services/flowPlugin';
+import { IRootActions, setLoadingAction, setPluginListAction } from '@/redux/actions';
+import { addPluginService, deletePluginService, getPluginListService } from '@/services/flowPlugin';
 import BasicTable from '@/components/BasicTable';
 import moment from 'moment';
 import TooltipDiv from '@/components/TooltipDiv';
@@ -41,14 +41,14 @@ const PluginPage: React.FC<Props> = (props: any) => {
   }, [projectList]);
   // 获取插件列表
   const getPluginListFun = () => {
-    dispatch(setLoading(true));
-    getPluginList().then((res: any) => {
+    dispatch(setLoadingAction(true));
+    getPluginListService().then((res: any) => {
       if (!!res && res.code === 'SUCCESS') {
-        dispatch(setPluginList(res.data?.sort((a: any, b: any) => b.updatedAt - a.updatedAt)));
+        dispatch(setPluginListAction(res.data?.sort((a: any, b: any) => b.updatedAt - a.updatedAt)));
       } else {
         message.error(res?.message || '接口异常');
       };
-      dispatch(setLoading(false));
+      dispatch(setLoadingAction(false));
     });
   };
   // 初始化列表
@@ -65,10 +65,10 @@ const PluginPage: React.FC<Props> = (props: any) => {
         type="primary"
         style={{ width: '100%' }}
         onClick={() => {
-          dispatch(setLoading(true));
+          dispatch(setLoadingAction(true));
           const onDelete = (item: any, index: number) => {
             const { id } = item;
-            deletePlugin(id).then((res) => {
+            deletePluginService(id).then((res) => {
               if (!!res && res.code === 'SUCCESS') {
                 if (!!selectedRows[index + 1]) {
                   onDelete(selectedRows[index + 1], index + 1);
@@ -220,7 +220,7 @@ const PluginPage: React.FC<Props> = (props: any) => {
                         title="确定删除?"
                         onConfirm={() => {
                           const { id } = record;
-                          deletePlugin(id).then((res) => {
+                          deletePluginService(id).then((res) => {
                             if (!!res && res.code === 'SUCCESS') {
                               message.success('删除成功');
                               getPluginListFun();
@@ -311,7 +311,7 @@ const PluginPage: React.FC<Props> = (props: any) => {
                 return;
               };
               const param = formatPlugin(item);
-              addPlugin(param).then(() => {
+              addPluginService(param).then(() => {
                 addPluginFun(index + 1);
               });
             };
@@ -331,10 +331,10 @@ const PluginPage: React.FC<Props> = (props: any) => {
               const { alias, name } = item;
               const { id } = pluginList?.filter((i: any) => i.name === sameList[index])?.[0] || {};
               if (ifAllcover.current) {
-                deletePlugin(id).then((res) => {
+                deletePluginService(id).then((res) => {
                   if (!!res && res.code === 'SUCCESS') {
                     const param = formatPlugin(item);
-                    addPlugin(param).then(() => {
+                    addPluginService(param).then(() => {
                       uploadPluginFun(index + 1);
                     });
                   } else {
@@ -357,10 +357,10 @@ const PluginPage: React.FC<Props> = (props: any) => {
                   okText: '覆盖',
                   cancelText: '跳过',
                   onOk() {
-                    deletePlugin(id).then((res) => {
+                    deletePluginService(id).then((res) => {
                       if (!!res && res.code === 'SUCCESS') {
                         const param = formatPlugin(item);
-                        addPlugin(param).then(() => {
+                        addPluginService(param).then(() => {
                           uploadPluginFun(index + 1);
                         });
                       } else {

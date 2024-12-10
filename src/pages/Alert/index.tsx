@@ -13,7 +13,7 @@ import moment from 'moment';
 import * as _ from 'lodash-es';
 import TooltipDiv from '@/components/TooltipDiv';
 import PrimaryTitle from '@/components/PrimaryTitle';
-import { getParams, updateParams } from '@/services/flowEditor';
+import { getParamsService, updateParamsService } from '@/services/flowEditor';
 import styles from './index.module.less';
 import { dpmDomain } from '@/utils/fetch';
 import { copyUrlToClipBoard, getUserAuthList } from '@/utils/utils';
@@ -90,7 +90,7 @@ const AlertPage: React.FC<Props> = (props: any) => {
         (i: any) => i.id === id
       )?.[0];
       if (!!result) {
-        updateParams(id, { ...result, alertShow: true }).then((res) => {
+        updateParamsService(id, { ...result, alertShow: true }).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             const result: any = (dataList || [])?.map?.((item: any) => {
               if (item.id === id) {
@@ -197,9 +197,9 @@ const AlertPage: React.FC<Props> = (props: any) => {
                     }}
                     onOk={() => {
                       form.validateFields().then(values => {
-                        getParams(editVisible.id).then((params) => {
+                        getParamsService(editVisible.id).then((params) => {
                           if (params && params.code === 'SUCCESS') {
-                            updateParams(editVisible.id, {
+                            updateParamsService(editVisible.id, {
                               ...params.data,
                               contentData: Object.assign(
                                 params.data?.contentData,
@@ -343,7 +343,7 @@ const AlertItem = (props: any) => {
   const onDelete = (item: any) => {
     const { id } = item;
     try {
-      updateParams(id, { ...item, alertShow: false }).then((res) => {
+      updateParamsService(id, { ...item, alertShow: false }).then((res) => {
         if (!!res && res.code === 'SUCCESS') {
           setDataList((prev: any) => {
             const result = (prev || [])?.map?.((item: any) => {

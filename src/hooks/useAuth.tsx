@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { getAuthApi } from '@/services/auth';
+import { getAuthApiService } from '@/services/auth';
 // import store from '@/stores/globalStore';
 
 const useAuth = () => {
@@ -9,7 +9,7 @@ const useAuth = () => {
   const [status, setStatus] = useState('loading'); // loading 获取权限中, error 获取权限失败
 
   useEffect(() => {
-    getAuthApi().then((res: any) => {
+    getAuthApiService().then((res: any) => {
       if (res && res.code === 200) {
         // localStorage.setItem('userdata', JSON.stringify(res.data));
         const authMap = {};

@@ -8,7 +8,7 @@ import { menuConfig } from './config/siderNav';
 import styles from './index.module.less';
 import { getUserAuthList, getUserData } from '@/utils/utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 
 const { Sider } = Layout;
 const projectIcon = () => (
@@ -174,9 +174,9 @@ const SiderNav: React.FC<Props> = (props: any) => {
         setTourOpen(false);
         // 引导完，存在本地缓存，下次就不做引导了
         localStorage.setItem('ubvision-tour-slider', 'true');
-        dispatch(setLoading(true));
+        dispatch(setLoadingAction(true));
         setTimeout(() => {
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
         }, 500);
       }} steps={tourSteps} />
     </Sider>

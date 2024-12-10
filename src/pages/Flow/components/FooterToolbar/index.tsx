@@ -8,7 +8,7 @@ import styles from './index.module.less';
 import TooltipDiv from '@/components/TooltipDiv';
 import { chooseFolder, openFolder } from '@/api/native-path';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData } from '@/redux/actions';
+import { IRootActions, setCanvasDataAction } from '@/redux/actions';
 import DetailLog from './components/detail-log';
 import TerminalLog from './components/terminal-log';
 
@@ -70,7 +70,7 @@ const FooterToolbar: React.FC<Props> = (props: any) => {
                     ...canvasData,
                     plugin_dir: pluginPath,
                   };
-                  dispatch(setCanvasData(result));
+                  dispatch(setCanvasDataAction(result));
                 });
               }}>
                 设置方案路径

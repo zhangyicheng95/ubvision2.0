@@ -4,8 +4,8 @@ import { BugFilled, CaretRightOutlined, DatabaseOutlined, PauseOutlined, SaveOut
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasStart, setErrorList, setFlowRunningData, setFlowRunningDataHistory, setLoading, setLogList, setSaveGraph } from '@/redux/actions';
-import { addParams, startFlowService, stopFlowService, updateParams } from '@/services/flowEditor';
+import { IRootActions, setCanvasStartAction, setErrorListAction, setFlowRunningDataAction, setFlowRunningDataHistoryAction, setLoadingAction, setLogListAction, setSaveGraphAction } from '@/redux/actions';
+import { addParamsService, startFlowService, stopFlowService, updateParamsService } from '@/services/flowEditor';
 import { defaultConfig } from 'antd/es/theme/context';
 import { useNavigate } from 'react-router';
 import { GetQueryObj } from '@/utils/utils';
@@ -83,7 +83,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   }, [graphData, canvasData]);
   // 保存业务
   const saveGraph = useCallback((param?: any) => {
-    dispatch(setLoading(true));
+    dispatch(setLoadingAction(true));
     return new Promise((resolve, reject) => {
       const { groupList, nodeList, edgeList } = formatGraphData(param || canvasData);
       const params = {
@@ -92,51 +92,51 @@ const HeaderToolbar: React.FC<Props> = (props) => {
       };
       if (canvasData?.id) {
         // 有id，代表修改
-        updateParams(canvasData?.id, params).then((res) => {
+        updateParamsService(canvasData?.id, params).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             message.success('保存成功');
             resolve(true);
           } else {
             message.error(res?.message || '接口异常');
           }
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
         });
       } else {
         // 没id，代表添加
-        addParams(_.omit(params, 'id')).then((res) => {
+        addParamsService(_.omit(params, 'id')).then((res) => {
           if (!!res && res.code === 'SUCCESS' && !!res?.data?.id) {
             message.success('保存成功');
-            dispatch(setLoading(false));
+            dispatch(setLoadingAction(false));
             navigate(`/flow?id=${res.data?.id}&number=${number}`, {
               state: res.data,
             });
           } else {
             message.error(res?.message || '接口异常');
           }
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
         });
       };
     });
   }, [graphData, canvasData]);
   useEffect(() => {
-    dispatch(setSaveGraph(saveGraph));
+    dispatch(setSaveGraphAction(saveGraph));
   }, [graphData, canvasData]);
   // 启动业务
   const startFlow = useCallback((type?: string) => {
     if (canvasData?.id) {
       // 启动之前，清理上一次的日志记录
-      dispatch(setLogList([]));
-      dispatch(setErrorList([]));
+      dispatch(setLogListAction([]));
+      dispatch(setErrorListAction([]));
       // 方案启动函数
       saveGraph().then((res) => {
-        dispatch(setLoading(true));
+        dispatch(setLoadingAction(true));
         startFlowService({
           ...canvasData,
           id: canvasData?.id,
           debug: type === 'debugger'
         }).then((res) => {
           if (['success', 'SUCCESS'].includes(res?.code)) {
-            dispatch(setCanvasStart(true));
+            dispatch(setCanvasStartAction(true));
             (graphData?.getNodes?.() || [])?.forEach((node: any) => {
               node.updateData?.({ canvasStart: true });
             });
@@ -145,7 +145,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
               res?.message || res?.msg || '服务启动失败，请检查网络设置'
             );
           };
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
         });
       });
     } else {
@@ -166,7 +166,7 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   }, [graphData, canvasData]);
   // 停止业务
   const stopFlow = useCallback((ifGoBack?: Boolean, ifRestart?: Boolean) => {
-    dispatch(setLoading(true));
+    dispatch(setLoadingAction(true));
     // socketDataRef.current && socketDataRef.current?.close();
     // socketStateRef.current && socketStateRef.current?.close();
     // socketErrorRef.current && socketErrorRef.current?.close();
@@ -174,14 +174,14 @@ const HeaderToolbar: React.FC<Props> = (props) => {
     setTimeout(() => {
       stopFlowService(canvasData?.id).then((res) => {
         if (['success', 'SUCCESS'].includes(res?.code)) {
-          dispatch(setCanvasStart(false));
+          dispatch(setCanvasStartAction(false));
           (graphData?.getNodes?.() || [])?.forEach((node: any) => {
             node.updateData?.({ canvasStart: false });
           });
         } else {
           message.error(res?.message || '停止服务失败，请检查网络设置');
         };
-        dispatch(setLoading(false));
+        dispatch(setLoadingAction(false));
       });
     }, 1000);
   }, [graphData, canvasData]);
@@ -222,12 +222,12 @@ const HeaderToolbar: React.FC<Props> = (props) => {
   // 任务启动后，建立socket链接
   useEffect(() => {
     if (canvasStart) {
-      socketError.listen((error: string) => dispatch(setErrorList(error)), api);
-      socketLog.listen((log: string) => dispatch(setLogList(log)));
+      socketError.listen((error: string) => dispatch(setErrorListAction(error)), api);
+      socketLog.listen((log: string) => dispatch(setLogListAction(log)));
       setTimeout(() => {
         socketData.listen((data: any) => {
-          dispatch(setFlowRunningData(data));
-          dispatch(setFlowRunningDataHistory({ [new Date().getTime()]: data }));
+          dispatch(setFlowRunningDataAction(data));
+          dispatch(setFlowRunningDataHistoryAction({ [new Date().getTime()]: data }));
         });
         // socketState.listen((data: any) => dispatch(setFlowRunningStatus(data)));
       }, 200);

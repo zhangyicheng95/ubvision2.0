@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback, useRef, memo, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useRef, memo, useState } from 'react';
 import { Button, Input, message, Modal } from 'antd';
-import { CloseOutlined, ScissorOutlined } from '@ant-design/icons';
+import { CloseOutlined } from '@ant-design/icons';
 import * as _ from 'lodash-es';
 import { Graph, Markup } from '@antv/x6';
 import { Snapline } from '@antv/x6-plugin-snapline';
@@ -14,12 +14,12 @@ import { createRoot } from 'react-dom/client';
 import SimpleNodeView from '../../config/miniMapNodeView';
 import MiniMapPanel from '../MinimapPanel';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearFlowData, IRootActions, setCanvasData, setErrorList, setFlowRunningData, setFlowRunningStatus, setGraphData, setLoading, setLogList, setSelectedNode } from '@/redux/actions';
+import { clearFlowDataAction, IRootActions, setCanvasDataAction, setGraphDataAction, setLoadingAction, setSelectedNodeAction } from '@/redux/actions';
 import { Transform } from '@antv/x6-plugin-transform';
 import { archSize, edgeType, generalConfigList, portTypeObj } from '../../common/constants';
 import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
-import { copyUrlToClipBoard, getActualWidthOfChars, getuid, guid } from '@/utils/utils';
+import { copyUrlToClipBoard, getuid, guid } from '@/utils/utils';
 import { createGroup, formatPorts } from '../../utils';
 import Toolbar from './Toolbar';
 import { Export } from '@antv/x6-plugin-export';
@@ -419,12 +419,12 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
           enabled: true
         }),
       );
-      dispatch(setGraphData(graphRef.current));
+      dispatch(setGraphDataAction(graphRef.current));
     };
 
     return () => {
       console.log('清理画布');
-      dispatch(clearFlowData());
+      dispatch(clearFlowDataAction());
       const cells = graphRef?.current?.getCells?.();
       (cells || [])?.forEach((cell: any) => {
         graphRef?.current?.removeCell?.(cell);
@@ -694,7 +694,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         }).filter(Boolean);
         graphRef.current.addEdges(edgeList);
         graphRef?.current.zoomToFit({ absolute: true, maxScale: 1 });
-        dispatch(setCanvasData({
+        dispatch(setCanvasDataAction({
           ...canvasData,
           zoom: graphRef?.current?.zoom(),
         }));
@@ -739,9 +739,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   useEffect(() => {
     if (!!graphRef.current) {
       if (!!canvasData?.id) {
-        dispatch(setLoading(true));
+        dispatch(setLoadingAction(true));
         initGraph().then(() => {
-          dispatch(setLoading(false));
+          dispatch(setLoadingAction(false));
           syncNodeStatus();
         });
       }
@@ -952,7 +952,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   nodes: (canvasData?.flowData?.nodes || [])?.concat(addNodes?.map((node: any) => node?.store?.data?.config))
                 }
               };
-              dispatch(setCanvasData(result));
+              dispatch(setCanvasDataAction(result));
               // 新增节点添加到画布中
               graphRef.current.addNodes(addNodes);
               (addNodes || []).forEach((node: any) => {
@@ -1044,7 +1044,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
                   nodes: (canvasData?.flowData?.nodes || [])?.concat(addNodes?.map((node: any) => node?.store?.data?.config))
                 }
               };
-              dispatch(setCanvasData(result));
+              dispatch(setCanvasDataAction(result));
               setTimeout(() => {
                 // 粘贴画线到分组中
                 let addEdges: any = [];
@@ -1120,7 +1120,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
         nodes: (canvasData?.flowData?.nodes || [])?.concat(newNode)
       }
     };
-    dispatch(setCanvasData(result));
+    dispatch(setCanvasDataAction(result));
   }, [canvasData]);
   // 节点删除
   const nodeRemove = useCallback((flow: any) => {
@@ -1161,9 +1161,9 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
     reset(e);
     setTimeout(() => {
       if (node?.id?.indexOf('group_') > -1) {
-        dispatch(setSelectedNode(id));
+        dispatch(setSelectedNodeAction(id));
       } else if (node?.store?.data?.customId?.indexOf('node_') > -1) {
-        dispatch(setSelectedNode(`${customId}$%$${id}`));
+        dispatch(setSelectedNodeAction(`${customId}$%$${id}`));
       };
     }, 200);
   }, []);
@@ -1264,7 +1264,7 @@ const CanvasFlow: React.FC<Props> = (props: any) => {
   };
   // 空白处双击
   const reset = (event: any) => {
-    dispatch(setSelectedNode(''));
+    dispatch(setSelectedNodeAction(''));
     ctrlRef.current = false;
   };
   // 节点搜索

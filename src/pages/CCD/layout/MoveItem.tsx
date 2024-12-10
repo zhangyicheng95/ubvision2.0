@@ -8,13 +8,15 @@ import {
   SaveOutlined, SettingOutlined, DeleteOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasDataAction, setSelectedNodeAction } from '@/redux/actions';
 import ChartPreviewModal from '../components/ChartPreviewModal';
 import LogPreviewModal from '../components/LogPreviewModal';
 import dataItemImageNG from '@/assets/images/item-bg-ng.png';
 import { editLeftPanel } from '../index';
 import { windowTypeList } from './config';
 import homeBg from '@/assets/images/home-bg.png';
+import DropSortableItem from '@/components/DragComponents/DropSortableItem';
+import DragSortableItem from '@/components/DragComponents/DragSortableItem';
 
 interface Props {
   data?: [];
@@ -52,15 +54,25 @@ const MoveItem: React.FC<Props> = (props: any) => {
 
   // 屏幕变化
   const windowResize = () => {
-    console.log('屏幕尺寸变化');
-
     initParams?.();
     // 拿到屏幕的分辨率宽高比
     const scale = window.screen.width / window.screen.height;
     const box: any = boxRef.current;
+    const rect = boxRef.current.getBoundingClientRect();
     const height = box?.clientWidth / scale;
+    setWindowsScale(scale);
+    //渲染边界
+    setBoxSize((prev: any) => {
+      return {
+        ...prev,
+        left: rect.left,
+        right: rect.right,
+        bottom: height,
+      };
+    });
+    // 编辑时，把窗口缩放保存
     if (ifCanEdit) {
-      dispatch(setCanvasData({
+      dispatch(setCanvasDataAction({
         ...canvasData,
         ...{
           contentData: {
@@ -69,16 +81,6 @@ const MoveItem: React.FC<Props> = (props: any) => {
         }
       }));
     };
-    setWindowsScale(scale);
-    //渲染边界
-    setBoxSize((prev: any) => {
-      return {
-        ...prev,
-        left: editLeftPanel,
-        right: box?.clientWidth + editLeftPanel + 15,
-        bottom: height,
-      };
-    });
   };
   // 初始化
   useEffect(() => {
@@ -95,10 +97,28 @@ const MoveItem: React.FC<Props> = (props: any) => {
   const elementGuidelines = useMemo(() => {
     return (data || [])?.map((item: any) => `.${item.name}`);
   }, [data]);
-  // 点击编辑每一个组件
+  // 添加组件
+  const handleAddItem = (item: any) => {
+    const { label, value, x, y } = item;
+    setDataList?.((prev: any) => prev?.concat({
+      id: `${getuid()}$$${value}`,
+      name: `${value}_${guid()}`,
+      alias: label,
+      type: value, x, y, rotate: 0, value: [],
+      width: 300,
+      height: 150
+    }));
+  };
+  // 删除组件
+  const handledeleteItem = (id: string) => {
+    console.log(id);
+
+    setDataList?.((prev: any) => prev?.filter((i: any) => i.id !== id));
+  };
+  // 点击选中一个组件
   const handelClick = (name: string, e: any) => {
     if (ifCanEdit) {
-      dispatch(setSelectedNode(name));
+      dispatch(setSelectedNodeAction(name));
     };
     e.preventDefault();
     e.stopPropagation();
@@ -177,7 +197,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
       {
         key: `delete`,
         label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          console.log(item);
+          handledeleteItem(item?.id);
         }}>
           <DeleteOutlined className="contextMenu-icon" />
           删除
@@ -227,7 +247,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
                         ?.map((item: any) => {
                           const { label, value, } = item;
                           return <div
-                            className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-second-item ${windowTypeSecond === value ? 'menu-selected-self' : ''}`}
+                            className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-second-item ${windowTypeSecond === value ? 'font-selected-self' : ''}`}
                             key={value}
                             onClick={() => setWindowTypeSecond(value)}
                           >
@@ -247,10 +267,12 @@ const MoveItem: React.FC<Props> = (props: any) => {
                           className={`flex-box-column-start ccd-main-box-plugin-panel-body-content-item`}
                           key={`${type}-${value}`}
                         >
-                          <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
-                          <div className="ccd-main-box-plugin-panel-body-content-item-icon">
-                            {icon ? <Image src={icon} /> : <img src={homeBg} />}
-                          </div>
+                          <DragSortableItem item={item} onDragStart={() => { }}>
+                            <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
+                            <div className="ccd-main-box-plugin-panel-body-content-item-icon">
+                              {icon ? <Image src={icon} /> : <img src={homeBg} />}
+                            </div>
+                          </DragSortableItem>
                         </div>
                       })
                   }
@@ -266,113 +288,120 @@ const MoveItem: React.FC<Props> = (props: any) => {
         overflowY: 'auto',
         overflowX: 'hidden'
       }}>
-        <div className="ccd-main-box-canvas"
-          ref={boxRef}
-          style={{
-            height: ((((boxRef?.current?.clientWidth || 1920) / windowsScale + 30) > window.screen.height) ? window.screen.height : (boxRef?.current?.clientWidth / windowsScale))
-          }}
-          onClick={(e) => {
-            if (ifCanEdit) {
-              dispatch(setSelectedNode(''));
-            };
-            e.preventDefault();
-            e.stopPropagation();
+        <DropSortableItem
+          onDragEnd={(props: any) => {
+            const { source, clientOffset } = props;
+            let { x = 0, y = 0 } = clientOffset || {};
+            x -= editLeftPanel;
+            y -= 62;
+            handleAddItem({ ...source, x, y })
           }}
         >
-          {(data || [])?.map((item: any, index: number) => {
-            let { name, x, y, width, height, rotate = 0, type, id } = item;
-            const target = `.${name}`;
-            if (width === 0 || height === 0) {
-              return null;
-            }
-            return <Fragment key={index}>
-              <Dropdown
-                getPopupContainer={(triggerNode: any) => {
-                  return triggerNode?.parentNode || document.body;
-                }}
-                menu={{ items: settingList(item) }}
-                trigger={['contextMenu']}
-              >
-                <div
-                  className={`move-item ${name}`}
-                  style={{
-                    height,
-                    width,
-                    transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+          <div className="ccd-main-box-canvas"
+            ref={boxRef}
+            style={{
+              height: ((((boxRef?.current?.clientWidth || 1920) / windowsScale + 30) > window.screen.height) ? window.screen.height : (boxRef?.current?.clientWidth / windowsScale))
+            }}
+            onClick={(e) => {
+              if (ifCanEdit) {
+                dispatch(setSelectedNodeAction(''));
+              };
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {(data || [])?.map((item: any, index: number) => {
+              let { name, x, y, width, height, rotate = 0, type, id } = item;
+              const target = `.${name}`;
+              if (width === 0 || height === 0) {
+                return null;
+              }
+              return <Fragment key={index}>
+                <Dropdown
+                  getPopupContainer={(triggerNode: any) => {
+                    return triggerNode?.parentNode || document.body;
                   }}
-                  onClick={(e) => handelClick(name, e)}
+                  menu={{ items: settingList(item) }}
+                  trigger={['contextMenu']}
                 >
-                  {name}
-                </div>
-              </Dropdown>
-              <Moveable
-                target={target} // 拖拽目标
+                  <div
+                    className={`move-item ${name}`}
+                    style={{
+                      height,
+                      width,
+                      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+                    }}
+                    onClick={(e) => handelClick(name, e)}
+                  >
+                    {name}
+                  </div>
+                </Dropdown>
+                <Moveable
+                  target={target} // 拖拽目标
 
-                // 拖动
-                draggable={selectedNode === name} // 元素可拖动
-                padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // padding距离
-                zoom={selectedNode === name ? 1 : 0} // 缩放包裹的moveable
-                origin={false} // 显示中心点
-                boundingBox={true} // 元素将被限制在其父容器内移动
-                throttleDrag={0} // 拖拽阈值 达到这个值才执行拖拽
-                onDragEnd={handleDragEnd}
+                  // 拖动
+                  draggable={selectedNode === name} // 元素可拖动
+                  padding={{ left: 0, top: 0, right: 0, bottom: 0 }} // padding距离
+                  zoom={selectedNode === name ? 1 : 0} // 缩放包裹的moveable
+                  origin={false} // 显示中心点
+                  boundingBox={true} // 元素将被限制在其父容器内移动
+                  throttleDrag={0} // 拖拽阈值 达到这个值才执行拖拽
+                  onDragEnd={handleDragEnd}
 
-                // 磁吸功能
-                snappable={true} // 是否初始化磁吸功能
-                snapContainer={snapContainer} // 磁吸功能的容器
-                bounds={{
-                  ...boxSize,
-                  // right: boxRef.current?.clientWidth + editLeftPanel,
-                  // bottom: boxRef.current?.clientHeight
-                }} // 边界点
+                  // 磁吸功能
+                  snappable={true} // 是否初始化磁吸功能
+                  snapContainer={snapContainer} // 磁吸功能的容器
+                  bounds={boxSize} // 边界点
 
-                // 缩放
-                resizable={selectedNode === name} // 是否可以缩放
-                throttleResize={0} //  缩放阈值
-                renderDirections={['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']} // 变化的点
-                onResizeEnd={handleResizeEnd}
+                  // 缩放
+                  resizable={selectedNode === name} // 是否可以缩放
+                  throttleResize={0} //  缩放阈值
+                  renderDirections={['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se']} // 变化的点
+                  onResizeEnd={handleResizeEnd}
 
-                // 旋转
-                rotatable={selectedNode === name} // 旋转
-                throttleRotate={0} // 旋转阈值
-                rotationPosition={"top"}  // 旋转方向
-                onRotateEnd={handleRotateEnd} // 旋转完成
+                  // 旋转
+                  rotatable={selectedNode === name} // 旋转
+                  throttleRotate={0} // 旋转阈值
+                  rotationPosition={"top"}  // 旋转方向
+                  onRotateEnd={handleRotateEnd} // 旋转完成
 
-                // 辅助线
-                snapGap={true} // 开启辅助线
-                elementGuidelines={elementGuidelines}
-                snapDirections={{
-                  "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
-                }} // 辅助线方向
-                elementSnapDirections={{
-                  "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
-                }} // 元素捕捉方向
-                snapThreshold={10} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
-                isDisplaySnapDigit={true} // 是否展示与磁吸辅助线的距离
-                snapDigit={0} //捕捉距离数字
+                  // 辅助线
+                  snapGap={true} // 开启辅助线
+                  elementGuidelines={elementGuidelines}
+                  snapDirections={{
+                    "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
+                  }} // 辅助线方向
+                  elementSnapDirections={{
+                    "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
+                  }} // 元素捕捉方向
+                  snapThreshold={10} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
+                  isDisplaySnapDigit={true} // 是否展示与磁吸辅助线的距离
+                  snapDigit={0} //捕捉距离数字
 
-                // 每一个图形变换的更新动作
-                onRender={(e) => {
-                  itemRef.current = e;
-                  e.target.style.cssText += e.cssText;
-                }}
-              />
-            </Fragment>
-          })}
-          {
-            // 图表放大预览
-            _.isObject(myChartVisible) && !_.isEmpty(myChartVisible) ? (
-              <ChartPreviewModal option={myChartVisible} onCancel={() => setMyChartVisible(null)} />
-            ) : null
-          }
-          {
-            // 日志放大预览
-            !!logDataVisible ? (
-              <LogPreviewModal type={logDataVisible} onCancel={() => setLogDataVisible('')} />
-            ) : null
-          }
-        </div>
+                  // 每一个图形变换的更新动作
+                  onRender={(e) => {
+                    itemRef.current = e;
+                    e.target.style.cssText += e.cssText;
+                  }}
+                />
+              </Fragment>
+            })}
+          </div>
+        </DropSortableItem>
       </div>
+
+      {
+        // 图表放大预览
+        _.isObject(myChartVisible) && !_.isEmpty(myChartVisible) ? (
+          <ChartPreviewModal option={myChartVisible} onCancel={() => setMyChartVisible(null)} />
+        ) : null
+      }
+      {
+        // 日志放大预览
+        !!logDataVisible ? (
+          <LogPreviewModal type={logDataVisible} onCancel={() => setLogDataVisible('')} />
+        ) : null
+      }
     </div>
   );
 };
@@ -391,7 +420,7 @@ const InitItem = (props: any) => {
     configForm,
     addWindow,
     removeWindow,
-    loading, setLoading,
+    loading, setLoadingAction,
     startProjects,
     endProjects,
     projectStatus,

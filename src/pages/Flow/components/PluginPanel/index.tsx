@@ -13,10 +13,10 @@ import { archSize, generalConfigList, outputTypeObj } from '../../common/constan
 import { register } from '@antv/x6-react-shape';
 import AlgoNode from '@/components/AlgoNode';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setLoading } from '@/redux/actions';
+import { IRootActions, setLoadingAction } from '@/redux/actions';
 import BasicTable from '@/components/BasicTable';
 import BasicConfirm from '@/components/BasicConfirm';
-import { addPlugin, deletePlugin } from '@/services/flowPlugin';
+import { addPluginService, deletePluginService } from '@/services/flowPlugin';
 import { formatPlugin } from '@/common/globalConstants';
 
 interface Props {
@@ -428,7 +428,7 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                 return;
               };
               const param = formatPlugin(item);
-              addPlugin(param).then(() => {
+              addPluginService(param).then(() => {
                 addPluginFun(index + 1);
               });
             };
@@ -448,10 +448,10 @@ const PluginPanel: React.FC<Props> = (props: any) => {
               const { alias, name } = item;
               const { id } = canvasPlugins?.filter((i: any) => i.name === sameList[index])?.[0] || {};
               if (ifAllcover.current) {
-                deletePlugin(id).then((res) => {
+                deletePluginService(id).then((res) => {
                   if (!!res && res.code === 'SUCCESS') {
                     const param = formatPlugin(item);
-                    addPlugin(param).then(() => {
+                    addPluginService(param).then(() => {
                       uploadPluginFun(index + 1);
                     });
                   } else {
@@ -474,10 +474,10 @@ const PluginPanel: React.FC<Props> = (props: any) => {
                   okText: '覆盖',
                   cancelText: '跳过',
                   onOk() {
-                    deletePlugin(id).then((res) => {
+                    deletePluginService(id).then((res) => {
                       if (!!res && res.code === 'SUCCESS') {
                         const param = formatPlugin(item);
-                        addPlugin(param).then(() => {
+                        addPluginService(param).then(() => {
                           uploadPluginFun(index + 1);
                         });
                       } else {
@@ -595,15 +595,15 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         return (
           <div>
             <a onClick={() => {
-              dispatch(setLoading(true));
+              dispatch(setLoadingAction(true));
               if (id) {
                 // 更新插件
-                deletePlugin(id).then((res) => {
+                deletePluginService(id).then((res) => {
                   if (!!res && res.code === 'SUCCESS') {
                     const param = formatPlugin(record);
-                    addPlugin(param).then(() => {
+                    addPluginService(param).then(() => {
                       message.success('插件更新成功');
-                      dispatch(setLoading(false));
+                      dispatch(setLoadingAction(false));
                       getCanvasPlugins?.();
                     });
                   } else {
@@ -613,9 +613,9 @@ const PluginPanel: React.FC<Props> = (props: any) => {
               } else {
                 // 添加插件
                 const param = formatPlugin(record);
-                addPlugin(param).then(() => {
+                addPluginService(param).then(() => {
                   message.success('插件导入成功');
-                  dispatch(setLoading(false));
+                  dispatch(setLoadingAction(false));
                   getCanvasPlugins?.();
                 });
               }
@@ -635,12 +635,12 @@ const PluginPanel: React.FC<Props> = (props: any) => {
   };
   // 导入内置插件
   const onPluginsVisibleOk = () => {
-    dispatch(setLoading(true));
+    dispatch(setLoadingAction(true));
     function addPluginFun(index: number) {
       const itemKey = selectedRows[index];
       if (!itemKey) {
         message.success('插件导入成功');
-        dispatch(setLoading(false));
+        dispatch(setLoadingAction(false));
         onPluginsVisibleCancel();
         return;
       };
@@ -650,15 +650,15 @@ const PluginPanel: React.FC<Props> = (props: any) => {
         if (!item) return;
         // 添加
         const param = formatPlugin(item);
-        addPlugin(param).then(() => {
+        addPluginService(param).then(() => {
           addPluginFun(index + 1);
         });
       } else {
         // 更新
-        deletePlugin(item.id).then((res) => {
+        deletePluginService(item.id).then((res) => {
           if (!!res && res.code === 'SUCCESS') {
             const param = formatPlugin(item);
-            addPlugin(param).then(() => {
+            addPluginService(param).then(() => {
               addPluginFun(index + 1);
             });
           } else {

@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useReducer, useState } from 'react';
 import { AutoComplete, Button, Checkbox, Divider, Empty, Form, Input, message, Popconfirm, Row, Select, Spin, Table } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './index.module.less';
-import { addGroup, getGroupById, updateGroupById } from '@/services/auth';
+import { addGroupService, getGroupByIdService, updateGroupByIdService } from '@/services/auth';
 import { authorIds } from '@/auth/auth';
 import { authorToChinese } from '@/auth/common'
 import { StoreEnum } from '@/pages/Auth/store/typing';
@@ -75,7 +75,7 @@ const GroupEditPage: React.FC<Props> = (props: any) => {
   useEffect(() => {
     if (!!state) {
       setLoading(true);
-      getGroupById(state).then((res: any) => {
+      getGroupByIdService(state).then((res: any) => {
         if (!!res && res?.code === 'SUCCESS') {
           setData(res?.data || {});
           setFieldsValue({ auth: res?.data?.auth });
@@ -128,7 +128,7 @@ const GroupEditPage: React.FC<Props> = (props: any) => {
           }, []).filter(Boolean)
         }
         if (data?.id) {
-          updateGroupById(data.id, params).then((res: any) => {
+          updateGroupByIdService(data.id, params).then((res: any) => {
             if (!!res && res?.code === 'SUCCESS') {
               message.success('编辑成功');
               onCancel();
@@ -137,7 +137,7 @@ const GroupEditPage: React.FC<Props> = (props: any) => {
             }
           });
         } else {
-          addGroup(params).then((res: any) => {
+          addGroupService(params).then((res: any) => {
             if (!!res && res?.code === 'SUCCESS') {
               message.success('添加成功');
               onCancel();

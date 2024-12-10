@@ -1,20 +1,14 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Form, message, Input, AutoComplete } from 'antd';
-import {
-  SaveOutlined,
-} from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { message } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { GetQueryObj, getuid, guid } from '@/utils/utils';
-import { getParams, updateParams } from '@/services/flowEditor';
+import { getParamsService } from '@/services/flowEditor';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import DropSortableItem from '@/components/DragComponents/DropSortableItem';
 import MoveItem from './layout/MoveItem';
-import Moveable from 'react-moveable';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasData, setCanvasDataBase, setLoading, setSelectedNode } from '@/redux/actions';
+import { IRootActions, setCanvasDataAction, setCanvasDataActionBaseAction, setLoadingAction } from '@/redux/actions';
 import { useCallback } from 'react';
 import CCDHeaderPage from './layout/header';
 import CCDFooterPage from './layout/footer';
@@ -40,11 +34,12 @@ const CCDPage: React.FC<Props> = (props: any) => {
   }, [location.hash]);
   const [dataList, setDataList] = useState<any>([]);
 
-  const initParams = (data?: any) => {
+  // init渲染
+  const initParams = useCallback((data?: any) => {
     const { flowData = {}, contentData = {}, selfStart = false } = data || canvasDataBase || {};
     const {
       home = [],
-      content = {},
+      content = [],
       homeSetting = {
         'footer-1': { fontSize: 14 },
         'footer-2': { fontSize: 20 },
@@ -52,12 +47,14 @@ const CCDPage: React.FC<Props> = (props: any) => {
       windowsScale,
       gridMargin,
     } = contentData;
-    let scale = windowsScale * (ifCanEdit ? ((moveRef?.current?.clientWidth - editLeftPanel) / window.screen.width) : 1);
+    let scale = (windowsScale || 1) * (ifCanEdit ? ((moveRef?.current?.clientWidth - editLeftPanel) / window.screen.width) : 1);
 
-    const contentList = (content || [])?.concat(home || [])
+    const contentList = (!!canvasData?.contentData?.content ? canvasData?.contentData?.content : content)
+      ?.concat(home || [])
       ?.map((item: any) => {
         const { type, i, size, maxH, maxW, minH, minW, w, h, ...rest } = item;
         return {
+          id: `${getuid()}$$${item.type}`,
           ...rest,
           name: `${type || i}_${guid()}`,
           type: type || i,
@@ -75,16 +72,22 @@ const CCDPage: React.FC<Props> = (props: any) => {
               ...homeSetting?.[i],
               x: (item.x * window.screen.width) / 96,
               y: item.y * 14,
-              width: (item.w * window.screen.width) / 96,
-              height: item.h * 14,
+              width: (w * window.screen.width) / 96,
+              height: h * 14,
             }
               : {}),
         };
       })
       ?.map((item: any) => {
-        const { x, y, width, height } = item;
+        let { x, y, width, height, name } = item;
+        const baseItem: any = (canvasDataBase?.contentData?.content || [])?.filter((i: any) => i.name === name)?.[0];
+        if (!!baseItem && !!baseItem.width) {
+          x = baseItem.x;
+          y = baseItem.y;
+          width = baseItem.width;
+          height = baseItem.height;
+        };
         return {
-          id: `${getuid()}$$${item.type}`,
           ...item,
           x: (x > 0 ? x : 0) * scale,
           y: (y > 0 ? y : 0) * scale,
@@ -95,18 +98,19 @@ const CCDPage: React.FC<Props> = (props: any) => {
       ?.filter((i: any) => !!i.width);
 
     setDataList(contentList);
-  };
+  }, [canvasData, canvasDataBase]);
+  // 获取方案详情
   const getParamFun = () => {
-    dispatch(setLoading(true));
-    getParams(id).then((res: any) => {
+    dispatch(setLoadingAction(true));
+    getParamsService(id).then((res: any) => {
       if (res && res.code === 'SUCCESS') {
         initParams(res?.data || {});
-        dispatch(setCanvasData(res?.data || {}));
-        dispatch(setCanvasDataBase(res?.data || {}));
+        dispatch(setCanvasDataAction(res?.data || {}));
+        dispatch(setCanvasDataActionBaseAction(res?.data || {}));
       } else {
         message.error(res?.msg || res?.message || '接口异常');
       };
-      dispatch(setLoading(false));
+      dispatch(setLoadingAction(false));
     });
   };
   // 初始化
@@ -114,7 +118,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
     window?.ipcRenderer?.invoke(`maximize-${number}`, number);
     setTimeout(() => {
       getParamFun();
-    }, 1000);
+    }, 100);
   }, [id]);
 
   return (

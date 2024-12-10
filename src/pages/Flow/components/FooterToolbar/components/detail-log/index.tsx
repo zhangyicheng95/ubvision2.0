@@ -6,7 +6,7 @@ import * as _ from 'lodash-es';
 import styles from './index.module.less';
 import { GetQueryObj } from '@/utils/utils';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setErrorList, setLogList } from '@/redux/actions';
+import { IRootActions, setErrorListAction, setLogListAction } from '@/redux/actions';
 import moment from 'moment';
 
 interface Props {
@@ -37,9 +37,9 @@ const DetailLog: React.FC<Props> = (props) => {
   // 清空控制台
   const clearLogContent = () => {
     if (type === 'log') {
-      dispatch(setLogList([]));
+      dispatch(setLogListAction([]));
     } else {
-      dispatch(setErrorList([]));
+      dispatch(setErrorListAction([]));
     }
   };
   // 搜索框

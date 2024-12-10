@@ -20,7 +20,7 @@ import {
 import styles from './index.module.less';
 import ProjectApi from '@/api/project';
 import PrimaryTitle from '@/components/PrimaryTitle';
-import { addParams, } from '@/services/flowEditor';
+import { addParamsService, } from '@/services/flowEditor';
 import tipIcon from '@/assets/imgs/tip.svg';
 import postmanIcon from '@/assets/imgs/postman.svg';
 import moment from 'moment';
@@ -132,7 +132,7 @@ const Home: React.FC<Props> = (props: any) => {
         } = res;
         try {
           const data = _.omit(_.omit(_.omit(JSON.parse(result), 'id'), 'alertShow'), 'running');
-          addParams(data).then((res) => {
+          addParamsService(data).then((res) => {
             if (
               !!res &&
               res.code === 'SUCCESS' &&
@@ -207,7 +207,7 @@ const Home: React.FC<Props> = (props: any) => {
                 icon={<ProjectOutlined className='home-body-bottom-icon' />}
                 onClick={() => {
                   setCaseVisible(true);
-                  // getCaseList().then((res: any) => {
+                  // getCaseListService().then((res: any) => {
                   //   if (!!res && res.code === 'SUCCESS') {
                   //     setCaseList(res.data);
                   //   } else {
@@ -386,7 +386,7 @@ const Home: React.FC<Props> = (props: any) => {
                         })
                       );
                       return;
-                      addParams(item).then((res) => {
+                      addParamsService(item).then((res) => {
                         if (
                           !!res &&
                           res.code === 'SUCCESS' &&
