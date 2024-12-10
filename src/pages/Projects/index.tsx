@@ -362,17 +362,7 @@ const ProjectItem = (props: any) => {
     } else {
       setLogSavePath(`C:\\UBVisionData\\.ubvision\\${id}\\logs\\master.log`);
       return;
-    }
-
-    ipcRenderer?.once('home-dir-read-reply', function (res: any) {
-      if (res === 'error') {
-        message.error('系统信息获取失败');
-      } else {
-        path = res;
-        setLogSavePath(`${path}\\.ubvision\\${id}\\logs\\master.log`);
-      }
-    });
-    ipcRenderer?.ipcCommTest('home-dir-read');
+    };
   }, [localStorage.getItem('general_setting')]);
   // 重命名
   const onRename = (name: string) => {
@@ -389,6 +379,7 @@ const ProjectItem = (props: any) => {
             setRenameVisible(false);
           } else {
             message.error(res?.message || '接口异常');
+            setLoading(false);
           }
         });
       } else {
@@ -433,6 +424,7 @@ const ProjectItem = (props: any) => {
             getList();
           } else {
             message.error(res?.message || '接口异常');
+            setLoading(false);
           }
         });
       } else {
@@ -460,6 +452,7 @@ const ProjectItem = (props: any) => {
             getList();
           } else {
             message.error(res?.message || '接口异常');
+            setLoading(false);
           }
         });
       },

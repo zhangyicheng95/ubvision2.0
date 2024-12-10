@@ -3,9 +3,13 @@ import Moveable from 'react-moveable';
 import { getuid, guid } from '@/utils/utils';
 import * as _ from 'lodash';
 import TooltipDiv from '@/components/TooltipDiv';
-import { Button, message, Modal, Form, Dropdown, Menu, Badge, Image, Input } from 'antd';
 import {
-  SaveOutlined, SettingOutlined, DeleteOutlined,
+  Button, message, Modal, Form, Dropdown, Menu, Badge, Image, Input,
+  Switch, Divider, InputNumber
+} from 'antd';
+import {
+  SaveOutlined, SettingOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined,
+  VerticalAlignTopOutlined, VerticalAlignBottomOutlined, CopyOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasDataAction, setSelectedNodeAction } from '@/redux/actions';
@@ -35,6 +39,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
     return location.hash?.indexOf('edit') > -1;
   }, [location.hash]);
   const [form] = Form.useForm();
+  const timerRef = useRef<any>();
   const boxRef = useRef<any>();
   const itemRef = useRef<any>();
   const [snapContainer, setSnapContainer] = useState<any>(null);
@@ -51,36 +56,52 @@ const MoveItem: React.FC<Props> = (props: any) => {
   const [windowTypeFirst, setWindowTypeFirst] = useState('charts');
   const [windowTypeSecond, setWindowTypeSecond] = useState('all');
   const [searchVal, setSearchVal] = useState('');
+  const [editItem, setEditItem] = useState<any>(null);
 
   // 屏幕变化
   const windowResize = () => {
-    initParams?.();
-    // 拿到屏幕的分辨率宽高比
-    const scale = window.screen.width / window.screen.height;
-    const box: any = boxRef.current;
-    const rect = boxRef.current.getBoundingClientRect();
-    const height = box?.clientWidth / scale;
-    setWindowsScale(scale);
-    //渲染边界
-    setBoxSize((prev: any) => {
-      return {
-        ...prev,
-        left: rect.left,
-        right: rect.right,
-        bottom: height,
-      };
-    });
-    // 编辑时，把窗口缩放保存
-    if (ifCanEdit) {
-      dispatch(setCanvasDataAction({
-        ...canvasData,
-        ...{
-          contentData: {
-            windowsScale: window.screen.width / (window.screen.width - editLeftPanel)
-          }
-        }
-      }));
+    if (!!timerRef.current) {
+      clearTimeout(timerRef.current);
     };
+    timerRef.current = setTimeout(() => {
+      !!data?.length ?
+        initParams({
+          ...canvasData,
+          contentData: {
+            ...canvasData?.contentData,
+            content: data
+          }
+        })
+        :
+        initParams();
+      // 拿到屏幕的分辨率宽高比
+      const scale = window.screen.width / window.screen.height;
+      const box: any = boxRef.current;
+      const rect = boxRef.current.getBoundingClientRect();
+      const height = box?.clientWidth / scale;
+      setWindowsScale(scale);
+      //渲染边界
+      setBoxSize((prev: any) => {
+        return {
+          ...prev,
+          left: rect.left,
+          right: rect.right,
+          bottom: height,
+        };
+      });
+      // 编辑时，把窗口缩放保存
+      if (ifCanEdit) {
+        dispatch(setCanvasDataAction({
+          ...canvasData,
+          ...{
+            contentData: {
+              ...canvasData?.contentData,
+              windowsScale: window.screen.width / (window.screen.width - editLeftPanel)
+            }
+          }
+        }));
+      };
+    }, 100);
   };
   // 初始化
   useEffect(() => {
@@ -92,30 +113,46 @@ const MoveItem: React.FC<Props> = (props: any) => {
     return () => {
       window?.removeEventListener?.('resize', windowResize);
     }
-  }, [canvasData.id]);
+  }, [canvasData.id, data.length]);
   // 磁吸效果辅助线的dom列表
   const elementGuidelines = useMemo(() => {
     return (data || [])?.map((item: any) => `.${item.name}`);
   }, [data]);
   // 添加组件
   const handleAddItem = (item: any) => {
-    const { label, value, x, y } = item;
+    const { type } = item;
     setDataList?.((prev: any) => prev?.concat({
-      id: `${getuid()}$$${value}`,
-      name: `${value}_${guid()}`,
-      alias: label,
-      type: value, x, y, rotate: 0, value: [],
-      width: 300,
-      height: 150
+      rotate: 0, value: [],
+      zIndex: 0,
+      ...item,
+      id: `${getuid()}$$${type}`,
+      name: `${type}_${guid()}`,
     }));
   };
-  // 删除组件
-  const handledeleteItem = (id: string) => {
-    console.log(id);
-
-    setDataList?.((prev: any) => prev?.filter((i: any) => i.id !== id));
+  // 复制窗口
+  const handleCopyItem = (item: any) => {
+    handleAddItem({
+      ...item,
+      x: item.x + 20,
+      y: item.y + 20,
+      zIndex: (item.zIndex || 0) + 1
+    });
   };
-  // 点击选中一个组件
+  // 删除窗口
+  const handleDeleteItem = (id: string) => {
+    Modal.confirm({
+      title: "确认删除?",
+      content: '删除后无法恢复',
+      onOk() {
+        if (!!editItem && editItem?.id === id) {
+          setEditItem(null);
+        };
+        setDataList?.((prev: any) => prev?.filter((i: any) => i.id !== id));
+      },
+      onCancel() { },
+    });
+  };
+  // 点击窗口
   const handelClick = (name: string, e: any) => {
     if (ifCanEdit) {
       dispatch(setSelectedNodeAction(name));
@@ -136,7 +173,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
       left += Number(transforms?.[0]?.split('px')?.[0]);
       top += Number(transforms?.[1]?.split('px')?.[0]);
     };
-    setDataList?.((prev: any) => prev?.map((item: any) => {
+    const result = (data || [])?.map((item: any) => {
       if (item.name === className) {
         return {
           ...item,
@@ -146,7 +183,8 @@ const MoveItem: React.FC<Props> = (props: any) => {
         }
       }
       return item;
-    }));
+    });
+    setDataList?.(result);
   };
   // 缩放
   function handleResizeEnd(e: any) {
@@ -154,7 +192,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
     let { width, height } = e?.target?.style;
     width = Number(width?.split('px')?.[0] || 0);
     height = Number(height?.split('px')?.[0] || 0);
-    setDataList?.((prev: any) => prev?.map((item: any) => {
+    const result = (data || [])?.map((item: any) => {
       if (item.name === className) {
         return {
           ...item,
@@ -162,15 +200,15 @@ const MoveItem: React.FC<Props> = (props: any) => {
         }
       }
       return item;
-    }));
+    });
+    setDataList?.(result);
   };
   // 旋转
   function handleRotateEnd(e: any) {
     const className = e?.target?.className?.split(` `)?.filter((i: any) => i?.indexOf('_') > -1)?.[0];
     const { transform } = e?.target?.style;
     const rotate = transform.split('rotate(')?.[1]?.split('deg)')?.[0];
-
-    setDataList?.((prev: any) => prev?.map((item: any) => {
+    const result = (data || [])?.map((item: any) => {
       if (item.name === className) {
         return {
           ...item,
@@ -178,33 +216,159 @@ const MoveItem: React.FC<Props> = (props: any) => {
         }
       }
       return item;
-    }));
+    });
+    setDataList?.(result);
   };
   // 每个item右键
   const settingList: any = (item: any) => {
     return [
       {
-        key: `edit`,
+        key: `top`,
         label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          console.log(item);
+          setDataList?.((prev: any) => {
+            let zIndex = 0;
+            prev.forEach((i: any) => {
+              if (i.zIndex > zIndex) {
+                zIndex = i.zIndex;
+              }
+            });
+            return prev?.map((i: any) => {
+              if (item.name === i.name) {
+                return {
+                  ...i,
+                  zIndex: Math.max(zIndex || 0, 0) + 1,
+                }
+              }
+              return i;
+            });
+          });
         }}>
-          <SettingOutlined className="contextMenu-icon" />
-          编辑
-          <span className="contextMenu-text">CCD Edit</span>
+          <VerticalAlignTopOutlined className="contextMenu-icon" />
+          置顶
+          <span className="contextMenu-text">Top Up</span>
+        </div>
+      },
+      {
+        key: `bottom`,
+        disabled: !item.zIndex || (item.zIndex === 0),
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          setDataList?.((prev: any) => prev?.map((i: any) => {
+            if (item.name === i.name) {
+              return {
+                ...i,
+                zIndex: 0,
+              }
+            }
+            return i;
+          }));
+        }}>
+          <VerticalAlignBottomOutlined className="contextMenu-icon" />
+          置底
+          <span className="contextMenu-text">Bottom Up</span>
+        </div>
+      },
+      {
+        key: `upper`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          setDataList?.((prev: any) => prev?.map((i: any) => {
+            if (item.name === i.name) {
+              return {
+                ...i,
+                zIndex: Math.max(i?.zIndex || 0, 0) + 1,
+              }
+            }
+            return i;
+          }));
+        }}>
+          <ArrowUpOutlined className="contextMenu-icon" />
+          向上一层
+          <span className="contextMenu-text">Layer Up</span>
+        </div>
+      },
+      {
+        key: `lower`,
+        disabled: !item.zIndex || (item.zIndex === 0),
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          setDataList?.((prev: any) => prev?.map((i: any) => {
+            if (item.name === i.name) {
+              return {
+                ...i,
+                zIndex: Math.max(i?.zIndex || 1, 1) - 1,
+              }
+            }
+            return i;
+          }));
+        }}>
+          <ArrowDownOutlined className="contextMenu-icon" />
+          向下一层
+          <span className="contextMenu-text">Layer down</span>
         </div>
       },
       { type: 'divider' },
       {
+        key: `edit`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          setEditItem(item);
+          setTimeout(() => {
+            form.setFieldsValue(item);
+          }, 200);
+        }}>
+          <SettingOutlined className="contextMenu-icon" />
+          编辑
+          <span className="contextMenu-text">Layer Edit</span>
+        </div>
+      },
+      {
+        key: `copy`,
+        label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+          handleCopyItem(item);
+        }}>
+          <CopyOutlined className="contextMenu-icon" />
+          复制
+          <span className="contextMenu-text">Layer Copy</span>
+        </div>
+      },
+      {
         key: `delete`,
         label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          handledeleteItem(item?.id);
+          handleDeleteItem(item?.id);
         }}>
           <DeleteOutlined className="contextMenu-icon" />
           删除
-          <span className="contextMenu-text">CCD Delete</span>
+          <span className="contextMenu-text">Layer Delete</span>
         </div>
-      }
+      },
     ];
+  };
+  // 保存窗口属性
+  const onConfigSave = () => {
+    return new Promise((resolve, reject) => {
+      form.validateFields()
+        .then((values) => {
+          if (editItem.id) {
+            // 编辑的窗口
+            setDataList((prev: any) => {
+              return prev?.map((i: any) => {
+                if (i.id === editItem.id) {
+                  return {
+                    ...i,
+                    ...values
+                  };
+                } else {
+                  return i;
+                };
+              });
+            });
+            setEditItem(null);
+          };
+        })
+        .catch((err) => {
+          console.log(err);
+          const { errorFields } = err;
+          errorFields?.length && message.error(`${errorFields[0]?.errors[0]} 是必填项`);
+          reject()
+        });
+    })
   };
 
   return (
@@ -267,7 +431,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
                           className={`flex-box-column-start ccd-main-box-plugin-panel-body-content-item`}
                           key={`${type}-${value}`}
                         >
-                          <DragSortableItem item={item} onDragStart={() => { }}>
+                          <DragSortableItem item={{ ...item, type: value, alias: label }} onDragStart={() => { }}>
                             <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
                             <div className="ccd-main-box-plugin-panel-body-content-item-icon">
                               {icon ? <Image src={icon} /> : <img src={homeBg} />}
@@ -294,7 +458,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
             let { x = 0, y = 0 } = clientOffset || {};
             x -= editLeftPanel;
             y -= 62;
-            handleAddItem({ ...source, x, y })
+            handleAddItem({ alias: source.alias, type: source.type, x, y, width: 300, height: 150 })
           }}
         >
           <div className="ccd-main-box-canvas"
@@ -311,12 +475,12 @@ const MoveItem: React.FC<Props> = (props: any) => {
             }}
           >
             {(data || [])?.map((item: any, index: number) => {
-              let { name, x, y, width, height, rotate = 0, type, id } = item;
+              let { name, x, y, width, height, rotate = 0, zIndex = 0, type, id } = item;
               const target = `.${name}`;
               if (width === 0 || height === 0) {
                 return null;
               }
-              return <Fragment key={index}>
+              return <Fragment key={id}>
                 <Dropdown
                   getPopupContainer={(triggerNode: any) => {
                     return triggerNode?.parentNode || document.body;
@@ -329,9 +493,14 @@ const MoveItem: React.FC<Props> = (props: any) => {
                     style={{
                       height,
                       width,
-                      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`
+                      transform: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                      zIndex
                     }}
                     onClick={(e) => handelClick(name, e)}
+                    onDoubleClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                   >
                     {name}
                   </div>
@@ -389,7 +558,89 @@ const MoveItem: React.FC<Props> = (props: any) => {
           </div>
         </DropSortableItem>
       </div>
+      {
+        !!editItem ?
+          <div className="flex-box-column ccd-main-box-config-panel">
+            <div className="ccd-main-box-config-panel-title">
+              窗口属性编辑 - {editItem?.alias || editItem?.name}
+            </div>
+            <div className="ccd-main-box-config-panel-body">
+              <Form form={form} layout="vertical" scrollToFirstError>
+                <Divider>窗口属性</Divider>
+                <Form.Item
+                  name={`x`}
+                  label="横坐标"
+                  rules={[{ required: true, message: '横坐标' }]}
+                >
+                  <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item
+                  name={`y`}
+                  label="纵坐标"
+                  rules={[{ required: true, message: '纵坐标' }]}
+                >
+                  <InputNumber min={0} />
+                </Form.Item>
+                <Form.Item
+                  name={`width`}
+                  label="窗口宽度"
+                  rules={[{ required: true, message: '窗口宽度' }]}
+                >
+                  <InputNumber min={10} />
+                </Form.Item>
+                <Form.Item
+                  name={`height`}
+                  label="窗口高度"
+                  rules={[{ required: true, message: '窗口高度' }]}
+                >
+                  <InputNumber min={10} />
+                </Form.Item>
+                <Form.Item
+                  name={`rotate`}
+                  label="旋转角度"
+                  rules={[{ required: true, message: '旋转角度' }]}
+                >
+                  <InputNumber />
+                </Form.Item>
+                <Divider>通用设置</Divider>
+                <Form.Item
+                  name={`alias`}
+                  label="窗口名称"
+                  rules={[{ required: true, message: '窗口名称' }]}
+                >
+                  <Input placeholder="请输入窗口名称" />
+                </Form.Item>
 
+                <Divider>私有设置</Divider>
+                {/* <Form.Item
+                  name={`pushData`}
+                  label="数据推送"
+                  valuePropName="checked"
+                  rules={[{ required: false, message: '数据推送' }]}
+                >
+                  <Switch />
+                </Form.Item> */}
+              </Form>
+            </div>
+            <div className="flex-box ccd-main-box-config-panel-footer">
+              <Button
+                block
+                onClick={() => {
+                  setEditItem(null);
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                type="primary" block
+                onClick={() => {
+                  onConfigSave()
+                }}
+              >保存</Button>
+            </div>
+          </div>
+          : null
+      }
       {
         // 图表放大预览
         _.isObject(myChartVisible) && !_.isEmpty(myChartVisible) ? (

@@ -8,7 +8,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import MoveItem from './layout/MoveItem';
 import { useDispatch, useSelector } from 'react-redux';
-import { IRootActions, setCanvasDataAction, setCanvasDataActionBaseAction, setLoadingAction } from '@/redux/actions';
+import { IRootActions, setCanvasDataAction, setLoadingAction } from '@/redux/actions';
 import { useCallback } from 'react';
 import CCDHeaderPage from './layout/header';
 import CCDFooterPage from './layout/footer';
@@ -25,8 +25,9 @@ const CCDPage: React.FC<Props> = (props: any) => {
       : {};
   const id = params?.['id'];
   const number = params?.['number'];
-  const { canvasData, canvasDataBase, selectedNode } = useSelector((state: IRootActions) => state);
+  const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
+
   const moveRef = useRef<any>();
   // 布局是否可编辑
   const ifCanEdit = useMemo(() => {
@@ -36,77 +37,75 @@ const CCDPage: React.FC<Props> = (props: any) => {
 
   // init渲染
   const initParams = useCallback((data?: any) => {
-    const { flowData = {}, contentData = {}, selfStart = false } = data || canvasDataBase || {};
-    const {
-      home = [],
-      content = [],
-      homeSetting = {
-        'footer-1': { fontSize: 14 },
-        'footer-2': { fontSize: 20 },
-      },
-      windowsScale,
-      gridMargin,
-    } = contentData;
-    let scale = (windowsScale || 1) * (ifCanEdit ? ((moveRef?.current?.clientWidth - editLeftPanel) / window.screen.width) : 1);
+      const { flowData = {}, contentData = {}, selfStart = false } = data || canvasData || {};
+      const {
+        home = [],
+        content = [],
+        homeSetting = {
+          'footer-1': { fontSize: 14 },
+          'footer-2': { fontSize: 20 },
+        },
+        windowsScale,
+        gridMargin,
+      } = contentData;
+      let scale = (windowsScale || 1) * (ifCanEdit ? ((moveRef?.current?.clientWidth - editLeftPanel) / window.screen.width) : 1);
+      const contentList = (content || [])
+        ?.concat(home || [])
+        ?.map((item: any) => {
+          const { type, i, size, maxH, maxW, minH, minW, w, h, ...rest } = item;
+          return {
+            id: `${getuid()}$$${item.type}`,
+            name: `${type || i}_${guid()}`,
+            type: type || i,
+            ...rest,
+            ...(!!size
+              // 组件窗口
+              ? {
+                x: (size.x * window.screen.width) / 96,
+                y: size.y * 14,
+                width: (size.w * window.screen.width) / 96,
+                height: size.h * 14,
+              }
+              // 基础窗口
+              :
+              (!!w || !!h) ? {
+                ...homeSetting?.[i],
+                x: (item.x * window.screen.width) / 96,
+                y: item.y * 14,
+                width: (w * window.screen.width) / 96,
+                height: h * 14,
+              }
+                : {}),
+          };
+        })
+        ?.map((item: any) => {
+          let { x, y, width, height, name } = item;
+          const baseItem: any = (canvasData?.contentData?.content || [])?.filter((i: any) => i.name === name)?.[0];
+          if (!!baseItem && !!baseItem.width) {
+            x = baseItem.x;
+            y = baseItem.y;
+            width = baseItem.width;
+            height = baseItem.height;
+          };
+          return {
+            ...item,
+            x: (x > 0 ? x : 0) * scale,
+            y: (y > 0 ? y : 0) * scale,
+            width: width * scale,
+            height: height * scale,
+          }
+        })
+        ?.filter((i: any) => !!i.width);
+      // console.log(contentList);
 
-    const contentList = (!!canvasData?.contentData?.content ? canvasData?.contentData?.content : content)
-      ?.concat(home || [])
-      ?.map((item: any) => {
-        const { type, i, size, maxH, maxW, minH, minW, w, h, ...rest } = item;
-        return {
-          id: `${getuid()}$$${item.type}`,
-          ...rest,
-          name: `${type || i}_${guid()}`,
-          type: type || i,
-          ...(!!size
-            // 组件窗口
-            ? {
-              x: (size.x * window.screen.width) / 96,
-              y: size.y * 14,
-              width: (size.w * window.screen.width) / 96,
-              height: size.h * 14,
-            }
-            // 基础窗口
-            :
-            (!!w || !!h) ? {
-              ...homeSetting?.[i],
-              x: (item.x * window.screen.width) / 96,
-              y: item.y * 14,
-              width: (w * window.screen.width) / 96,
-              height: h * 14,
-            }
-              : {}),
-        };
-      })
-      ?.map((item: any) => {
-        let { x, y, width, height, name } = item;
-        const baseItem: any = (canvasDataBase?.contentData?.content || [])?.filter((i: any) => i.name === name)?.[0];
-        if (!!baseItem && !!baseItem.width) {
-          x = baseItem.x;
-          y = baseItem.y;
-          width = baseItem.width;
-          height = baseItem.height;
-        };
-        return {
-          ...item,
-          x: (x > 0 ? x : 0) * scale,
-          y: (y > 0 ? y : 0) * scale,
-          width: width * scale,
-          height: height * scale,
-        }
-      })
-      ?.filter((i: any) => !!i.width);
-
-    setDataList(contentList);
-  }, [canvasData, canvasDataBase]);
+      setDataList(contentList);
+  }, [canvasData]);
   // 获取方案详情
   const getParamFun = () => {
     dispatch(setLoadingAction(true));
     getParamsService(id).then((res: any) => {
       if (res && res.code === 'SUCCESS') {
-        initParams(res?.data || {});
         dispatch(setCanvasDataAction(res?.data || {}));
-        dispatch(setCanvasDataActionBaseAction(res?.data || {}));
       } else {
         message.error(res?.msg || res?.message || '接口异常');
       };
