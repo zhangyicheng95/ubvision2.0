@@ -1,4 +1,4 @@
-import React, {  } from 'react';
+import React, { } from 'react';
 import { Button, message } from 'antd';
 import {
     SaveOutlined,
@@ -21,11 +21,28 @@ const CCDHeaderPage: React.FC<Props> = (props: any) => {
     // 保存布局
     const onSave = useCallback(() => {
         dispatch(setLoadingAction(true));
+        const realWidth = window.screen.width / (canvasData?.contentData?.windowsScale || 1);
+        const realHeight = realWidth / (window.screen.width / window.screen.height);
         const param = {
             ...canvasData,
             contentData: {
                 ..._.omit(_.omit(_.omit(canvasData?.contentData || {}, 'contentHeader'), 'homeSetting'), 'home'),
-                content: dataList
+                content: dataList?.map((item: any) => {
+                    let { x, y, width, height, ...rest } = item;
+                    if (x < 0) {
+                        x = 0;
+                    };
+                    if (y < 0) {
+                        y = 0;
+                    };
+                    return {
+                        ...rest,
+                        x: x / realWidth,
+                        y: y / realHeight,
+                        width: width / realWidth,
+                        height: height / realHeight
+                    };
+                }),
             }
         };
         updateParamsService(canvasData?.id, param).then((res) => {

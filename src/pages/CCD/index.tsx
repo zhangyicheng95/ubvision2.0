@@ -37,75 +37,84 @@ const CCDPage: React.FC<Props> = (props: any) => {
 
   // init渲染
   const initParams = useCallback((data?: any) => {
-      const { flowData = {}, contentData = {}, selfStart = false } = data || canvasData || {};
-      const {
-        home = [],
-        content = [],
-        homeSetting = {
-          'footer-1': { fontSize: 14 },
-          'footer-2': { fontSize: 20 },
-        },
-        windowsScale,
-        gridMargin,
-      } = contentData;
-      let scale = (windowsScale || 1) * (ifCanEdit ? ((moveRef?.current?.clientWidth - editLeftPanel) / window.screen.width) : 1);
-      const contentList = (content || [])
-        ?.concat(home || [])
-        ?.map((item: any) => {
-          const { type, i, size, maxH, maxW, minH, minW, w, h, ...rest } = item;
-          return {
-            id: `${getuid()}$$${item.type}`,
-            name: `${type || i}_${guid()}`,
-            type: type || i,
-            ...rest,
-            ...(!!size
-              // 组件窗口
-              ? {
-                x: (size.x * window.screen.width) / 96,
-                y: size.y * 14,
-                width: (size.w * window.screen.width) / 96,
-                height: size.h * 14,
-              }
-              // 基础窗口
-              :
-              (!!w || !!h) ? {
-                ...homeSetting?.[i],
-                x: (item.x * window.screen.width) / 96,
-                y: item.y * 14,
-                width: (w * window.screen.width) / 96,
-                height: h * 14,
-              }
-                : {}),
-          };
-        })
-        ?.map((item: any) => {
-          let { x, y, width, height, name } = item;
-          const baseItem: any = (canvasData?.contentData?.content || [])?.filter((i: any) => i.name === name)?.[0];
-          if (!!baseItem && !!baseItem.width) {
-            x = baseItem.x;
-            y = baseItem.y;
-            width = baseItem.width;
-            height = baseItem.height;
-          };
-          return {
-            ...item,
-            x: (x > 0 ? x : 0) * scale,
-            y: (y > 0 ? y : 0) * scale,
-            width: width * scale,
-            height: height * scale,
-          }
-        })
-        ?.filter((i: any) => !!i.width);
-      // console.log(contentList);
+    const { contentData } = data || canvasData || {};
+    const {
+      content = [],
+      homeSetting = {
+        'footer-1': { fontSize: 14 },
+        'footer-2': { fontSize: 20 },
+      },
+      windowsScale,
+    } = contentData;
+    const realWidth = moveRef?.current?.clientWidth - editLeftPanel;
+    const realHeight = realWidth / (window.screen.width / window.screen.height);
+    const contentList = (content || [])
+      ?.map((item: any) => {
+        const { type, i, size, maxH, maxW, minH, minW, w, h, ...rest } = item;
+        return {
+          id: `${getuid()}$$${item.type}`,
+          name: `${type || i}_${guid()}`,
+          type: type || i,
+          ...rest,
+          ...(!!size
+            // 组件窗口
+            ? {
+              x: (size.x * realWidth) / 96,
+              y: size.y * 14,
+              width: (size.w * realWidth) / 96,
+              height: size.h * 14,
+            }
+            // 基础窗口
+            :
+            (!_.isUndefined(w) || !_.isUndefined(h)) ? {
+              ...homeSetting?.[i],
+              x: (item.x * realWidth) / 96,
+              y: item.y * 14,
+              width: (w * realWidth) / 96,
+              height: h * 14,
+            }
+              : {}),
+        };
+      })
+      ?.filter((i: any) => !!i.width)
+      ?.map((item: any) => {
+        let { x = 0, y = 0, width = 0, height = 0, name } = item;
+        if (x < 0) {
+          x = 0;
+        };
+        if (y < 0) {
+          y = 0;
+        };
+        if (width > 1) {
+          x = x / realWidth;
+          y = y / realHeight;
+          width = width / realWidth;
+          height = height / realHeight;
+        };
+        return {
+          ...item,
+          x: x * realWidth,
+          y: y * realHeight,
+          width: width * realWidth,
+          height: height * realHeight
+        }
+      });
+    // console.log(contentList);
 
-      setDataList(contentList);
+    setDataList(contentList);
   }, [canvasData]);
   // 获取方案详情
   const getParamFun = () => {
     dispatch(setLoadingAction(true));
     getParamsService(id).then((res: any) => {
       if (res && res.code === 'SUCCESS') {
-        dispatch(setCanvasDataAction(res?.data || {}));
+        dispatch(setCanvasDataAction({
+          ...res?.data || {},
+          contentData: {
+            ..._.omit(res?.data?.contentData || {}, 'home'),
+            content: (res?.data?.contentData?.content || [])?.concat(res?.data?.contentData?.home || [])
+          }
+        }));
       } else {
         message.error(res?.msg || res?.message || '接口异常');
       };
@@ -117,7 +126,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
     window?.ipcRenderer?.invoke(`maximize-${number}`, number);
     setTimeout(() => {
       getParamFun();
-    }, 100);
+    }, 500);
   }, [id]);
 
   return (

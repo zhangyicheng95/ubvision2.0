@@ -15,12 +15,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IRootActions, setCanvasDataAction, setSelectedNodeAction } from '@/redux/actions';
 import ChartPreviewModal from '../components/ChartPreviewModal';
 import LogPreviewModal from '../components/LogPreviewModal';
-import dataItemImageNG from '@/assets/images/item-bg-ng.png';
 import { editLeftPanel } from '../index';
-import { windowTypeList } from './config';
+import { windowTypeList } from '../config/config';
 import homeBg from '@/assets/images/home-bg.png';
 import DropSortableItem from '@/components/DragComponents/DropSortableItem';
 import DragSortableItem from '@/components/DragComponents/DragSortableItem';
+import ImageCharts from '../components/ImageCharts';
+import ConfigPanel from './ConfigPanel';
+import ItemWindow from './ItemWindow';
 
 interface Props {
   data?: [];
@@ -64,12 +66,23 @@ const MoveItem: React.FC<Props> = (props: any) => {
       clearTimeout(timerRef.current);
     };
     timerRef.current = setTimeout(() => {
+      const realWidth = boxRef?.current?.clientWidth;
+      const realHeight = realWidth / (window.screen.width / window.screen.height);
       !!data?.length ?
         initParams({
           ...canvasData,
           contentData: {
             ...canvasData?.contentData,
-            content: data
+            content: data?.map((item: any) => {
+              const { x, y, width, height, ...rest } = item;
+              return {
+                ...rest,
+                x: x / (x < realWidth ? realWidth : window.screen.width),
+                y: y / (y < realHeight ? realHeight : window.screen.height),
+                width: width / (width < realWidth ? realWidth : window.screen.width),
+                height: height / (height < realHeight ? realHeight : window.screen.height),
+              }
+            }),
           }
         })
         :
@@ -121,13 +134,21 @@ const MoveItem: React.FC<Props> = (props: any) => {
   // 添加组件
   const handleAddItem = (item: any) => {
     const { type } = item;
-    setDataList?.((prev: any) => prev?.concat({
-      rotate: 0, value: [],
-      zIndex: 0,
-      ...item,
-      id: `${getuid()}$$${type}`,
-      name: `${type}_${guid()}`,
-    }));
+    setDataList?.((prev: any) => {
+      let zIndex = 0;
+      prev.forEach((i: any) => {
+        if (i.zIndex > zIndex) {
+          zIndex = i.zIndex;
+        };
+      });
+      return prev?.concat({
+        rotate: 0, value: [],
+        zIndex,
+        ...item,
+        id: `${getuid()}$$${type}`,
+        name: `${type}_${guid()}`,
+      });
+    });
   };
   // 复制窗口
   const handleCopyItem = (item: any) => {
@@ -228,9 +249,12 @@ const MoveItem: React.FC<Props> = (props: any) => {
           setDataList?.((prev: any) => {
             let zIndex = 0;
             prev.forEach((i: any) => {
-              if (i.zIndex > zIndex) {
-                zIndex = i.zIndex;
-              }
+              if (i.id !== item.id) {
+                // 不跟自己对比
+                if (i.zIndex > zIndex) {
+                  zIndex = i.zIndex;
+                };
+              };
             });
             return prev?.map((i: any) => {
               if (item.name === i.name) {
@@ -308,9 +332,9 @@ const MoveItem: React.FC<Props> = (props: any) => {
       {
         key: `edit`,
         label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          setEditItem(item);
+          setEditItem({ rotate: 0, ...item });
           setTimeout(() => {
-            form.setFieldsValue(item);
+            form.setFieldsValue({ rotate: 0, ...item });
           }, 200);
         }}>
           <SettingOutlined className="contextMenu-icon" />
@@ -502,7 +526,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
                       e.stopPropagation();
                     }}
                   >
-                    {name}
+                    <ItemWindow item={item} />
                   </div>
                 </Dropdown>
                 <Moveable
@@ -560,85 +584,12 @@ const MoveItem: React.FC<Props> = (props: any) => {
       </div>
       {
         !!editItem ?
-          <div className="flex-box-column ccd-main-box-config-panel">
-            <div className="ccd-main-box-config-panel-title">
-              窗口属性编辑 - {editItem?.alias || editItem?.name}
-            </div>
-            <div className="ccd-main-box-config-panel-body">
-              <Form form={form} layout="vertical" scrollToFirstError>
-                <Divider>窗口属性</Divider>
-                <Form.Item
-                  name={`x`}
-                  label="横坐标"
-                  rules={[{ required: true, message: '横坐标' }]}
-                >
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item
-                  name={`y`}
-                  label="纵坐标"
-                  rules={[{ required: true, message: '纵坐标' }]}
-                >
-                  <InputNumber min={0} />
-                </Form.Item>
-                <Form.Item
-                  name={`width`}
-                  label="窗口宽度"
-                  rules={[{ required: true, message: '窗口宽度' }]}
-                >
-                  <InputNumber min={10} />
-                </Form.Item>
-                <Form.Item
-                  name={`height`}
-                  label="窗口高度"
-                  rules={[{ required: true, message: '窗口高度' }]}
-                >
-                  <InputNumber min={10} />
-                </Form.Item>
-                <Form.Item
-                  name={`rotate`}
-                  label="旋转角度"
-                  rules={[{ required: true, message: '旋转角度' }]}
-                >
-                  <InputNumber />
-                </Form.Item>
-                <Divider>通用设置</Divider>
-                <Form.Item
-                  name={`alias`}
-                  label="窗口名称"
-                  rules={[{ required: true, message: '窗口名称' }]}
-                >
-                  <Input placeholder="请输入窗口名称" />
-                </Form.Item>
-
-                <Divider>私有设置</Divider>
-                {/* <Form.Item
-                  name={`pushData`}
-                  label="数据推送"
-                  valuePropName="checked"
-                  rules={[{ required: false, message: '数据推送' }]}
-                >
-                  <Switch />
-                </Form.Item> */}
-              </Form>
-            </div>
-            <div className="flex-box ccd-main-box-config-panel-footer">
-              <Button
-                block
-                onClick={() => {
-                  setEditItem(null);
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                type="primary" block
-                onClick={() => {
-                  onConfigSave()
-                }}
-              >保存</Button>
-            </div>
-          </div>
+          <ConfigPanel
+            onSave={onConfigSave}
+            editItem={editItem}
+            setEditItem={setEditItem}
+            form={form}
+          />
           : null
       }
       {
@@ -653,241 +604,6 @@ const MoveItem: React.FC<Props> = (props: any) => {
           <LogPreviewModal type={logDataVisible} onCancel={() => setLogDataVisible('')} />
         ) : null
       }
-    </div>
-  );
-};
-
-const InitItem = (props: any) => {
-  const { canvasData } = useSelector((state: IRootActions) => state);
-  const dispatch = useDispatch();
-  const {
-    data,
-    item,
-    setMyChartVisible,
-    setLogDataVisible,
-    snapshot,
-    bodyBoxTab,
-    formCustom,
-    configForm,
-    addWindow,
-    removeWindow,
-    loading, setLoadingAction,
-    startProjects,
-    endProjects,
-    projectStatus,
-    started,
-  } = props;
-  const ifCanEdit = useMemo(() => {
-    return location.hash?.indexOf('edit') > -1;
-  }, [location.hash]);
-  const newGridContentList = !!localStorage.getItem(`localGridContentList-${canvasData.id}`)
-    ? JSON.parse(localStorage.getItem(`localGridContentList-${canvasData.id}`) || '{}')
-    : [];
-  const {
-    id: key,
-    size,
-    value: __value = [],
-    type,
-    yName,
-    xName,
-    defaultImg,
-    fontSize,
-    reverse,
-    direction,
-    symbol,
-    fetchType,
-    ifFetch,
-    fetchParams,
-    align,
-    hiddenAxis,
-    labelInxAxis,
-    labelDirection,
-    barRadius,
-    showBackground,
-    showWithLine,
-    backgroundColor = 'default',
-    barColor = 'default',
-    progressType = 'line',
-    progressSize = 8,
-    progressSteps = 5,
-    des_bordered,
-    des_column,
-    des_layout,
-    des_size,
-    ifLocalStorage,
-    CCDName,
-    imgs_width,
-    imgs_height,
-    tableSize,
-    magnifier,
-    comparison,
-    operationList,
-    dataZoom,
-    fontColor,
-    interlacing,
-    modelRotate,
-    modelScale,
-    modelRotateScreenshot,
-    password,
-    passwordHelp,
-    ifShowHeader,
-    ifShowColorList,
-    headerBackgroundColor,
-    basicInfoData = [{ id: guid(), name: '', value: '' }],
-    ifNeedClear,
-    ifUpdateProject,
-    ifUpdatetoInitParams,
-    magnifierSize,
-    listType,
-    valueColor,
-    blockType,
-    blockTypeLines,
-    modelUpload,
-    xColumns,
-    yColumns,
-    platFormOptions,
-    ifFetchParams,
-    ifNeedAllow,
-    lineNumber,
-    columnNumber,
-    magnifierWidth,
-    magnifierHeight,
-    ifPopconfirm,
-    showImgList,
-    notLocalStorage,
-    imgListNum,
-    showFooter,
-    markNumberLeft,
-    markNumberTop,
-    line_height,
-    staticHeight,
-    fileTypes,
-    fileFetch,
-    titlePaddingSize = 0,
-    bodyPaddingSize = 0,
-    showLabel,
-    titleBackgroundColor,
-    titleFontSize = 20,
-    valueOnTop = false,
-    timeSelectDefault,
-    iconSize,
-    parentBodyBox,
-    parentBodyBoxTab,
-  } = item;
-  const gridValue = []?.filter((i: any) => i?.id === key)?.[0];
-  const newGridValue = newGridContentList?.filter((i: any) => i?.id === key)?.[0];
-  // socket有数据就渲染新的，没有就渲染localStorage缓存的
-  const dataValue: any = gridValue?.[__value[1]] || newGridValue?.[__value[1]] || undefined;
-  const parent = canvasData?.flowData?.nodes?.filter((i: any) => i.id === __value[0]);
-  const { alias, name, ports } = parent?.[0] || {};
-  const { items = [] } = ports || {};
-  const SecLabel: any = items?.filter(
-    (i: any) => i.group === 'bottom' && i?.label?.name === __value[1],
-  )[0];
-
-  return (
-    <div
-      key={key}
-      className={`log-content drag-item-content-box background-ubv`}
-      // @ts-ignore
-      style={Object.assign(
-        {},
-        ['imgButton', 'heatMap'].includes(type)
-          ? { backgroundColor: 'transparent' }
-          : ['default'].includes(backgroundColor)
-            ? {}
-            : backgroundColor === 'border'
-              ? { paddingTop: (titleFontSize / 4) * 3, backgroundColor: 'transparent' }
-              : backgroundColor === 'transparent'
-                ? { backgroundColor: 'transparent' }
-                : backgroundColor === 'black'
-                  ? { backgroundColor: 'black' }
-                  : {
-                    backgroundImage: `url(${type === 'img' && (dataValue?.status == 'NG' || dataValue?.status?.value == 'NG')
-                      ? dataItemImageNG
-                      : backgroundColor
-                      })`,
-                    backgroundColor: 'transparent',
-                  },
-        !!parentBodyBox && parentBodyBoxTab != bodyBoxTab ? { visibility: 'hidden' } : {},
-      )}
-    >
-      {!['default', 'transparent'].includes(backgroundColor) ? (
-        <div
-          className={`flex-box data-screen-card-title-box ${['border'].includes(backgroundColor) ? 'data-screen-card-title-box-border' : ''
-            }`}
-          style={Object.assign(
-            {},
-            { fontSize: titleFontSize, padding: titlePaddingSize },
-            ['border'].includes(backgroundColor)
-              ? { padding: 0 }
-              : { backgroundImage: `url(${titleBackgroundColor})` },
-          )}
-        >
-          {['border'].includes(backgroundColor) ? (
-            <div
-              className="data-screen-card-title-box-border-bg"
-              style={{ top: (titleFontSize / 4) * 3 }}
-            />
-          ) : null}
-          <div className="data-screen-card-title">{CCDName}</div>
-        </div>
-      ) : null}
-      {ifShowHeader ? (
-        <div className="common-card-title-box flex-box">
-          <TooltipDiv className="flex-box common-card-title">
-            {`${CCDName || alias || name || '无效的节点'}`}
-            <span className="title-span">{`- ${SecLabel?.label?.alias || __value[1] || ''}`}</span>
-          </TooltipDiv>
-        </div>
-      ) : null}
-      <div
-        className={`card-body-box ${backgroundColor === 'border' ? 'background-ubv' : ''}`}
-        style={Object.assign(
-          {},
-          ifShowHeader
-            ? { height: 'calc(100% - 28px)' }
-            : !['default', 'transparent'].includes(backgroundColor)
-              ? { height: `calc(100% - ${(titleFontSize / 2) * 3 + titlePaddingSize * 2}px)` }
-              : { height: '100%' },
-          backgroundColor === 'border'
-            ? {
-              border: '2px solid rgba(144,144,144,0.6)',
-              borderRadius: 6,
-              height: '100%',
-              padding: `${titleFontSize / 2 + bodyPaddingSize
-                }px ${bodyPaddingSize}px ${bodyPaddingSize}px`,
-            }
-            : { padding: bodyPaddingSize },
-        )}
-      >
-        <div className="flex-box-center" style={{ height: '100%' }}>
-          {!parent?.[0] &&
-            type?.indexOf('button') < 0 &&
-            ![
-              'header',
-              'slider-1',
-              'slider-4',
-              'footer-1',
-              'footer-2',
-              'bodyBox',
-              'form',
-              'switchBox',
-              'segmentSwitch',
-              'rangeDomain',
-              'rectRange',
-              'modelSwitch',
-              'iframe',
-              'timeSelect',
-            ].includes(type) ? (
-            '请重新绑定数据节点'
-          ) : type === 'line' ? (
-            <Image />
-          )
-            : <Image />
-          }
-        </div>
-      </div>
     </div>
   );
 };

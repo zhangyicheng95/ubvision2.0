@@ -329,15 +329,15 @@ const Home: React.FC<Props> = (props: any) => {
                     className="flex-box home-body-bottom-right-document-list-item"
                     key={`home-body-bottom-right-document-list-item-${value}`}
                     onClick={() => {
-                      message.destroy();
-                      message.info('功能开发中，敬请期待。');
-                      // ipcRenderer.ipcCommTest(
-                      //   'alert-open-browser',
-                      //   JSON.stringify({
-                      //     type: 'markdown',
-                      //     id: value,
-                      //   })
-                      // );
+                      // message.destroy();
+                      // message.info('功能开发中，敬请期待。');
+                      ipcRenderer.ipcCommTest(
+                        'alert-open-browser',
+                        JSON.stringify({
+                          type: 'markdown',
+                          id: value,
+                        })
+                      );
                     }}
                   >
                     {label}

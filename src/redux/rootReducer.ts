@@ -27,7 +27,10 @@ const initalState: IRootActions = {
 		},
 		graphLock: false, // 画布锁
 		lineType: '', // 连线类型
-		contentData: {}, // 前端布局
+		contentData: {
+			windowsScale: 1,
+			content: [],
+		}, // 前端布局
 	},
 	canvasDataBase: {
 		id: '',
@@ -44,7 +47,10 @@ const initalState: IRootActions = {
 		},
 		graphLock: false, // 画布锁
 		lineType: '', // 连线类型
-		contentData: {}, // 前端布局
+		contentData: {
+			windowsScale: 1,
+			content: [],
+		}, // 前端布局
 	},
 	canvasStart: false,
 	selectedNode: '',

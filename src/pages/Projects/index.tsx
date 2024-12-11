@@ -1,4 +1,5 @@
 import React, {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -577,6 +578,7 @@ const ProjectItem = (props: any) => {
       setLoading(false);
     });
   };
+  // 历史记录
   const columns = [
     {
       title: '版本时间',
@@ -639,32 +641,32 @@ const ProjectItem = (props: any) => {
       },
     },
   ];
+  // 节点状态
   const stateColumns = [
     {
       title: '节点',
       dataIndex: 'name',
       key: 'name',
-      width: '30%',
     },
     {
       title: '进程id',
       dataIndex: 'pid',
       key: 'pid',
-      width: '20%',
+      width: '150px',
       sorter: (a: any, b: any) => (a.pid + '').localeCompare(b.pid + ''),
     },
     {
       title: 'cpu',
       dataIndex: 'cpu',
       key: 'cpu',
-      width: '20%',
+      width: '100px',
       sorter: (a: any, b: any) => a.cpu.localeCompare(b.cpu),
     },
     {
       title: '内存',
       dataIndex: 'mem',
       key: 'mem',
-      width: '20%',
+      width: '120px',
       defaultSortOrder: 'descend',
       sorter: (a: any, b: any) => a.mem.localeCompare(b.mem),
     },
@@ -781,12 +783,21 @@ const ProjectItem = (props: any) => {
         },
         {
           key: `import-alert-${id}`,
+          disabled: !!running,
           label: <div className='flex-box-justify-between dropdown-box'>
-            <Upload {...uploadProps}>
-              <CloudUploadOutlined className="contextMenu-icon" />
-              导入界面配置
-              <span className="contextMenu-text">Import Alert</span>
-            </Upload>
+            {
+              !!running ?
+                <Fragment>
+                  <CloudUploadOutlined className="contextMenu-icon" />
+                  导入界面配置
+                  <span className="contextMenu-text">Import Alert</span>
+                </Fragment> :
+                <Upload {...uploadProps}>
+                  <CloudUploadOutlined className="contextMenu-icon" />
+                  导入界面配置
+                  <span className="contextMenu-text">Import Alert</span>
+                </Upload>
+            }
           </div>
         },
       ]
@@ -836,7 +847,9 @@ const ProjectItem = (props: any) => {
     },
     userAuthList.includes('projects.history') ? {
       key: `reset-history-${id}`,
+      disabled: !!running,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        if (!!running) return;
         getHistoryListServiceFun();
       }}>
         <HistoryOutlined className="contextMenu-icon" />
@@ -846,7 +859,9 @@ const ProjectItem = (props: any) => {
     } : null,
     userAuthList.includes('projects.nodeStatus') ? {
       key: `node-status-${id}`,
+      disabled: !running,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        if (!running) return;
         getStateListFun();
       }}>
         <BarsOutlined className="contextMenu-icon" />
@@ -856,7 +871,9 @@ const ProjectItem = (props: any) => {
     } : null,
     (userAuthList.includes('projects.delete') || userAuthList.includes('projects.export')) ? {
       key: `node-select-${id}`,
+      disabled: !!running,
       label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
+        if (!!running) return;
         setSelectedRows((prev: any) => {
           if (prev.includes(id)) {
             return prev.filter((i: any) => i !== id);
