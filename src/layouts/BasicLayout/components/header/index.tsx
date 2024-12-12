@@ -9,8 +9,11 @@ import {
 import styles from './index.module.less';
 import { useNavigate } from 'react-router-dom';
 import { clearAllInterval, GetQueryObj } from '@/utils/utils';
+import { useSelector } from 'react-redux';
+import { IRootActions } from '@/redux/actions';
 
 const CHeader: React.FC = (props: any) => {
+  const { canvasData } = useSelector((state: IRootActions) => state);
   const params: any = !!location.search
     ? GetQueryObj(location.search)
     : !!location.href
@@ -76,7 +79,7 @@ const CHeader: React.FC = (props: any) => {
       location.href?.indexOf('#/flow') > -1 ||
       location.href?.indexOf('#/ccd') > -1 ||
       location.href?.indexOf('#/softwareopen') > -1 ||
-      location.href?.indexOf('#/markdown') > -1||
+      location.href?.indexOf('#/markdown') > -1 ||
       location.href?.indexOf('#/case') > -1
     );
   };
@@ -117,13 +120,26 @@ const CHeader: React.FC = (props: any) => {
       label: <div onClick={() => {
         changeTheme('dark');
       }}>主题色-暗</div>
+    },
+    { type: 'divider' },
+    {
+      key: 'min',
+      label: <div onClick={() => {
+        minimize();
+      }}>窗口最小化</div>
+    },
+    {
+      key: 'close',
+      label: <div onClick={() => {
+        close();
+      }}>关闭窗口</div>
     }
   ];
 
   return (
-    <div className={`${styles.basicLayoutHeader} flex-box-justify-between`}>
-      <div className="flex-box">
-        <div className="basic-layout-header-title-box">UBVision</div>
+    (location.href?.indexOf('#/ccd') > -1 && !canvasData?.contentData?.showHeader) ?
+      <div className={`flex-box ${styles.floatHeaderBtn}`}>
+        <div className="electron-drag" />
         <Dropdown
           menu={{ items: settingList }}
           placement="bottomLeft"
@@ -136,36 +152,53 @@ const CHeader: React.FC = (props: any) => {
             className="basic-layout-header-btn"
           />
         </Dropdown>
-        <div className="flex-box"></div>
       </div>
-      <div className="flex-box electron-drag"></div>
-      <div className="flex-box operation-box">
-        <Button
-          icon={<MinusOutlined style={{
-            color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
-          }} />}
-          type="text"
-          className="basic-layout-header-btn"
-          onClick={() => minimize()}
-        />
-        <Button
-          icon={<BorderOutlined style={{
-            color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
-          }} />}
-          type="text"
-          className="basic-layout-header-btn"
-          onClick={() => maximize()}
-        />
-        <Button
-          icon={<CloseOutlined style={{
-            color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
-          }} />}
-          type="text"
-          className="basic-layout-header-btn"
-          onClick={() => close()}
-        />
+      :
+      <div className={`${styles.basicLayoutHeader} flex-box-justify-between`}>
+        <div className="flex-box basic-layout-header-left-box">
+          <div className="basic-layout-header-title-box">UBVision</div>
+          <Dropdown
+            menu={{ items: settingList }}
+            placement="bottomLeft"
+          >
+            <Button
+              icon={<UnorderedListOutlined style={{
+                color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
+              }} />}
+              type="text"
+              className="basic-layout-header-btn"
+            />
+          </Dropdown>
+          <div className="flex-box"></div>
+        </div>
+        <div className="flex-box electron-drag"></div>
+        <div className="flex-box basic-layout-header-operation-box">
+          <Button
+            icon={<MinusOutlined style={{
+              color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
+            }} />}
+            type="text"
+            className="basic-layout-header-btn"
+            onClick={() => minimize()}
+          />
+          <Button
+            icon={<BorderOutlined style={{
+              color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
+            }} />}
+            type="text"
+            className="basic-layout-header-btn"
+            onClick={() => maximize()}
+          />
+          <Button
+            icon={<CloseOutlined style={{
+              color: localStorage.getItem('theme-mode') === 'dark' ? '#fff' : '#000'
+            }} />}
+            type="text"
+            className="basic-layout-header-btn"
+            onClick={() => close()}
+          />
+        </div>
       </div>
-    </div>
   );
 };
 

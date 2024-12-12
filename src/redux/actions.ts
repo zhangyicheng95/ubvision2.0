@@ -64,6 +64,9 @@ export interface IRootActions {
 		contentData: {
 			windowsScale: 1,
 			content: [],
+			showHeader: false,
+			showFooter: false,
+			background: string,
 		}, // 前端布局
 	}; // 画布数据
 	canvasDataBase: {
@@ -84,6 +87,9 @@ export interface IRootActions {
 		contentData: {
 			windowsScale: 1,
 			content: [],
+			showHeader: false,
+			showFooter: false,
+			background: string,
 		}, // 前端布局
 	}; // 画布数据备份
 	canvasStart: false; // 方案启动

@@ -30,6 +30,9 @@ const initalState: IRootActions = {
 		contentData: {
 			windowsScale: 1,
 			content: [],
+			showHeader: false,
+			showFooter: false,
+			background: '',
 		}, // 前端布局
 	},
 	canvasDataBase: {
@@ -50,6 +53,9 @@ const initalState: IRootActions = {
 		contentData: {
 			windowsScale: 1,
 			content: [],
+			showHeader: false,
+			showFooter: false,
+			background: '',
 		}, // 前端布局
 	},
 	canvasStart: false,

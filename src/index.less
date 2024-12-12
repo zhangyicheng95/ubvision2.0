@@ -16,7 +16,6 @@
 
 :root {
   font-weight: 400;
-
   line-height: 1.5;
   user-select: none;
   color-scheme: light dark;
@@ -45,6 +44,7 @@ body {
   margin: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
 
   * {
     font-family: 'iconfont' !important;
@@ -201,6 +201,12 @@ code {
   .ant-switch-handle::before {
     background-color: #177ddc !important;
   }
+}
+
+.ant-select-dropdown,
+.ant-dropdown,
+.ant-tooltip {
+  z-index: 10000;
 }
 
 .ant-popover {

@@ -332,9 +332,14 @@ const MoveItem: React.FC<Props> = (props: any) => {
       {
         key: `edit`,
         label: <div className='flex-box-justify-between dropdown-box' onClick={() => {
-          setEditItem({ rotate: 0, ...item });
+          const result = {
+            sourceType: 'websocket', rotate: 0, value: [],
+            ...item
+          };
+          form.resetFields();
+          setEditItem(result);
           setTimeout(() => {
-            form.setFieldsValue({ rotate: 0, ...item });
+            form.setFieldsValue(result);
           }, 200);
         }}>
           <SettingOutlined className="contextMenu-icon" />
@@ -370,6 +375,8 @@ const MoveItem: React.FC<Props> = (props: any) => {
       form.validateFields()
         .then((values) => {
           if (editItem.id) {
+            console.log(values);
+
             // 编辑的窗口
             setDataList((prev: any) => {
               return prev?.map((i: any) => {
@@ -411,60 +418,84 @@ const MoveItem: React.FC<Props> = (props: any) => {
                 setSearchVal(val);
               }} />
             </div>
-            <div className="ccd-main-box-plugin-panel-body">
-              <div className="flex-box ccd-main-box-plugin-panel-body">
-                <div className="flex-box ccd-main-box-plugin-panel-body-type">
-                  <div className="ccd-main-box-plugin-panel-body-type-first">
-                    {
-                      windowTypeList?.map((item: any) => {
-                        const { label, value, icon, types, contents } = item;
-                        return <div
-                          className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-first-item ${windowTypeFirst === value ? 'menu-selected-self' : ''}`}
-                          key={value}
-                          onClick={() => setWindowTypeFirst(value)}
-                        >
-                          {icon}
-                          {label}
-                        </div>
-                      })
-                    }
-                  </div>
-                  <div className="ccd-main-box-plugin-panel-body-type-second">
-                    {
-                      (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.types || [])
-                        ?.map((item: any) => {
-                          const { label, value, } = item;
-                          return <div
-                            className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-second-item ${windowTypeSecond === value ? 'font-selected-self' : ''}`}
-                            key={value}
-                            onClick={() => setWindowTypeSecond(value)}
-                          >
-                            {label}
-                          </div>
-                        })
-                    }
-                  </div>
-                </div>
-                <div className="ccd-main-box-plugin-panel-body-content">
+            <div className="flex-box ccd-main-box-plugin-panel-body">
+              <div className="flex-box ccd-main-box-plugin-panel-body-type">
+                <div className="ccd-main-box-plugin-panel-body-type-first">
                   {
-                    (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.contents || [])
-                      ?.filter((i: any) => i.label?.indexOf(searchVal) > -1 && (windowTypeSecond === 'all' ? i : _.toUpper(i.value)?.indexOf(_.toUpper(windowTypeSecond)) > -1))
+                    windowTypeList?.map((item: any) => {
+                      const { label, value, icon, types, contents } = item;
+                      return <div
+                        className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-first-item ${windowTypeFirst === value ? 'menu-selected-self' : ''}`}
+                        key={value}
+                        onClick={() => {
+                          setWindowTypeFirst(value);
+                          setWindowTypeSecond('all');
+                        }}
+                      >
+                        {icon}
+                        {label}
+                      </div>
+                    })
+                  }
+                </div>
+                <div className="ccd-main-box-plugin-panel-body-type-second">
+                  {
+                    (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.types || [])
                       ?.map((item: any) => {
-                        const { label, value, type, icon } = item;
+                        const { label, value, } = item;
                         return <div
-                          className={`flex-box-column-start ccd-main-box-plugin-panel-body-content-item`}
-                          key={`${type}-${value}`}
+                          className={`flex-box-column-center ccd-main-box-plugin-panel-body-type-second-item ${windowTypeSecond === value ? 'font-selected-self' : ''}`}
+                          key={value}
+                          onClick={() => setWindowTypeSecond(value)}
                         >
-                          <DragSortableItem item={{ ...item, type: value, alias: label }} onDragStart={() => { }}>
-                            <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
-                            <div className="ccd-main-box-plugin-panel-body-content-item-icon">
-                              {icon ? <Image src={icon} /> : <img src={homeBg} />}
-                            </div>
-                          </DragSortableItem>
+                          {label}
                         </div>
                       })
                   }
                 </div>
+              </div>
+              <div className="ccd-main-box-plugin-panel-body-content">
+                {
+                  (windowTypeList?.filter((i: any) => i.value === windowTypeFirst)?.[0]?.contents || [])
+                    ?.filter((i: any) => i.label?.indexOf(searchVal) > -1 && (windowTypeSecond === 'all' ? i : _.toUpper(i.type)?.indexOf(_.toUpper(windowTypeSecond)) > -1))
+                    ?.map((item: any) => {
+                      const { label, value, type, icon } = item;
+                      return <div
+                        className={`flex-box-column-start ccd-main-box-plugin-panel-body-content-item`}
+                        key={`${type}-${value}`}
+                        style={windowTypeFirst === 'background' ? { cursor: 'pointer' } : {}}
+                      >
+                        {
+                          windowTypeFirst === 'background' ?
+                            <Fragment>
+                              <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
+                              <div className="ccd-main-box-plugin-panel-body-content-item-icon" onClick={() => {
+                                dispatch(setCanvasDataAction({
+                                  ...canvasData || {},
+                                  contentData: {
+                                    ...canvasData?.contentData || {},
+                                    background: value
+                                  }
+                                }));
+                              }}>
+                                {icon ? <img src={icon} /> : ''}
+                              </div>
+                            </Fragment>
+                            :
+                            <DragSortableItem
+                              item={{ ...item, type: value, alias: label }}
+                              onDragStart={() => { }}
+                              className="ccd-main-box-plugin-panel-body-content-item-drag-box"
+                            >
+                              <div className="ccd-main-box-plugin-panel-body-content-item-title">{label}</div>
+                              <div className="ccd-main-box-plugin-panel-body-content-item-icon">
+                                {icon ? <img src={icon} /> : ''}
+                              </div>
+                            </DragSortableItem>
+                        }
+                      </div>
+                    })
+                }
               </div>
             </div>
           </div>
@@ -487,9 +518,17 @@ const MoveItem: React.FC<Props> = (props: any) => {
         >
           <div className="ccd-main-box-canvas"
             ref={boxRef}
-            style={{
-              height: ((((boxRef?.current?.clientWidth || 1920) / windowsScale + 30) > window.screen.height) ? window.screen.height : (boxRef?.current?.clientWidth / windowsScale))
-            }}
+            style={Object.assign(
+              {
+                height: ((((boxRef?.current?.clientWidth || 1920) / windowsScale + 30) > window.screen.height) ? window.screen.height : (boxRef?.current?.clientWidth / windowsScale)),
+              },
+              !!canvasData?.contentData?.background
+                ?
+                canvasData?.contentData?.background?.indexOf?.('/') > -1 ? {
+                  backgroundImage: `url(${canvasData?.contentData?.background})`
+                } : { backgroundColor: canvasData?.contentData?.background }
+                : {}
+            )}
             onClick={(e) => {
               if (ifCanEdit) {
                 dispatch(setSelectedNodeAction(''));
@@ -567,7 +606,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
                   elementSnapDirections={{
                     "top": true, "right": true, "bottom": true, "left": true, "center": true, "middle": true
                   }} // 元素捕捉方向
-                  snapThreshold={10} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
+                  snapThreshold={30} // 辅助线阈值 ,即元素与辅助线间距小于x,则自动贴边
                   isDisplaySnapDigit={true} // 是否展示与磁吸辅助线的距离
                   snapDigit={0} //捕捉距离数字
 
@@ -586,7 +625,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
         !!editItem ?
           <ConfigPanel
             onSave={onConfigSave}
-            editItem={editItem}
+            data={editItem}
             setEditItem={setEditItem}
             form={form}
           />

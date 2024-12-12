@@ -144,7 +144,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
         <div
           ref={moveRef}
           className='flex-box-start ccd-page-body-box'
-          style={{ height: `calc(100% - ${ifCanEdit ? 64 : 32}px)` }}
+          style={ifCanEdit ? { height: 'calc(100% - 32px)' } : {}}
         >
           <DndProvider backend={HTML5Backend}>
             <MoveItem
@@ -156,8 +156,10 @@ const CCDPage: React.FC<Props> = (props: any) => {
         </div>
       }
       {
-        // 底部
-        <CCDFooterPage dataList={dataList} />
+        !!canvasData?.contentData?.showFooter ?
+          // 底部
+          <CCDFooterPage dataList={dataList} />
+          : null
       }
     </div>
   );

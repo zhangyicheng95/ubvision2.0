@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { Layout, Menu, Spin } from 'antd';
-import { SunOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Layout, Menu, Spin } from 'antd';
+import { SunOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useLocation } from 'react-router';
 import SiderNav from '@/layouts/BasicLayout/components/siderNav';
 import CHeader from '@/layouts/BasicLayout/components/header';
@@ -19,7 +19,7 @@ interface Props {
 
 const BasicLayout = (props: any) => {
   const { children, route } = props;
-  const { loading, projectList } = useSelector((state: IRootActions) => state);
+  const { loading, projectList, canvasData } = useSelector((state: IRootActions) => state);
   const params: any = !!window.location.search
     ? GetQueryObj(window.location.search)
     : !!window.location.href
@@ -57,10 +57,10 @@ const BasicLayout = (props: any) => {
   }, []);
 
   return (
-    <div className={styles.basicLayoutWrapper}>
+    <div className={`flex-box-column ${styles.basicLayoutWrapper}`}>
       <CHeader />
       <ErrorBoundary>
-        <div className='flex-box ' style={{ height: `calc(100% - 30px)` }}>
+        <div className='flex-box' style={{ height: '100%' }}>
           {ifShowSiderNav ? <SiderNav /> : null}
           <div style={{ width: ifShowSiderNav ? `calc(100% - 68px)` : '100%', height: '100%' }}>
             <Spin

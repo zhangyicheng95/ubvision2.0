@@ -10,6 +10,8 @@ import dataItemImageNG from '@/assets/images/item-bg-ng.png';
 import LineCharts from '../components/LineCharts';
 import PieCharts from '../components/PieCharts';
 import BarCharts from '../components/BarCharts';
+import VideoCharts from '../components/VideoCharts';
+import AudioCharts from '../components/AudioCharts';
 
 interface Props {
     item: any;
@@ -41,10 +43,10 @@ const ItemWindow: React.FC<Props> = (props: any) => {
     const newGridContentList = !!localStorage.getItem(`localGridContentList-${canvasData.id}`)
         ? JSON.parse(localStorage.getItem(`localGridContentList-${canvasData.id}`) || '{}')
         : [];
-    const {
+    let {
         id,
         size,
-        value: __value = [],
+        'sourceType-socket': __value = [],
         type,
         yName,
         xName,
@@ -121,8 +123,9 @@ const ItemWindow: React.FC<Props> = (props: any) => {
         staticHeight,
         fileTypes,
         fileFetch,
-        titlePaddingSize = 0,
-        bodyPaddingSize = 0,
+        paddingSize = '',
+        titlePaddingSize = '',
+        bodyPaddingSize = '',
         showLabel,
         titleBackgroundColor,
         titleFontSize = 20,
@@ -132,6 +135,19 @@ const ItemWindow: React.FC<Props> = (props: any) => {
         parentBodyBox,
         parentBodyBoxTab,
     } = item;
+    paddingSize += '';
+    titlePaddingSize += '';
+    bodyPaddingSize += '';
+    if (paddingSize?.indexOf('%') < 0 && paddingSize?.indexOf('px') < 0) {
+        paddingSize = Number(paddingSize);
+    };
+    if (titlePaddingSize?.indexOf('%') < 0 && titlePaddingSize?.indexOf('px') < 0) {
+        titlePaddingSize = Number(titlePaddingSize);
+    };
+    if (bodyPaddingSize?.indexOf('%') < 0 && bodyPaddingSize?.indexOf('px') < 0) {
+        bodyPaddingSize = Number(bodyPaddingSize);
+    };
+
     const gridValue = []?.filter((i: any) => i?.id === id)?.[0];
     const newGridValue = newGridContentList?.filter((i: any) => i?.id === id)?.[0];
     // socket有数据就渲染新的，没有就渲染localStorage缓存的
@@ -150,28 +166,27 @@ const ItemWindow: React.FC<Props> = (props: any) => {
             // @ts-ignore
             style={Object.assign(
                 {},
+                { padding: paddingSize },
                 ['imgButton', 'heatMap'].includes(type)
                     ? { backgroundColor: 'transparent' }
                     : ['default'].includes(backgroundColor)
                         ? {}
-                        : backgroundColor === 'border'
-                            ? { paddingTop: (titleFontSize / 4) * 3, backgroundColor: 'transparent' }
-                            : backgroundColor === 'transparent'
-                                ? { backgroundColor: 'transparent' }
-                                : backgroundColor === 'black'
-                                    ? { backgroundColor: 'black' }
-                                    : {
-                                        backgroundImage: `url(${type === 'img' && (dataValue?.status == 'NG' || dataValue?.status?.value == 'NG')
-                                            ? dataItemImageNG
-                                            : backgroundColor
-                                            })`,
-                                        backgroundColor: 'transparent',
-                                    },
+                        : backgroundColor === 'transparent'
+                            ? { backgroundColor: 'transparent' }
+                            : backgroundColor === 'black'
+                                ? { backgroundColor: 'black' }
+                                : {
+                                    backgroundImage: `url(${type === 'img' && (dataValue?.status == 'NG' || dataValue?.status?.value == 'NG')
+                                        ? dataItemImageNG
+                                        : backgroundColor
+                                        })`,
+                                    backgroundColor: 'transparent',
+                                },
                 !!parentBodyBox && parentBodyBoxTab != bodyBoxTab ? { visibility: 'hidden' } : {},
             )}
         >
             {ifShowHeader ? (
-                <div className="move-item-content-box-title-box flex-box">
+                <div className="move-item-content-box-title-box flex-box" style={{ padding: titlePaddingSize, marginBottom: 0 }}>
                     <TooltipDiv className="flex-box move-item-content-box-title-box-title">
                         {`${CCDName || alias || name || '无效的节点'}`}
                         <span className="move-item-content-box-title-box-title-span">{(SecLabel?.label?.alias || __value[1]) ? `- ${(SecLabel?.label?.alias || __value[1])}` : ''}</span>
@@ -179,8 +194,8 @@ const ItemWindow: React.FC<Props> = (props: any) => {
                 </div>
             ) : null}
             <div className={`move-item-content-box-body-box`}>
-                <div className="flex-box-center" style={{ height: '100%' }}>
-                    {!parent?.[0] &&
+                <div className="flex-box-center" style={{ height: '100%', padding: bodyPaddingSize }}>
+                    {(!parent?.[0] && !item['sourceType-url']) &&
                         type?.indexOf('button') < 0 &&
                         ![
                             'header',
@@ -197,28 +212,42 @@ const ItemWindow: React.FC<Props> = (props: any) => {
                             'modelSwitch',
                             'iframe',
                             'timeSelect',
-                            'img'
-                        ].includes(type) ? (
-                        `请重新绑定数据节点-${item?.name}`
-                    ) : type === 'line' ? (
-                        <LineCharts
-                            id={id}
-                            data={{}}
-                        />
-                    ) : type === 'pie' ? (
-                        <PieCharts
-                            id={id}
-                            data={{}}
-                        />
-                    ) : type === 'bar' ? (
-                        <BarCharts
-                            id={id}
-                            data={{}}
-                        />
-                    ) : <ImageCharts
-                        id={id}
-                        data={{}}
-                    />
+                            'img',
+                            'audio',
+                            'video'
+                        ].includes(type) ?
+                        `请绑定数据源-${item?.name}`
+                        : type === 'line' ?
+                            <LineCharts
+                                id={id}
+                                data={{}}
+                            />
+                            : type === 'pie' ?
+                                <PieCharts
+                                    id={id}
+                                    data={{}}
+                                />
+                                : type === 'bar' ?
+                                    <BarCharts
+                                        id={id}
+                                        data={{}}
+                                    />
+                                    : type === 'img' ?
+                                        <ImageCharts
+                                            id={id}
+                                            data={{}}
+                                        />
+                                        : type === 'video' ?
+                                            <VideoCharts
+                                                id={id}
+                                                data={{}}
+                                            />
+                                            : type === 'audio' ?
+                                                <AudioCharts
+                                                    id={id}
+                                                    data={{}}
+                                                />
+                                                : null
                     }
                 </div>
             </div>
