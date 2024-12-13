@@ -3,7 +3,9 @@ import {
     ClusterOutlined, EllipsisOutlined, PlaySquareOutlined, LayoutOutlined,
     FundOutlined, AimOutlined,
 } from '@ant-design/icons';
-import homeBg from '@/assets/images/home-bg.png'
+import homeBg1 from '@/assets/images/home-bg-1.png';
+import homeBg2 from '@/assets/images/home-bg-2.png';
+import homeBg3 from '@/assets/images/home-bg-3.png';
 
 export const windowTypeList = [
     {
@@ -335,9 +337,21 @@ export const windowTypeList = [
         ],
         contents: [
             {
-                value: homeBg,
-                icon: homeBg,
-                label: '大屏背景图',
+                value: homeBg1,
+                icon: homeBg1,
+                label: '大屏背景图1',
+                type: 'img',
+            },
+            {
+                value: homeBg2,
+                icon: homeBg2,
+                label: '大屏背景图2',
+                type: 'img',
+            },
+            {
+                value: homeBg3,
+                icon: homeBg3,
+                label: '大屏背景图3',
                 type: 'img',
             },
             {

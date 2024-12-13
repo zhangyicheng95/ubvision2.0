@@ -1,6 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import axios from 'axios';
 import styles from './index.module.less';
+import TooltipDiv from '../TooltipDiv';
 
 const YOU_API_KEY = 'f4efab1249b3ea1c3c089c51595d9608';
 const YOU_LOCATION = 'Beijing';
@@ -36,7 +37,9 @@ const WeatherApp = (props: any) => {
         // backgroundImage: `url(http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png)`,
         ...style
     }} {...rest}>
-        <img src={`http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`} alt="" />
+        <TooltipDiv content={weatherData.weather[0].description} style={{ height: 50 }}>
+            <img src={`http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`} alt="" />
+        </TooltipDiv>
         <div className="weather-speed">风速: {weatherData.wind.speed} m/s</div>
 
     </div>

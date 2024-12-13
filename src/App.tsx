@@ -247,11 +247,22 @@ const App: React.FC = () => {
       setLoadingAction(false);
     });
   };
-  if (!userData?.userName && location?.href?.indexOf?.('#/flow') < 0) {
+  if (
+    !userData?.userName &&
+    location?.href?.indexOf?.('#/flow') < 0 &&
+    location.href?.indexOf('#/ccd') < 0 &&
+    location.href?.indexOf('#/softwareopen') < 0 &&
+    location.href?.indexOf('#/markdown') < 0 &&
+    location.href?.indexOf('#/case')
+  ) {
     onLogin({ userName: 'sany', password: '123' });
   } else if (
     userData.userName !== 'sany' &&
-    location.href?.indexOf('#/flow') < 0
+    location.href?.indexOf('#/flow') < 0 &&
+    location.href?.indexOf('#/ccd') < 0 &&
+    location.href?.indexOf('#/softwareopen') < 0 &&
+    location.href?.indexOf('#/markdown') < 0 &&
+    location.href?.indexOf('#/case')
   ) {
     useReloadAfterStationary(
       { wait: 1000 * 60 * 60 * 2, interval: 1000 * 60 },
