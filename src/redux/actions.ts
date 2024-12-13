@@ -65,6 +65,8 @@ export interface IRootActions {
 			windowsScale: 1,
 			content: [],
 			showHeader: false,
+			showLogo: false,
+			changeLogo: false,
 			showFooter: false,
 			background: string,
 		}, // 前端布局
@@ -88,6 +90,8 @@ export interface IRootActions {
 			windowsScale: 1,
 			content: [],
 			showHeader: false,
+			showLogo: false,
+			changeLogo: false,
 			showFooter: false,
 			background: string,
 		}, // 前端布局

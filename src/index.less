@@ -19,7 +19,6 @@
   line-height: 1.5;
   user-select: none;
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
 
   font-synthesis: none;
@@ -228,8 +227,14 @@ code {
 }
 
 @media (prefers-color-scheme: light) {
-  #root {
+
+  html,
+  body {
     color: #213547;
+  }
+
+  #root {
+    // color: #213547;
     background-color: #ffffff;
 
     .ant-layout-sider-children {
@@ -263,7 +268,14 @@ code {
 }
 
 @media (prefers-color-scheme: dark) {
+
+  html,
+  body {
+    color: #ccc;
+  }
+
   :root {
+
     .ant-layout-sider-children {
       background-color: rgba(0, 0, 0, 0.85);
 

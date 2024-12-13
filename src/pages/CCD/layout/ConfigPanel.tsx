@@ -160,7 +160,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                                 },
                                 {
                                     value: dataHeaderImage,
-                                    label: 'header背景图',
+                                    label: 'header背景图1',
                                 },
                                 {
                                     value: dataHeaderImage2,
@@ -251,16 +251,49 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
             {
                 key: '3',
                 label: '私有配置',
-                children: <Fragment>
-                    {/* <Form.Item
-  name={`pushData`}
-  label="数据推送"
-  valuePropName="checked"
-  rules={[{ required: false, message: '数据推送' }]}
->
-  <Switch />
-</Form.Item> */}
-                </Fragment>
+                children: data?.type === 'header' ?
+                    <Fragment>
+                        <Form.Item
+                            name={`title`}
+                            label={'标题'}
+                            rules={[{ required: false, message: '标题' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name={`subTitle`}
+                            label={'副标题'}
+                            rules={[{ required: false, message: '副标题' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name={'des_layout'}
+                            label="布局方向"
+                            initialValue={'center'}
+                            rules={[{ required: false, message: '布局方向' }]}
+                        >
+                            <Select
+                                options={[
+                                    { label: '居上', value: 'flex-start' },
+                                    { label: '居中', value: 'center' },
+                                    { label: '居下', value: 'flex-end' },
+                                ]}
+                            />
+                        </Form.Item>
+                        <Form.Item
+                            name="iconSize"
+                            label="图标尺寸"
+                            initialValue={24}
+                            rules={[{ required: false, message: '图标尺寸' }]}
+                        >
+                            <InputNumber min={0} />
+                        </Form.Item>
+                    </Fragment>
+                    :
+                    <Fragment>
+
+                    </Fragment>
             },
             {
                 key: '4',
@@ -400,7 +433,7 @@ const ConfigPanel: React.FC<Props> = (props: any) => {
                 </Fragment>
             },
         ];
-    }, [dataSourceList, sourceType]);
+    }, [data?.type, dataSourceList, sourceType]);
 
     return (
         <div className="flex-box-column ccd-main-box-config-panel">

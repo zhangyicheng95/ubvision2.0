@@ -18,9 +18,7 @@ const CCDHeaderPage: React.FC<Props> = (props: any) => {
     const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
     const dispatch = useDispatch();
 
-    // 保存布局
-    const onSave = useCallback(() => {
-        dispatch(setLoadingAction(true));
+    const formatParams = useCallback(() => {
         const realWidth = window.screen.width / (canvasData?.contentData?.windowsScale || 1);
         const realHeight = realWidth / (window.screen.width / window.screen.height);
         const param = {
@@ -45,6 +43,12 @@ const CCDHeaderPage: React.FC<Props> = (props: any) => {
                 }),
             }
         };
+        return param;
+    }, [dataList, canvasData]);
+    // 保存布局
+    const onSave = useCallback(() => {
+        dispatch(setLoadingAction(true));
+        const param = formatParams();
         updateParamsService(canvasData?.id, param).then((res) => {
             if (!!res && res.code === 'SUCCESS') {
                 message.success('保存成功');
@@ -64,12 +68,30 @@ const CCDHeaderPage: React.FC<Props> = (props: any) => {
         });
     }, [dataList, canvasData]);
 
+    // 暂存
+    const onSettingSave = useCallback(() => {
+        dispatch(setLoadingAction(true));
+        const param = formatParams();
+        updateParamsService(canvasData?.id, param).then((res) => {
+            if (!!res && res.code === 'SUCCESS') {
+                message.success('保存成功');
+                window.location.reload();
+            } else {
+                message.error(res?.message || '接口异常');
+            }
+            dispatch(setLoadingAction(false));
+        });
+    }, [dataList, canvasData]);
     return (
         <div className="flex-box ccd-page-header-box">
             <Button
                 icon={<SaveOutlined />}
                 size='small'
                 type="primary" onClick={onSave}>保存</Button>
+            <Button
+                icon={<SaveOutlined />}
+                size='small'
+                onClick={onSettingSave}>暂存</Button>
         </div>
     );
 };

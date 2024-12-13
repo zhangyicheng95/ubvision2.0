@@ -31,6 +31,8 @@ const initalState: IRootActions = {
 			windowsScale: 1,
 			content: [],
 			showHeader: false,
+			showLogo: false,
+			changeLogo: false,
 			showFooter: false,
 			background: '',
 		}, // 前端布局
@@ -54,6 +56,8 @@ const initalState: IRootActions = {
 			windowsScale: 1,
 			content: [],
 			showHeader: false,
+			showLogo: false,
+			changeLogo: false,
 			showFooter: false,
 			background: '',
 		}, // 前端布局

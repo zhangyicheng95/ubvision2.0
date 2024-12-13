@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { message } from 'antd';
 import * as _ from 'lodash-es';
 import styles from './index.module.less';
-import { GetQueryObj, getuid, guid } from '@/utils/utils';
+import { GetQueryObj, getuid, guid, ifCanEdit } from '@/utils/utils';
 import { getParamsService } from '@/services/flowEditor';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -29,10 +29,6 @@ const CCDPage: React.FC<Props> = (props: any) => {
   const dispatch = useDispatch();
 
   const moveRef = useRef<any>();
-  // 布局是否可编辑
-  const ifCanEdit = useMemo(() => {
-    return location.hash?.indexOf('edit') > -1;
-  }, [location.hash]);
   const [dataList, setDataList] = useState<any>([]);
 
   // init渲染
@@ -134,7 +130,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
       {
         // 头部
         useMemo(() => {
-          return ifCanEdit ?
+          return ifCanEdit() ?
             <CCDHeaderPage dataList={dataList} />
             : null
         }, [dataList])
@@ -144,7 +140,7 @@ const CCDPage: React.FC<Props> = (props: any) => {
         <div
           ref={moveRef}
           className='flex-box-start ccd-page-body-box'
-          style={ifCanEdit ? { height: 'calc(100% - 32px)' } : {}}
+          style={ifCanEdit() ? { height: `calc(100% - ${!!canvasData?.contentData?.showFooter ? 64 : 32}px)` } : {}}
         >
           <DndProvider backend={HTML5Backend}>
             <MoveItem

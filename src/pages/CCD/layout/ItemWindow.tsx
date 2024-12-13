@@ -12,6 +12,10 @@ import PieCharts from '../components/PieCharts';
 import BarCharts from '../components/BarCharts';
 import VideoCharts from '../components/VideoCharts';
 import AudioCharts from '../components/AudioCharts';
+import NightingalePieCharts from '../components/PieNightingaleCharts';
+import Pie3DCharts from '../components/Pie3DCharts';
+import PointCharts from '../components/PointCharts';
+import HeaderCharts from '../components/HeaderCharts';
 
 interface Props {
     item: any;
@@ -37,9 +41,6 @@ const ItemWindow: React.FC<Props> = (props: any) => {
         projectStatus,
         started,
     } = props;
-    const ifCanEdit = useMemo(() => {
-        return location.hash?.indexOf('edit') > -1;
-    }, [location.hash]);
     const newGridContentList = !!localStorage.getItem(`localGridContentList-${canvasData.id}`)
         ? JSON.parse(localStorage.getItem(`localGridContentList-${canvasData.id}`) || '{}')
         : [];
@@ -185,7 +186,7 @@ const ItemWindow: React.FC<Props> = (props: any) => {
                 !!parentBodyBox && parentBodyBoxTab != bodyBoxTab ? { visibility: 'hidden' } : {},
             )}
         >
-            {ifShowHeader ? (
+            {(ifShowHeader && type !== 'header') ? (
                 <div className="move-item-content-box-title-box flex-box" style={{ padding: titlePaddingSize, marginBottom: 0 }}>
                     <TooltipDiv className="flex-box move-item-content-box-title-box-title">
                         {`${CCDName || alias || name || '无效的节点'}`}
@@ -217,37 +218,57 @@ const ItemWindow: React.FC<Props> = (props: any) => {
                             'video'
                         ].includes(type) ?
                         `请绑定数据源-${item?.name}`
-                        : type === 'line' ?
-                            <LineCharts
+                        : type === 'header' ?
+                            <HeaderCharts
                                 id={id}
-                                data={{}}
+                                data={item}
                             />
-                            : type === 'pie' ?
-                                <PieCharts
+                            : type === 'line' ?
+                                <LineCharts
                                     id={id}
-                                    data={{}}
+                                    data={item}
                                 />
-                                : type === 'bar' ?
-                                    <BarCharts
+                                : type === 'point' ?
+                                    <PointCharts
                                         id={id}
                                         data={{}}
                                     />
-                                    : type === 'img' ?
-                                        <ImageCharts
+                                    : type === 'bar' ?
+                                        <BarCharts
                                             id={id}
                                             data={{}}
                                         />
-                                        : type === 'video' ?
-                                            <VideoCharts
+                                        : type === 'pie' ?
+                                            <PieCharts
                                                 id={id}
                                                 data={{}}
                                             />
-                                            : type === 'audio' ?
-                                                <AudioCharts
+                                            : type === 'pie3D' ?
+                                                <Pie3DCharts
                                                     id={id}
                                                     data={{}}
                                                 />
-                                                : null
+                                                : type === 'nightingalePie' ?
+                                                    <NightingalePieCharts
+                                                        id={id}
+                                                        data={{}}
+                                                    />
+                                                    : type === 'img' ?
+                                                        <ImageCharts
+                                                            id={id}
+                                                            data={{}}
+                                                        />
+                                                        : type === 'video' ?
+                                                            <VideoCharts
+                                                                id={id}
+                                                                data={{}}
+                                                            />
+                                                            : type === 'audio' ?
+                                                                <AudioCharts
+                                                                    id={id}
+                                                                    data={{}}
+                                                                />
+                                                                : null
                     }
                 </div>
             </div>

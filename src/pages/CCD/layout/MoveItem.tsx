@@ -1,6 +1,6 @@
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Moveable from 'react-moveable';
-import { getuid, guid } from '@/utils/utils';
+import { getuid, guid, ifCanEdit } from '@/utils/utils';
 import * as _ from 'lodash';
 import TooltipDiv from '@/components/TooltipDiv';
 import {
@@ -36,10 +36,6 @@ const MoveItem: React.FC<Props> = (props: any) => {
   } = props;
   const { canvasData, selectedNode } = useSelector((state: IRootActions) => state);
   const dispatch = useDispatch();
-  // 布局是否可编辑
-  const ifCanEdit = useMemo(() => {
-    return location.hash?.indexOf('edit') > -1;
-  }, [location.hash]);
   const [form] = Form.useForm();
   const timerRef = useRef<any>();
   const boxRef = useRef<any>();
@@ -77,10 +73,10 @@ const MoveItem: React.FC<Props> = (props: any) => {
               const { x, y, width, height, ...rest } = item;
               return {
                 ...rest,
-                x: x / (x < realWidth ? realWidth : window.screen.width),
-                y: y / (y < realHeight ? realHeight : window.screen.height),
-                width: width / (width < realWidth ? realWidth : window.screen.width),
-                height: height / (height < realHeight ? realHeight : window.screen.height),
+                x: x / (x <= realWidth ? realWidth : window.screen.width),
+                y: y / (y <= realHeight ? realHeight : window.screen.height),
+                width: width / (width <= realWidth ? realWidth : window.screen.width),
+                height: height / (height <= realHeight ? realHeight : window.screen.height),
               }
             }),
           }
@@ -103,7 +99,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
         };
       });
       // 编辑时，把窗口缩放保存
-      if (ifCanEdit) {
+      if (ifCanEdit()) {
         dispatch(setCanvasDataAction({
           ...canvasData,
           ...{
@@ -175,7 +171,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
   };
   // 点击窗口
   const handelClick = (name: string, e: any) => {
-    if (ifCanEdit) {
+    if (ifCanEdit()) {
       dispatch(setSelectedNodeAction(name));
     };
     e.preventDefault();
@@ -407,7 +403,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
       className="flex-box-start ccd-main-box"
     >
       {
-        !!ifCanEdit ?
+        !!ifCanEdit() ?
           <div className="flex-box-column ccd-main-box-plugin-panel" style={{
             width: editLeftPanel - (editLeftPanel > 0 ? 16 : 0),
             minWidth: editLeftPanel - (editLeftPanel > 0 ? 16 : 0),
@@ -530,7 +526,7 @@ const MoveItem: React.FC<Props> = (props: any) => {
                 : {}
             )}
             onClick={(e) => {
-              if (ifCanEdit) {
+              if (ifCanEdit()) {
                 dispatch(setSelectedNodeAction(''));
               };
               e.preventDefault();

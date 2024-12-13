@@ -2,6 +2,10 @@ import { message } from 'antd';
 import * as _ from 'lodash-es';
 import Base64 from 'base-64';
 
+// 判断url是否包含某字段
+export const ifCanEdit = (val = 'edit') => {
+    return window?.location.hash?.indexOf('' + val) > -1;
+};
 //获取用户信息
 export function getUserData() {
     try {

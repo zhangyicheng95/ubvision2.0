@@ -2,7 +2,7 @@
 
 import { GetQueryObj } from "@/utils/utils";
 
-const BASE_IP = localStorage.getItem("ipUrl") || 'localhost:8866';
+export const BASE_IP = localStorage.getItem("ipUrl") || 'localhost:8866';
 const params: any = !!location.search
     ? GetQueryObj(location.search)
     : !!location.href

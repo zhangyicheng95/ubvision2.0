@@ -1,8 +1,8 @@
 import React, { memo, useEffect, useState } from 'react';
-import * as echarts from 'echarts';
-import styles from './common.module.less';
-import * as _ from 'lodash';
 import { Modal, Image, Skeleton } from 'antd';
+import * as echarts from 'echarts';
+import styles from '../config/common.module.less';
+import * as _ from 'lodash';
 import moment from 'moment';
 
 interface Props {
